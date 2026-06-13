@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "brainstorming": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/brainstorming/SKILL.md",
+      "computedHash": "45a7e91ad905b9375efebfdf506bd4968c1cc6f43509115f0e1f43f425591e9f"
+    },
+    "business-analyst": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/business-analyst/SKILL.md",
+      "computedHash": "0b973834355fd5d0c387f977f9d5c9745b4e70c235716c154ffcecad58cdbd9a"
+    }
+  }
+}
