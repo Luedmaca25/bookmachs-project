@@ -14,7 +14,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 ---
 
 ### Fase 2: Modelado de Datos y Base de Datos (EF Core Code-First)
-- [ ] **Tarea 5:** Codificar las Entidades del Dominio en C#: `User`, `Book`, `MatchTransaction`, `Subscription`, `UserPreference` y `GlobalSettings`.
+- [x] **Tarea 5:** Codificar las Entidades del Dominio en C#: `User`, `Book`, `MatchTransaction`, `Subscription`, `UserPreference` y `GlobalSettings`.
 - [ ] **Tarea 6:** Crear el contexto de base de datos (`BookmachsDbContext`) en la capa `Infrastructure`, definiendo claves foráneas, reglas de modelo y relaciones.
 - [ ] **Tarea 7:** Generar la migración inicial (`dotnet ef migrations add InitialCreate`) y aplicarla a la base de datos local de SQL Server.
 - [ ] **Tarea 8:** Implementar el Patrón Repositorio y *Unit of Work* en la infraestructura, dejando las interfaces puras en la capa Domain.
