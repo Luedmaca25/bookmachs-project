@@ -7,7 +7,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 
 ### Fase 1: Setup Inicial del Proyecto y Arquitectura
 - [x] **Tarea 1:** Crear la solución de Visual Studio `Bookmachs.sln` y generar los 4 proyectos base siguiendo Clean Architecture (`Bookmachs.Domain`, `Bookmachs.Application`, `Bookmachs.Infrastructure`, `Bookmachs.Api`).
-- [ ] **Tarea 2:** Configurar la Inyección de Dependencias, patrón CQRS (instalando MediatR) y Swagger en el proyecto `Bookmachs.Api`.
+- [x] **Tarea 2:** Configurar la Inyección de Dependencias, patrón CQRS (instalando MediatR) y Swagger en el proyecto `Bookmachs.Api`.
 - [ ] **Tarea 3:** Inicializar el proyecto Frontend con React + Vite (`npm create vite@latest`).
 - [ ] **Tarea 4:** Instalar dependencias core en el frontend (React Router, Zustand para estado, React Query) y aplicar diseño usando **CSS Puro (Vanilla CSS)**, estructurando carpetas bajo el estándar Feature-Sliced Design (`app`, `features`, `lib`, `shared`).
 
