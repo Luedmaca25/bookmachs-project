@@ -5,7 +5,7 @@ Basado en los requerimientos funcionales, el backlog maestro y los criterios de 
 
 *   **Frontend:** **React** (usando Vite para empaquetado optimizado). 
     *   *Gestión de estado:* Zustand (estado global) y React Query (estado asíncrono y caché de servidor). 
-    *   *Estilos:* CSS modular o TailwindCSS.
+    *   *Estilos:* **CSS Puro (Vanilla CSS)** (Sin uso de TailwindCSS u otros frameworks de utilidades).
 *   **Backend:** **ASP.NET Core Web API (.NET 8)**.
 *   **Base de Datos:** **SQL Server** gestionado mediante **Entity Framework Core** (Enfoque Code-First).
 *   **Hosting / Despliegue:** **VPS en SmarterASP.NET** (Entorno Windows/IIS optimizado para stack de Microsoft).
@@ -25,7 +25,7 @@ Bookmachs.sln
 ├── src/
 │   ├── Bookmachs.Domain/         (Centro: Entidades de negocio, Interfaces de Repositorios, Excepciones, Reglas puras)
 │   ├── Bookmachs.Application/    (Casos de uso/Features, CQRS con MediatR, DTOs de entrada/salida)
-│   ├── Bookmachs.Infrastructure/ (Servicios externos: EF Core DbContext, Migrations, Webpay, Pasarelas IA)
+│   ├── Bookmachs.Infrastructure/ (Servicios externos: EF Core DbContext, Migrations, Webpay)
 │   └── Bookmachs.Api/            (Controladores REST, Configuración de Inyección de Dependencias, Middlewares)
 ```
 
@@ -39,7 +39,7 @@ src/
 ├── features/             (Módulos del negocio aislados)
 │   ├── authentication/   (Login, Formulario de Registro, Cuestionario Onboarding)
 │   ├── discovery/        (Motor de Swipe, Tarjetas de libros, Límites diarios)
-│   ├── inventory/        (Tu Libreta, Subida de fotos, Scanner IA)
+│   ├── inventory/        (Tu Libreta, Subida de fotos)
 │   ├── transactions/     (Match, Cálculo de Fee, Checkout de pago, Selección de logística)
 │   └── social/           (Perfil, Huella de Carbono, Timeline Público)
 ├── lib/                  (Configuraciones encapsuladas de librerías de 3ros ej: apiClient, react-query)
@@ -52,29 +52,27 @@ src/
 
 Definiremos las entidades en la capa `Domain` y gestionaremos las migraciones desde `Infrastructure`. El contexto (*Bounded Context*) central involucra las siguientes relaciones:
 
-*   **`User`**: Administra datos, `SubscriptionPlan` actual, contador de `DailySwipesConsumed` y rol.
+*   **`User`**: Administra datos, `DocumentoIdentidad` (Dinámico), `SubscriptionPlan` actual, contador de `DailySwipesConsumed` y rol.
 *   **`Book`**: La unidad de intercambio. Define propiedades como `Title`, `Author`, `Condition` y un flag `IsInternalStock` (Bookmachs vs Usuarios).
-*   **`MatchTransaction`**: Entidad crítica transaccional. Enlaza a un `UserId` con un `BookId`, calcula el `FeeAmount` base de la IA, guarda el `PaymentHoldId` (id de retención en la pasarela) y actualiza el `LogisticsStatus`.
+*   **`MatchTransaction`**: Entidad crítica transaccional. Enlaza a un `UserId` con un `BookId`, calcula el `FeeAmount`, guarda el `PaymentHoldId` (id de retención en la pasarela) y actualiza el `LogisticsStatus`.
 *   **`UserPreference`**: Registros asociados al cuestionario dinámico.
-
-*Nota Arquitectónica:* Nunca inyectaremos el `DbContext` directamente en la capa `Api`. Se utilizará el patrón **Repository** e interfaces inyectadas a través de la capa `Application`.
 
 ---
 
 ## 4. Integraciones y Estrategia "Library-First"
 
-No reinventaremos la rueda. Toda lógica transversal y compleja que ya esté resuelta por la industria se manejará integrando librerías o APIs sólidas:
-
-1.  **Manejo de Fallos y Reintentos de Red:**
-    *   Uso de **Polly** (en .NET) para definir políticas de reintento ante fallos temporales al comunicarse con las APIs de pasarelas de pago o motores de IA.
-2.  **Procesamiento de IA (Lectura de Portadas):**
-    *   No entrenaremos modelos locales. `Infrastructure` consumirá la API de **Google Cloud Vision** o **OpenAI GPT-4o Vision** para extraer Título/Autor/Sinopsis desde la imagen cargada por el usuario Premium.
-3.  **Pagos y Retenciones (Holds):**
+1.  **Motor de Recomendación Ligero (C# Nativo vs Ollama):**
+    *   Dado que la aplicación se alojará en un entorno VPS estándar (SmarterASP.NET sin aceleración GPU dedicada), correr un LLM local como Ollama sería inviable por el alto consumo de RAM y tiempos lentos de respuesta. Por lo tanto, el sistema utilizará un algoritmo de coincidencia cruzada construido de manera **nativa en C#** (Collaborative Filtering / Tag Matching). Esto garantiza una ejecución en milisegundos, 0 costos de servidor adicional y recomendaciones precisas basadas en el cuestionario de gustos.
+2.  **Manejo de Archivos (Fotos de Libros):**
+    *   Las fotos subidas por los usuarios se almacenarán directamente en una **Carpeta Local del servidor VPS** (ej. `/wwwroot/uploads`), minimizando costos de cloud computing por ahora.
+3.  **Manejo de Fallos y Reintentos de Red:**
+    *   Uso de **Polly** (en .NET) para definir políticas de reintento ante fallos temporales al comunicarse con las pasarelas de pago.
+4.  **Pagos y Retenciones (Holds):**
     *   Integración del SDK oficial de **Mercado Pago** (que soporta suscripciones y retenciones temporales) y SDK de **Transbank Webpay Plus** para transacciones locales en Chile.
-4.  **Tareas en Segundo Plano (CRON):**
+5.  **Tareas en Segundo Plano (CRON):**
     *   Para la "Liberación de Reservas en 48 hrs" exigida en el backlog, se implementará **Hangfire** en ASP.NET Core. Evita depender de temporizadores frágiles en memoria que mueren si el App Pool de IIS en SmarterASP se recicla.
-5.  **Autenticación SSO:**
-    *   Uso estricto de `Microsoft.AspNetCore.Authentication.JwtBearer` y `Google.Apis.Auth` para certificar el token de Google, emitiendo JWTs seguros al frontend.
+6.  **Autenticación SSO:**
+    *   Uso estricto de `Microsoft.AspNetCore.Authentication.JwtBearer` y `Google.Apis.Auth` para validar el token OAuth de Google **(servicio oficial y 100% gratuito provisto por Google para SSO)**.
 
 ---
 
@@ -84,7 +82,7 @@ El proveedor SmarterASP.NET utiliza infraestructura IIS (Internet Information Se
 
 ### 5.1 Despliegue del Backend (API)
 *   Se publicará `Bookmachs.Api` utilizando Visual Studio Web Deploy o FTP. 
-*   **Base de Datos:** En el entorno de producción, las migraciones (*Code-First*) se aplicarán de forma controlada utilizando scripts generados (`dotnet ef migrations script`) aplicados directamente al SQL Server, evitando que la API intente mutar esquemas estructurales en tiempo de ejecución de alto tráfico.
+*   **Base de Datos:** En el entorno de producción, las migraciones (*Code-First*) se aplicarán de forma controlada utilizando scripts generados aplicados directamente al SQL Server.
 
 ### 5.2 Despliegue del Frontend (React SPA)
 *   Se generará el *build* productivo (`npm run build`).
@@ -95,8 +93,8 @@ El proveedor SmarterASP.NET utiliza infraestructura IIS (Internet Information Se
 
 ## 6. Estándares y Reglas Clínicas de Código
 
-1.  **Early Returns (Retornos Tempranos):** Obligatorio en controladores y servicios. Validar primero permisos y parámetros, retornando errores 400/401 inmediatamente para evitar la anidación de condicionales (If-Else blocks profundos).
-2.  **Separación Pura de Intereses:** 
+1.  **Early Returns (Retornos Tempranos):** Obligatorio en controladores y servicios. Validar primero permisos y parámetros, retornando errores 400/401 inmediatamente para evitar la anidación de condicionales.
+2.  **Separation of Concerns:** 
     *   Ningún componente de React en el Frontend debe calcular el precio del Fee de un libro. La API enviará el costo exacto procesado y encriptado como única fuente de verdad.
     *   Ningún controlador ASP.NET en la API debe tener sentencias LINQ para buscar en base de datos.
 3.  **Archivos Cortos y Enfocados:** Clases y componentes que superen las 200 líneas de código deben ser refactorizados y extraídos utilizando el principio de Responsabilidad Única (SRP).
