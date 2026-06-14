@@ -12,6 +12,12 @@
       "sourceType": "github",
       "skillPath": "skills/business-analyst/SKILL.md",
       "computedHash": "0b973834355fd5d0c387f977f9d5c9745b4e70c235716c154ffcecad58cdbd9a"
+    },
+    "software-architecture": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/software-architecture/SKILL.md",
+      "computedHash": "4e63488e8ff45d6a1db2bd346734fdf84f31b05a45c3256d43029ae20db2b4d2"
     }
   }
 }
