@@ -21,6 +21,7 @@ public record StartWebpayCheckoutCommand : IRequest<WebpayStartResultDto>
     public Guid MatchTransactionId { get; init; }
     public Guid RequesterUserId { get; init; }
     public string ReturnUrl { get; init; } = string.Empty;
+    public bool AcceptCrossBorder { get; init; }
 }
 
 public class StartWebpayCheckoutCommandHandler : IRequestHandler<StartWebpayCheckoutCommand, WebpayStartResultDto>
@@ -47,6 +48,16 @@ public class StartWebpayCheckoutCommandHandler : IRequestHandler<StartWebpayChec
         if (transaction.RequesterUserId != request.RequesterUserId)
         {
             throw new UnauthorizedAccessException("No tienes permisos para pagar esta transacción.");
+        }
+
+        // 2.5 Validar confirmación geográfica para transacciones internacionales
+        if (transaction.IsCrossBorder && !request.AcceptCrossBorder)
+        {
+            return new WebpayStartResultDto
+            {
+                Success = false,
+                Message = "Debe confirmar explícitamente que acepta los costos de envío internacional."
+            };
         }
 
         // 3. Validar estado actual

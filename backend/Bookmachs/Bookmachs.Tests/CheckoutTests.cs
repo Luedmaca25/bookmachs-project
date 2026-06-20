@@ -305,4 +305,113 @@ public class CheckoutTests
         var list = Assert.IsAssignableFrom<IEnumerable<MatchTransactionDto>>(result);
         Assert.Single(list);
     }
+
+    [Fact]
+    public async Task ConfirmCardCheckout_ShouldFail_WhenIsCrossBorderButAcceptCrossBorderIsFalse()
+    {
+        // Arrange
+        using var context = GetInMemoryDbContext();
+        using var unitOfWork = new UnitOfWork(context);
+        var paymentService = GetMockPaymentService();
+
+        var requester = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "requester@example.com",
+            Name = "Requester User"
+        };
+        await context.Users.AddAsync(requester);
+
+        var book = new Book
+        {
+            Id = Guid.NewGuid(),
+            Title = "El Hobbit",
+            BaseValue = 5000.0m
+        };
+        await context.Books.AddAsync(book);
+
+        var transaction = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = requester.Id,
+            BookId = book.Id,
+            FeeAmount = 1500.0m,
+            PaymentStatus = "Pending",
+            IsCrossBorder = true // Transfronterizo
+        };
+        await context.MatchTransactions.AddAsync(transaction);
+        await context.SaveChangesAsync();
+
+        var command = new ConfirmCardCheckoutCommand
+        {
+            MatchTransactionId = transaction.Id,
+            CardToken = "tok_visa_123",
+            RequesterUserId = requester.Id,
+            AcceptCrossBorder = false // No acepta
+        };
+        var handler = new ConfirmCardCheckoutCommandHandler(unitOfWork, paymentService);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Contains("costos de envío internacional", result.Message);
+        Assert.Equal("Pending", transaction.PaymentStatus); // Sigue pendiente
+    }
+
+    [Fact]
+    public async Task StartWebpayCheckout_ShouldFail_WhenIsCrossBorderButAcceptCrossBorderIsFalse()
+    {
+        // Arrange
+        using var context = GetInMemoryDbContext();
+        using var unitOfWork = new UnitOfWork(context);
+        var paymentService = GetMockPaymentService();
+
+        var requester = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "requester@example.com",
+            Name = "Requester User"
+        };
+        await context.Users.AddAsync(requester);
+
+        var book = new Book
+        {
+            Id = Guid.NewGuid(),
+            Title = "El Hobbit",
+            BaseValue = 5000.0m
+        };
+        await context.Books.AddAsync(book);
+
+        var transaction = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = requester.Id,
+            BookId = book.Id,
+            FeeAmount = 1500.0m,
+            PaymentStatus = "Pending",
+            IsCrossBorder = true // Transfronterizo
+        };
+        await context.MatchTransactions.AddAsync(transaction);
+        await context.SaveChangesAsync();
+
+        var command = new StartWebpayCheckoutCommand
+        {
+            MatchTransactionId = transaction.Id,
+            ReturnUrl = "https://my-app.com/callback",
+            RequesterUserId = requester.Id,
+            AcceptCrossBorder = false // No acepta
+        };
+        var handler = new StartWebpayCheckoutCommandHandler(unitOfWork, paymentService);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Contains("costos de envío internacional", result.Message);
+    }
 }

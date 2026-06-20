@@ -21,6 +21,7 @@ public record ConfirmCardCheckoutCommand : IRequest<CheckoutResultDto>
     public Guid MatchTransactionId { get; init; }
     public string CardToken { get; init; } = string.Empty;
     public Guid RequesterUserId { get; init; }
+    public bool AcceptCrossBorder { get; init; }
 }
 
 public class ConfirmCardCheckoutCommandHandler : IRequestHandler<ConfirmCardCheckoutCommand, CheckoutResultDto>
@@ -47,6 +48,16 @@ public class ConfirmCardCheckoutCommandHandler : IRequestHandler<ConfirmCardChec
         if (transaction.RequesterUserId != request.RequesterUserId)
         {
             throw new UnauthorizedAccessException("No tienes permisos para pagar esta transacción.");
+        }
+
+        // 2.5 Validar confirmación geográfica para transacciones internacionales
+        if (transaction.IsCrossBorder && !request.AcceptCrossBorder)
+        {
+            return new CheckoutResultDto
+            {
+                Success = false,
+                Message = "Debe confirmar explícitamente que acepta los costos de envío internacional."
+            };
         }
 
         // 3. Validar estado actual

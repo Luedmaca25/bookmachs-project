@@ -94,7 +94,8 @@ public class TransactionsController : ControllerBase
             {
                 MatchTransactionId = request.MatchTransactionId,
                 CardToken = request.CardToken,
-                RequesterUserId = userId
+                RequesterUserId = userId,
+                AcceptCrossBorder = request.AcceptCrossBorder
             };
 
             var result = await _mediator.Send(command);
@@ -139,7 +140,8 @@ public class TransactionsController : ControllerBase
             {
                 MatchTransactionId = request.MatchTransactionId,
                 ReturnUrl = request.ReturnUrl,
-                RequesterUserId = userId
+                RequesterUserId = userId,
+                AcceptCrossBorder = request.AcceptCrossBorder
             };
 
             var result = await _mediator.Send(command);
@@ -207,12 +209,14 @@ public class CheckoutCardRequest
 {
     public Guid MatchTransactionId { get; set; }
     public string CardToken { get; set; } = string.Empty;
+    public bool AcceptCrossBorder { get; set; }
 }
 
 public class WebpayStartRequest
 {
     public Guid MatchTransactionId { get; set; }
     public string ReturnUrl { get; set; } = string.Empty;
+    public bool AcceptCrossBorder { get; set; }
 }
 
 public class WebpayConfirmRequest

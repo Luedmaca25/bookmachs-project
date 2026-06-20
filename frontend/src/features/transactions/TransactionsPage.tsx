@@ -40,6 +40,7 @@ export const TransactionsPage: React.FC = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [acceptCrossBorder, setAcceptCrossBorder] = useState(false);
 
   // Simulación de redirección de Webpay
   const [webpayRedirecting, setWebpayRedirecting] = useState(false);
@@ -71,12 +72,15 @@ export const TransactionsPage: React.FC = () => {
         setSelectedTx(tx);
         setCheckoutSuccess(false);
         setCheckoutError(null);
+        setAcceptCrossBorder(false);
       } else {
         // Si no está en el listado local, recargar o limpiar
         setSelectedTx(null);
+        setAcceptCrossBorder(false);
       }
     } else {
       setSelectedTx(null);
+      setAcceptCrossBorder(false);
     }
   }, [checkoutId, matches]);
 
@@ -119,13 +123,19 @@ export const TransactionsPage: React.FC = () => {
       return;
     }
 
+    if (selectedTx.isCrossBorder && !acceptCrossBorder) {
+      setCheckoutError('Debe aceptar expresamente la confirmación por el costo de envío internacional.');
+      return;
+    }
+
     setCheckoutLoading(true);
     setCheckoutError(null);
 
     try {
       const payload = {
         matchTransactionId: selectedTx.id,
-        cardToken: `tok_card_mock_${paymentMethod}_${cardCvv}`
+        cardToken: `tok_card_mock_${paymentMethod}_${cardCvv}`,
+        acceptCrossBorder: acceptCrossBorder
       };
 
       const response = await apiClient.post<any>('/transactions/checkout-card', payload);
@@ -154,6 +164,11 @@ export const TransactionsPage: React.FC = () => {
   const handleWebpayStart = async () => {
     if (!selectedTx) return;
 
+    if (selectedTx.isCrossBorder && !acceptCrossBorder) {
+      setCheckoutError('Debe aceptar expresamente la confirmación por el costo de envío internacional.');
+      return;
+    }
+
     setCheckoutLoading(true);
     setCheckoutError(null);
 
@@ -161,7 +176,8 @@ export const TransactionsPage: React.FC = () => {
       const returnUrl = `${window.location.origin}/transacciones`;
       const payload = {
         matchTransactionId: selectedTx.id,
-        returnUrl: returnUrl
+        returnUrl: returnUrl,
+        acceptCrossBorder: acceptCrossBorder
       };
 
       const response = await apiClient.post<any>('/transactions/webpay-start', payload);
@@ -260,7 +276,18 @@ export const TransactionsPage: React.FC = () => {
               {selectedTx.isCrossBorder && (
                 <div className="checkout-alert-geo">
                   <strong>⚠️ Envío Internacional Detectado</strong>
-                  <p>El propietario del libro reside en un país diferente. Los costos logísticos se coordinan por separado.</p>
+                  <p>El propietario del libro reside en un país diferente. Los costos logísticos internacionales se coordinan por separado y son elevados.</p>
+                  <div className="checkout-geo-accept-container">
+                    <label className="checkout-geo-accept-label">
+                      <input
+                        type="checkbox"
+                        checked={acceptCrossBorder}
+                        onChange={(e) => setAcceptCrossBorder(e.target.checked)}
+                        className="checkout-geo-checkbox"
+                      />
+                      <span className="checkout-geo-accept-text">Comprendo y acepto asumir los costos adicionales del envío internacional.</span>
+                    </label>
+                  </div>
                 </div>
               )}
             </div>
@@ -337,7 +364,11 @@ export const TransactionsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <button type="submit" className="confirm-checkout-btn font-heading" disabled={checkoutLoading}>
+                  <button 
+                    type="submit" 
+                    className="confirm-checkout-btn font-heading" 
+                    disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
+                  >
                     {checkoutLoading ? 'Procesando Hold...' : `Retener $${selectedTx.feeAmount.toLocaleString()} CLP 🔒`}
                   </button>
                 </form>
@@ -348,7 +379,7 @@ export const TransactionsPage: React.FC = () => {
                     type="button"
                     className="confirm-checkout-btn webpay-btn font-heading"
                     onClick={handleWebpayStart}
-                    disabled={checkoutLoading}
+                    disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
                   >
                     {checkoutLoading ? 'Iniciando Webpay...' : 'Pagar con Webpay Plus Diferido 🇨🇱'}
                   </button>
