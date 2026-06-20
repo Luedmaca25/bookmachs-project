@@ -11,6 +11,7 @@ public interface IUnitOfWork : IDisposable
     IMatchTransactionRepository MatchTransactions { get; }
     ISubscriptionRepository Subscriptions { get; }
     IGlobalSettingsRepository GlobalSettings { get; }
+    IMasterPreferenceTagRepository MasterPreferenceTags { get; }
     
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

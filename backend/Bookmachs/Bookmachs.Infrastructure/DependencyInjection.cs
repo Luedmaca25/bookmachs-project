@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<IMatchTransactionRepository, MatchTransactionRepository>();
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<IGlobalSettingsRepository, GlobalSettingsRepository>();
+        services.AddScoped<IMasterPreferenceTagRepository, MasterPreferenceTagRepository>();
 
         return services;
     }

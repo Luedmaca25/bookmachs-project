@@ -15,6 +15,7 @@ public class BookmachsDbContext : DbContext
     public DbSet<Subscription> Subscriptions { get; set; } = null!;
     public DbSet<UserPreference> UserPreferences { get; set; } = null!;
     public DbSet<GlobalSettings> GlobalSettings { get; set; } = null!;
+    public DbSet<MasterPreferenceTag> MasterPreferenceTags { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -122,6 +123,14 @@ public class BookmachsDbContext : DbContext
             entity.Property(g => g.FeePercentage).HasPrecision(5, 4); // ej: 0.3000
             entity.Property(g => g.MinFeeAmount).HasPrecision(18, 2);
             entity.Property(g => g.MaxFeeAmount).HasPrecision(18, 2);
+        });
+
+        // --- Configuración de MasterPreferenceTag ---
+        modelBuilder.Entity<MasterPreferenceTag>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.Name).IsRequired().HasMaxLength(50);
+            entity.HasIndex(m => m.Name).IsUnique();
         });
     }
 }
