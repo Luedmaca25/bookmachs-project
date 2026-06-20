@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Bookmachs.Application.Authentication;
 using Bookmachs.Application.Authentication.Commands;
+using Google.Apis.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -66,4 +67,43 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = ex.Message });
         }
     }
+
+    [HttpPost("google")]
+    public async Task<ActionResult<AuthResponseDto>> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.IdToken))
+        {
+            return BadRequest("Se requiere el token de Google para iniciar sesión.");
+        }
+
+        try
+        {
+            var settings = new GoogleJsonWebSignature.ValidationSettings();
+            var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
+            
+            var command = new GoogleLoginCommand
+            {
+                GoogleSub = payload.Subject,
+                Email = payload.Email,
+                Name = payload.Name ?? payload.Email
+            };
+
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+        catch (InvalidJwtException ex)
+        {
+            return Unauthorized(new { message = "El token de Google no es válido o ha expirado.", details = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
+
+public class GoogleLoginRequest
+{
+    public string IdToken { get; set; } = string.Empty;
+}
+

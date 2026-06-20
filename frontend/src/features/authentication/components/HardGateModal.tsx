@@ -20,6 +20,68 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
   const [documento, setDocumento] = useState('');
   const [pais, setPais] = useState('Chile');
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const initializeGoogleSignIn = () => {
+      const gWindow = window as any;
+      if (gWindow.google) {
+        gWindow.google.accounts.id.initialize({
+          client_id: '1234567890-googleclientidplaceholder.apps.googleusercontent.com',
+          callback: async (response: any) => {
+            setLoading(true);
+            setError(null);
+            try {
+              const apiResponse = await apiClient.post<{ 
+                id: string; 
+                email: string; 
+                name: string; 
+                documentoIdentidad: string; 
+                pais: string; 
+                role: string; 
+                isPremium: boolean; 
+                token: string 
+              }>('/auth/google', { idToken: response.credential });
+              
+              loginAction(apiResponse, apiResponse.token);
+              onSuccess();
+            } catch (err: unknown) {
+              if (err instanceof Error) {
+                setError(err.message || 'Error al iniciar sesión con Google.');
+              } else {
+                setError('Error inesperado al iniciar sesión con Google.');
+              }
+            } finally {
+              setLoading(false);
+            }
+          }
+        });
+
+        const btnContainer = document.getElementById('google-btn-container');
+        if (btnContainer) {
+          gWindow.google.accounts.id.renderButton(
+            btnContainer,
+            { theme: 'outline', size: 'large', type: 'standard', text: 'continue_with', width: '380' }
+          );
+        }
+      }
+    };
+
+    const gWindow = window as any;
+    if (gWindow.google) {
+      const timer = setTimeout(initializeGoogleSignIn, 100);
+      return () => clearTimeout(timer);
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeGoogleSignIn;
+      document.body.appendChild(script);
+      return () => {};
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -152,6 +214,14 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
             {loading ? 'Procesando...' : isLogin ? 'Ingresar' : 'Crear Cuenta'}
           </button>
         </form>
+
+        <div className="modal-divider">
+          <span>o</span>
+        </div>
+
+        <div className="google-sso-wrapper">
+          <div id="google-btn-container"></div>
+        </div>
 
         <div className="modal-footer">
           <button 

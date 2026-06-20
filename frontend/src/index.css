@@ -929,4 +929,45 @@ p {
   text-decoration: underline;
 }
 
+/* ==========================================================================
+   SSO Google Button & Divider Styles
+   ========================================================================== */
+.modal-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0.5rem 0;
+}
+
+.modal-divider::before, .modal-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-divider:not(:empty)::before {
+  margin-right: .75em;
+}
+
+.modal-divider:not(:empty)::after {
+  margin-left: .75em;
+}
+
+.google-sso-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+#google-btn-container {
+  min-height: 40px;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  justify-content: center;
+}
+
 
