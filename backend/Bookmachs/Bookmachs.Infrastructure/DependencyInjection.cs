@@ -28,6 +28,8 @@ public static class DependencyInjection
         services.AddScoped<IMasterPreferenceTagRepository, MasterPreferenceTagRepository>();
 
         // Registrar Servicios de Autenticación y Seguridad
+        services.AddMemoryCache();
+        services.AddScoped<ICacheService, MemoryCacheService>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();

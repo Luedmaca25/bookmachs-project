@@ -123,6 +123,55 @@ public class BooksController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost("{id}/swipe")]
+    public async Task<ActionResult<SwipeResultDto>> SwipeBook(Guid id, [FromBody] SwipeBookRequest request)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        if (request == null || string.IsNullOrWhiteSpace(request.Action))
+        {
+            return BadRequest("Se requiere la acción (like o dislike) para el swipe.");
+        }
+
+        var action = request.Action.ToLower();
+        if (action != "like" && action != "dislike")
+        {
+            return BadRequest("La acción debe ser 'like' o 'dislike'.");
+        }
+
+        try
+        {
+            var command = new RegisterSwipeCommand
+            {
+                UserId = userId,
+                BookId = id,
+                Action = action
+            };
+
+            var result = await _mediator.Send(command);
+            
+            if (!result.Success)
+            {
+                // Devolvemos 403 Forbidden cuando el límite diario es sobrepasado
+                return StatusCode(StatusCodes.Status403Forbidden, result);
+            }
+
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
 
 public class UploadBookRequest
@@ -132,4 +181,9 @@ public class UploadBookRequest
     public string Description { get; set; } = string.Empty;
     public string Condition { get; set; } = "Excelente";
     public IFormFile CoverImage { get; set; } = null!;
+}
+
+public class SwipeBookRequest
+{
+    public string Action { get; set; } = string.Empty;
 }
