@@ -259,11 +259,18 @@ public class PaymentGatewayService : IPaymentGatewayService
     {
         if (_useMock || token.StartsWith("tb_token_"))
         {
+            string buyOrder = $"bo_{Guid.NewGuid().ToString("N")[..8]}";
+            var parts = token.Split('_');
+            if (parts.Length > 0 && Guid.TryParse(parts[^1], out var parsedGuid))
+            {
+                buyOrder = parsedGuid.ToString();
+            }
+
             return Task.FromResult(new TransbankCommitResult
             {
                 Success = true,
                 AuthorizationCode = "123456",
-                BuyOrder = $"bo_{Guid.NewGuid().ToString("N")[..8]}",
+                BuyOrder = buyOrder,
                 Amount = 1500.0m,
                 Status = "AUTHORIZED",
                 ErrorMessage = null

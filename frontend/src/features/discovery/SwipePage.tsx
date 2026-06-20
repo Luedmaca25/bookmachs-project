@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
 import { HardGateModal } from '../authentication/components/HardGateModal';
 import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
@@ -16,6 +17,7 @@ interface BookItem {
 }
 
 export const SwipePage: React.FC = () => {
+  const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [modalOpen, setModalOpen] = useState(false);
   
@@ -272,7 +274,7 @@ export const SwipePage: React.FC = () => {
         book={matchedBook}
         matchTransactionId={matchTransactionId}
         onProceedToCheckout={(txId) => {
-          alert(`Redirigiendo a Checkout para la transacción de Match: ${txId}`);
+          navigate(`/transacciones?checkout=${txId}`);
           setMatchOpen(false);
         }}
       />
