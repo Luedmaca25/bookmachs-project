@@ -1,11 +1,28 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../authentication/store/authStore';
 import { HardGateModal } from '../authentication/components/HardGateModal';
+import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
 
 export const SwipePage: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [swiped, setSwiped] = useState(false);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+
+  const needsOnboarding = isAuthenticated && (
+    !user?.pais || 
+    !user?.documentoIdentidad || 
+    !localStorage.getItem(`onboarding_completed_${user?.id}`)
+  );
+
+  const showWizard = needsOnboarding && !onboardingCompleted;
+
+  const handleOnboardingComplete = () => {
+    if (user) {
+      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+    }
+    setOnboardingCompleted(true);
+  };
 
   const handleSwipeAction = () => {
     if (!isAuthenticated) {
@@ -15,6 +32,21 @@ export const SwipePage: React.FC = () => {
       setTimeout(() => setSwiped(false), 1500);
     }
   };
+
+  if (showWizard) {
+    return (
+      <div className="swipe-page-container">
+        <div className="swipe-header">
+          <h1>Completar Onboarding</h1>
+          <div className="user-auth-badge">
+            <span>Hola, <strong>{user?.name}</strong></span>
+            <button onClick={logout} className="logout-btn">Cerrar Sesión</button>
+          </div>
+        </div>
+        <OnboardingWizard onComplete={handleOnboardingComplete} />
+      </div>
+    );
+  }
 
   return (
     <div className="swipe-page-container">

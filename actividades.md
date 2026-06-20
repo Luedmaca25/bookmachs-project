@@ -34,7 +34,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 - [x] **Tarea 14:** Desarrollar API de Registro Manual e Inicio de Sesión de usuario almacenando correo, nombre, y **Documento de Identidad (Dato dinámico que se adapta al país ingresado)**, validando campos de seguridad.
 - [x] **Tarea 15:** Construir el "Modal Hard Gate" en Frontend para que la interacción inicial del Swipe obligue al usuario no logueado a registrarse.
 - [x] **Tarea 16:** Integrar botón "Continuar con Google" (SSO Frontend) y enlazarlo con el backend.
-- [ ] **Tarea 17:** Construir el Wizard dinámico (Frontend) del cuestionario de gustos, alimentado en vivo por el endpoint del catálogo maestro (Backend).
+- [x] **Tarea 17:** Construir el Wizard dinámico (Frontend) del cuestionario de gustos, alimentado en vivo por el endpoint del catálogo maestro (Backend).
 
 ---
 
