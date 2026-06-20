@@ -24,6 +24,9 @@ public class User
 
     // Identificador único de Google SSO
     public string? GoogleSub { get; set; }
+
+    // Hash de contraseña para registro manual (nulo para usuarios de Google SSO)
+    public string? PasswordHash { get; set; }
     
     public string Role { get; set; } = "User"; // User, Admin
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

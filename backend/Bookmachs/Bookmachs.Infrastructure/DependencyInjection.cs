@@ -1,6 +1,8 @@
+using Bookmachs.Application.Common.Interfaces;
 using Bookmachs.Domain.Repositories;
 using Bookmachs.Infrastructure.Persistence;
 using Bookmachs.Infrastructure.Repositories;
+using Bookmachs.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +26,10 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<IGlobalSettingsRepository, GlobalSettingsRepository>();
         services.AddScoped<IMasterPreferenceTagRepository, MasterPreferenceTagRepository>();
+
+        // Registrar Servicios de Autenticación y Seguridad
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
 
         return services;
     }
