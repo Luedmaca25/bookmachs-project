@@ -30,6 +30,7 @@ public static class DependencyInjection
         // Registrar Servicios de Autenticación y Seguridad
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         return services;
     }
