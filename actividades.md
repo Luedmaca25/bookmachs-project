@@ -22,7 +22,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 ---
 
 ### Fase 3: Backoffice y Parametrización Global
-- [ ] **Tarea 9:** Desarrollar Endpoints CRUD (API) para la administración de la tabla `GlobalSettings` (Control de límites de swipes, costos de planes, y tope de cálculo de Fee).
+- [x] **Tarea 9:** Desarrollar Endpoints CRUD (API) para la administración de la tabla `GlobalSettings` (Control de límites de swipes, costos de planes, y tope de cálculo de Fee).
 - [ ] **Tarea 10:** Desarrollar Endpoint (API) de administración para alimentar el catálogo maestro dinámico del cuestionario de gustos.
 - [ ] **Tarea 11:** Desarrollar interfaz del Panel CMS Web (Frontend Admin) para visualizar y editar configuraciones.
 - [ ] **Tarea 12:** Pruebas QA (Unitarias y E2E): Confirmar que la actualización de estas variables alteran el comportamiento del sistema en tiempo real.

@@ -23,6 +23,11 @@ public class GlobalSettingsRepository : IGlobalSettingsRepository
             .FirstOrDefaultAsync();
     }
 
+    public async Task AddAsync(GlobalSettings settings)
+    {
+        await _context.GlobalSettings.AddAsync(settings);
+    }
+
     public void Update(GlobalSettings settings)
     {
         _context.GlobalSettings.Update(settings);
