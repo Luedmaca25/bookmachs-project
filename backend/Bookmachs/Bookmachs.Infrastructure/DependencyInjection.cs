@@ -1,8 +1,10 @@
 using Bookmachs.Application.Common.Interfaces;
 using Bookmachs.Domain.Repositories;
+using Bookmachs.Domain.Services;
 using Bookmachs.Infrastructure.Persistence;
 using Bookmachs.Infrastructure.Repositories;
 using Bookmachs.Infrastructure.Services;
+using Bookmachs.Infrastructure.Payments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
 
         return services;
     }
