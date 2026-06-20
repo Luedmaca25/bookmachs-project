@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Bookmachs.Application.Common.Interfaces;
+using Bookmachs.Domain.Entities;
 using Bookmachs.Domain.Repositories;
 using MediatR;
 
@@ -21,6 +23,8 @@ public class SwipeResultDto
     public int SwipeLimit { get; set; }
     public string? ErrorCode { get; set; }
     public string? Message { get; set; }
+    public bool IsMatch { get; set; }
+    public Guid? MatchTransactionId { get; set; }
 }
 
 public class RegisterSwipeCommandHandler : IRequestHandler<RegisterSwipeCommand, SwipeResultDto>
@@ -110,6 +114,72 @@ public class RegisterSwipeCommandHandler : IRequestHandler<RegisterSwipeCommand,
         // Actualizar base de datos de manera persistente
         user.DailySwipesConsumed = consumed;
         _unitOfWork.Users.Update(user);
+
+        // 7. Evaluar si se logra un Match (cuando la acción es "like")
+        bool isMatch = false;
+        Guid? matchTransactionId = null;
+
+        if (request.Action.Equals("like", StringComparison.OrdinalIgnoreCase))
+        {
+            var book = await _unitOfWork.Books.GetByIdAsync(request.BookId);
+            if (book != null && book.IsAvailable)
+            {
+                // Un match ocurre de inmediato si es stock de la plataforma (IsInternalStock),
+                // o con una probabilidad de 35% para simular coincidencia de otro usuario.
+                isMatch = book.IsInternalStock || (Random.Shared.NextDouble() < 0.35);
+
+                if (isMatch)
+                {
+                    decimal feePercentage = settings?.FeePercentage ?? 0.30m;
+                    decimal minFee = settings?.MinFeeAmount ?? 1000.0m;
+                    decimal maxFee = settings?.MaxFeeAmount ?? 9000.0m;
+
+                    // Calcular el Fee dinámico de intercambio
+                    decimal rawFee = book.BaseValue * feePercentage;
+                    decimal finalFee = rawFee;
+
+                    if (finalFee < minFee) finalFee = minFee;
+                    else if (finalFee > maxFee) finalFee = maxFee;
+
+                    finalFee = Math.Round(finalFee, 2);
+
+                    // Determinar si es una transacción transfronteriza
+                    bool isCrossBorder = false;
+                    if (!book.IsInternalStock && book.OwnerId.HasValue)
+                    {
+                        var owner = await _unitOfWork.Users.GetByIdAsync(book.OwnerId.Value);
+                        if (owner != null && !string.IsNullOrEmpty(user.Pais) && !string.IsNullOrEmpty(owner.Pais))
+                        {
+                            isCrossBorder = !string.Equals(user.Pais, owner.Pais, StringComparison.OrdinalIgnoreCase);
+                        }
+                    }
+
+                    // Crear y registrar la transacción del Match
+                    var transaction = new MatchTransaction
+                    {
+                        Id = Guid.NewGuid(),
+                        RequesterUserId = user.Id,
+                        BookId = book.Id,
+                        OwnerUserId = book.IsInternalStock ? null : book.OwnerId,
+                        FeeAmount = finalFee,
+                        PaymentStatus = "Pending",
+                        LogisticsStatus = "Pending",
+                        IsCrossBorder = isCrossBorder,
+                        CreatedAt = DateTime.UtcNow,
+                        StatusUpdatedAt = DateTime.UtcNow
+                    };
+
+                    await _unitOfWork.MatchTransactions.AddAsync(transaction);
+                    
+                    // Opcional: deshabilitar el libro para evitar múltiples matches simultáneos
+                    book.IsAvailable = false;
+                    _unitOfWork.Books.Update(book);
+
+                    matchTransactionId = transaction.Id;
+                }
+            }
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new SwipeResultDto
@@ -117,7 +187,9 @@ public class RegisterSwipeCommandHandler : IRequestHandler<RegisterSwipeCommand,
             Success = true,
             SwipesConsumed = consumed,
             SwipeLimit = swipeLimit,
-            Message = "Swipe registrado con éxito."
+            Message = isMatch ? "¡Match logrado!" : "Swipe registrado con éxito.",
+            IsMatch = isMatch,
+            MatchTransactionId = matchTransactionId
         };
     }
 }

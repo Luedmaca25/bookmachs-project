@@ -3,6 +3,7 @@ import { useAuthStore } from '../authentication/store/authStore';
 import { HardGateModal } from '../authentication/components/HardGateModal';
 import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
 import { UpsellModal } from './components/UpsellModal';
+import { MatchModal } from '../transactions/components/MatchModal';
 import { apiClient } from '../../lib/apiClient';
 
 interface BookItem {
@@ -31,6 +32,11 @@ export const SwipePage: React.FC = () => {
   const [limitReached, setLimitReached] = useState(false);
   const [limitValue, setLimitValue] = useState(100);
   const [upsellOpen, setUpsellOpen] = useState(false);
+
+  // Control de Match (Fase 7)
+  const [matchOpen, setMatchOpen] = useState(false);
+  const [matchedBook, setMatchedBook] = useState<BookItem | null>(null);
+  const [matchTransactionId, setMatchTransactionId] = useState<string | null>(null);
 
   // Control de Onboarding
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
@@ -98,8 +104,22 @@ export const SwipePage: React.FC = () => {
     try {
       const action = direction === 'right' ? 'like' : 'dislike';
       
+      interface SwipeResponse {
+        success: boolean;
+        swipesConsumed: number;
+        swipeLimit: number;
+        isMatch: boolean;
+        matchTransactionId?: string;
+      }
+
       // Llamada al endpoint de swipe en el backend
-      await apiClient.post(`/books/${currentBook.id}/swipe`, { action });
+      const response = await apiClient.post<SwipeResponse>(`/books/${currentBook.id}/swipe`, { action });
+
+      if (action === 'like' && response.isMatch) {
+        setMatchedBook(currentBook);
+        setMatchTransactionId(response.matchTransactionId || null);
+        setMatchOpen(true);
+      }
 
       // Esperar a que termine la animación (300ms) antes de cambiar de libro
       setTimeout(() => {
@@ -244,6 +264,17 @@ export const SwipePage: React.FC = () => {
         isOpen={upsellOpen}
         onClose={() => setUpsellOpen(false)}
         limitValue={limitValue}
+      />
+
+      <MatchModal
+        isOpen={matchOpen}
+        onClose={() => setMatchOpen(false)}
+        book={matchedBook}
+        matchTransactionId={matchTransactionId}
+        onProceedToCheckout={(txId) => {
+          alert(`Redirigiendo a Checkout para la transacción de Match: ${txId}`);
+          setMatchOpen(false);
+        }}
       />
     </div>
   );

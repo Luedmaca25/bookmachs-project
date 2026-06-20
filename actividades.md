@@ -56,7 +56,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 
 ### Fase 7: Sistema de Transacciones y Pagos (Checkout)
 - [x] **Tarea 26:** Programar la lógica matemática en el backend para retornar dinámicamente el precio estimado del *Fee* de intercambio.
-- [ ] **Tarea 27:** Diseñar la UI de "¡Match Logrado!" que muestra el desglose del Fee calculado.
+- [x] **Tarea 27:** Diseñar la UI de "¡Match Logrado!" que muestra el desglose del Fee calculado.
 - [ ] **Tarea 28:** Integración Library-First (Backend): Instalar y configurar librerías de pasarela (Transbank Webpay Plus y/o Mercado Pago) orientadas a pagos con retención ("Hold").
 - [ ] **Tarea 29:** Construir vistas de Checkout y validación (Frontend), junto a los Endpoints de confirmación que cambien el estado de la transacción.
 - [ ] **Tarea 30:** Implementar validación geográfica: Generar *Warning UI* internacional, forzando la confirmación por el alto costo del envío si un match es transfronterizo.
