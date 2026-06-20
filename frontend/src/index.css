@@ -2423,6 +2423,13 @@ p {
   text-transform: capitalize;
 }
 
+.badge-logistics-method {
+  background-color: rgba(78, 168, 222, 0.08);
+  color: var(--accent-secondary);
+  border: 1px solid rgba(78, 168, 222, 0.2);
+  text-transform: capitalize;
+}
+
 .match-card-actions {
   display: flex;
   flex-direction: column;

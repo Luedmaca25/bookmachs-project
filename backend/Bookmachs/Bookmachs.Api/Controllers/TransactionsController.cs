@@ -203,6 +203,61 @@ public class TransactionsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost("update-logistics")]
+    public async Task<ActionResult<LogisticsResultDto>> UpdateLogistics([FromBody] UpdateLogisticsRequest request)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        if (request == null || string.IsNullOrEmpty(request.LogisticsMethod))
+        {
+            return BadRequest("El ID de la transacción y el método logístico son requeridos.");
+        }
+
+        try
+        {
+            var command = new UpdateLogisticsCommand
+            {
+                MatchTransactionId = request.MatchTransactionId,
+                LogisticsMethod = request.LogisticsMethod,
+                TrackingNumber = request.TrackingNumber,
+                EvidencePhotoBase64 = request.EvidencePhotoBase64,
+                RequesterUserId = userId
+            };
+
+            var result = await _mediator.Send(command);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+}
+
+public class UpdateLogisticsRequest
+{
+    public Guid MatchTransactionId { get; set; }
+    public string LogisticsMethod { get; set; } = string.Empty;
+    public string? TrackingNumber { get; set; }
+    public string? EvidencePhotoBase64 { get; set; }
 }
 
 public class CheckoutCardRequest

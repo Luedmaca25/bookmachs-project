@@ -414,4 +414,169 @@ public class CheckoutTests
         Assert.False(result.Success);
         Assert.Contains("costos de envío internacional", result.Message);
     }
+
+    [Fact]
+    public async Task UpdateLogistics_ShouldUpdateLogistics_WhenStatusIsHoldAndMethodIsValidP2PWithTracking()
+    {
+        // Arrange
+        using var context = GetInMemoryDbContext();
+        using var unitOfWork = new UnitOfWork(context);
+
+        var requester = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "requester@example.com",
+            Name = "Requester User"
+        };
+        await context.Users.AddAsync(requester);
+
+        var book = new Book
+        {
+            Id = Guid.NewGuid(),
+            Title = "El Hobbit",
+            BaseValue = 5000.0m
+        };
+        await context.Books.AddAsync(book);
+
+        var transaction = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = requester.Id,
+            BookId = book.Id,
+            FeeAmount = 1500.0m,
+            PaymentStatus = "Hold", // Ya pagó
+            LogisticsStatus = "Pending"
+        };
+        await context.MatchTransactions.AddAsync(transaction);
+        await context.SaveChangesAsync();
+
+        var command = new UpdateLogisticsCommand
+        {
+            MatchTransactionId = transaction.Id,
+            LogisticsMethod = "P2P",
+            TrackingNumber = "TRK12345678",
+            RequesterUserId = requester.Id
+        };
+        var handler = new UpdateLogisticsCommandHandler(unitOfWork);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal("InTransit", result.LogisticsStatus);
+        Assert.Equal("P2P", result.LogisticsMethod);
+
+        var dbTx = await context.MatchTransactions.FindAsync(transaction.Id);
+        Assert.NotNull(dbTx);
+        Assert.Equal("P2P", dbTx.LogisticsMethod);
+        Assert.Equal("InTransit", dbTx.LogisticsStatus);
+    }
+
+    [Fact]
+    public async Task UpdateLogistics_ShouldFail_WhenStatusIsPending()
+    {
+        // Arrange
+        using var context = GetInMemoryDbContext();
+        using var unitOfWork = new UnitOfWork(context);
+
+        var requester = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "requester@example.com",
+            Name = "Requester User"
+        };
+        await context.Users.AddAsync(requester);
+
+        var book = new Book
+        {
+            Id = Guid.NewGuid(),
+            Title = "El Hobbit",
+            BaseValue = 5000.0m
+        };
+        await context.Books.AddAsync(book);
+
+        var transaction = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = requester.Id,
+            BookId = book.Id,
+            FeeAmount = 1500.0m,
+            PaymentStatus = "Pending", // No pagado
+            LogisticsStatus = "Pending"
+        };
+        await context.MatchTransactions.AddAsync(transaction);
+        await context.SaveChangesAsync();
+
+        var command = new UpdateLogisticsCommand
+        {
+            MatchTransactionId = transaction.Id,
+            LogisticsMethod = "P2P",
+            TrackingNumber = "TRK12345678",
+            RequesterUserId = requester.Id
+        };
+        var handler = new UpdateLogisticsCommandHandler(unitOfWork);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Contains("pagar", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdateLogistics_ShouldFail_WhenMethodIsDonacionButNoEvidence()
+    {
+        // Arrange
+        using var context = GetInMemoryDbContext();
+        using var unitOfWork = new UnitOfWork(context);
+
+        var requester = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "requester@example.com",
+            Name = "Requester User"
+        };
+        await context.Users.AddAsync(requester);
+
+        var book = new Book
+        {
+            Id = Guid.NewGuid(),
+            Title = "El Hobbit",
+            BaseValue = 5000.0m
+        };
+        await context.Books.AddAsync(book);
+
+        var transaction = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = requester.Id,
+            BookId = book.Id,
+            FeeAmount = 1500.0m,
+            PaymentStatus = "Hold",
+            LogisticsStatus = "Pending"
+        };
+        await context.MatchTransactions.AddAsync(transaction);
+        await context.SaveChangesAsync();
+
+        var command = new UpdateLogisticsCommand
+        {
+            MatchTransactionId = transaction.Id,
+            LogisticsMethod = "Donacion",
+            RequesterUserId = requester.Id,
+            EvidencePhotoBase64 = "" // Vacío
+        };
+        var handler = new UpdateLogisticsCommandHandler(unitOfWork);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Contains("evidencia", result.Message);
+    }
 }

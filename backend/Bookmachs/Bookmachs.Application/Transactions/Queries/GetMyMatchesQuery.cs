@@ -23,6 +23,7 @@ public class MatchTransactionDto
     public decimal FeeAmount { get; set; }
     public string PaymentStatus { get; set; } = "Pending";
     public string LogisticsStatus { get; set; } = "Pending";
+    public string? LogisticsMethod { get; set; }
     public bool IsCrossBorder { get; set; }
     public DateTime CreatedAt { get; set; }
 }
@@ -57,6 +58,7 @@ public class GetMyMatchesQueryHandler : IRequestHandler<GetMyMatchesQuery, IEnum
             FeeAmount = t.FeeAmount,
             PaymentStatus = t.PaymentStatus,
             LogisticsStatus = t.LogisticsStatus,
+            LogisticsMethod = t.LogisticsMethod,
             IsCrossBorder = t.IsCrossBorder,
             CreatedAt = t.CreatedAt
         }).ToList();

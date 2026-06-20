@@ -16,6 +16,7 @@ interface MatchTransaction {
   feeAmount: number;
   paymentStatus: string;
   logisticsStatus: string;
+  logisticsMethod: string | null;
   isCrossBorder: boolean;
   createdAt: string;
 }
@@ -41,6 +42,14 @@ export const TransactionsPage: React.FC = () => {
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [acceptCrossBorder, setAcceptCrossBorder] = useState(false);
+
+  // Estado para Selección de Logística
+  const [logisticsTx, setLogisticsTx] = useState<MatchTransaction | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<string>('Presencial');
+  const [trackingNumber, setTrackingNumber] = useState<string>('');
+  const [evidencePhoto, setEvidencePhoto] = useState<string>('');
+  const [logisticsLoading, setLogisticsLoading] = useState(false);
+  const [logisticsError, setLogisticsError] = useState<string | null>(null);
 
   // Simulación de redirección de Webpay
   const [webpayRedirecting, setWebpayRedirecting] = useState(false);
@@ -199,6 +208,66 @@ export const TransactionsPage: React.FC = () => {
       console.error('Error starting Webpay:', err);
       setCheckoutError('Error de red al conectar con Transbank.');
       setCheckoutLoading(false);
+    }
+  };
+
+  // Procesar selección de logística
+  const handleLogisticsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!logisticsTx) return;
+
+    if ((selectedMethod === 'P2P' || selectedMethod === 'Bodega') && !trackingNumber) {
+      setLogisticsError('Por favor ingresa el número de seguimiento para el despacho.');
+      return;
+    }
+
+    if (selectedMethod === 'Donacion' && !evidencePhoto) {
+      setLogisticsError('Por favor sube una foto de evidencia para respaldar tu donación.');
+      return;
+    }
+
+    setLogisticsLoading(true);
+    setLogisticsError(null);
+
+    try {
+      const payload = {
+        matchTransactionId: logisticsTx.id,
+        logisticsMethod: selectedMethod,
+        trackingNumber: selectedMethod === 'P2P' || selectedMethod === 'Bodega' ? trackingNumber : null,
+        evidencePhotoBase64: selectedMethod === 'Donacion' ? evidencePhoto : null
+      };
+
+      const response = await apiClient.post<any>('/transactions/update-logistics', payload);
+      if (response.success) {
+        setLogisticsTx(null);
+        setSelectedMethod('Presencial');
+        setTrackingNumber('');
+        setEvidencePhoto('');
+        loadMatches();
+      } else {
+        setLogisticsError(response.message || 'Error al actualizar el método logístico.');
+      }
+    } catch (err: any) {
+      console.error('Error updating logistics:', err);
+      let msg = 'Error de red al registrar la logística.';
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed && parsed.message) msg = parsed.message;
+      } catch {}
+      setLogisticsError(msg);
+    } finally {
+      setLogisticsLoading(false);
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEvidencePhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -392,6 +461,152 @@ export const TransactionsPage: React.FC = () => {
     );
   }
 
+  // Renderizar la vista de Selección de Logística
+  if (logisticsTx) {
+    return (
+      <div className="checkout-view-container">
+        <div className="checkout-header">
+          <button className="back-to-matches-btn" onClick={() => { setLogisticsTx(null); setLogisticsError(null); }}>
+            ← Volver a mis matches
+          </button>
+          <h2>Selección de Logística de Entrega 📦</h2>
+          <p>Configura el método de envío o entrega para concretar el intercambio del libro.</p>
+        </div>
+
+        <div className="checkout-grid">
+          <div className="checkout-summary-card">
+            <h3>Libro en Intercambio</h3>
+            <div className="checkout-book-info">
+              <div className="checkout-book-img">
+                {logisticsTx.bookImageUrl ? (
+                  <img src={logisticsTx.bookImageUrl} alt={logisticsTx.bookTitle} />
+                ) : (
+                  <span>📖</span>
+                )}
+              </div>
+              <div>
+                <h4>{logisticsTx.bookTitle}</h4>
+                <p>Autor: {logisticsTx.bookAuthor}</p>
+                <p>Propietario: {logisticsTx.ownerName}</p>
+              </div>
+            </div>
+            {logisticsTx.isCrossBorder && (
+              <div className="checkout-alert-geo">
+                <strong>⚠️ Envío Internacional Requerido</strong>
+                <p>Recuerda coordinar el despacho directo con el otro usuario. Los costos aduaneros y de transportistas son a convenir.</p>
+              </div>
+            )}
+          </div>
+
+          <div className="checkout-payment-card">
+            <h3>Elige el Método de Despacho</h3>
+            <form onSubmit={handleLogisticsSubmit} className="checkout-card-form">
+              <div className="form-field">
+                <label>Método Logístico</label>
+                <select
+                  value={selectedMethod}
+                  onChange={(e) => {
+                    setSelectedMethod(e.target.value);
+                    setTrackingNumber('');
+                    setEvidencePhoto('');
+                    setLogisticsError(null);
+                  }}
+                  className="logistics-select font-heading"
+                >
+                  <option value="Presencial">Intercambio Presencial (En tienda física)</option>
+                  <option value="Bodega">Envío a Bodega Bookmachs (tú despachas a Bookmachs)</option>
+                  <option value="P2P">Intercambio P2P (Envío directo al otro usuario)</option>
+                  <option value="Donacion">Dona y Recibe (donación física en plaza/colegio)</option>
+                </select>
+              </div>
+
+              {logisticsError && <div className="checkout-error-banner">{logisticsError}</div>}
+
+              {selectedMethod === 'Presencial' && (
+                <div className="checkout-alert-geo" style={{ borderColor: 'rgba(78, 168, 222, 0.2)', background: 'rgba(78, 168, 222, 0.05)' }}>
+                  <strong style={{ color: 'var(--accent-secondary)' }}>🗓️ Coordinación en Tienda Física</strong>
+                  <p style={{ marginTop: '0.3rem' }}>El intercambio se coordinará en la tienda asociada de Bookmachs. No requiere costos adicionales de transportistas externos ni comprobantes de envío.</p>
+                </div>
+              )}
+
+              {selectedMethod === 'Bodega' && (
+                <div className="method-fields-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginTop: '1rem' }}>
+                  <div className="checkout-alert-geo" style={{ borderColor: 'rgba(78, 168, 222, 0.2)', background: 'rgba(78, 168, 222, 0.05)' }}>
+                    <strong style={{ color: 'var(--accent-secondary)' }}>📦 Despacho a Bodega de Bookmachs</strong>
+                    <p style={{ marginTop: '0.3rem' }}>Debes despachar tu libro a nuestra bodega principal. Bookmachs validará su estado y enviará el libro del match de vuelta. Ingresa abajo tu Tracking ID.</p>
+                  </div>
+                  <div className="form-field">
+                    <label>Número de Seguimiento (Tracking ID)</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. STAR1293848293"
+                      value={trackingNumber}
+                      onChange={(e) => setTrackingNumber(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedMethod === 'P2P' && (
+                <div className="method-fields-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginTop: '1rem' }}>
+                  <div className="checkout-alert-geo" style={{ borderColor: 'rgba(78, 168, 222, 0.2)', background: 'rgba(78, 168, 222, 0.05)' }}>
+                    <strong style={{ color: 'var(--accent-secondary)' }}>🤝 Envío Directo (Peer-to-Peer)</strong>
+                    <p style={{ marginTop: '0.3rem' }}>Despacha tu libro directamente al domicilio del otro lector. Recuerda que debes proveer el Tracking ID oficial del courier elegido.</p>
+                  </div>
+                  <div className="form-field">
+                    <label>Número de Seguimiento (Tracking ID)</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. CHI9283742398"
+                      value={trackingNumber}
+                      onChange={(e) => setTrackingNumber(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedMethod === 'Donacion' && (
+                <div className="method-fields-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginTop: '1rem' }}>
+                  <div className="checkout-alert-geo" style={{ borderColor: 'rgba(78, 168, 222, 0.2)', background: 'rgba(78, 168, 222, 0.05)' }}>
+                    <strong style={{ color: 'var(--accent-secondary)' }}>🌳 Donación Comunitaria</strong>
+                    <p style={{ marginTop: '0.3rem' }}>Dona tu libro físico en un punto o contenedor de reciclaje cultural autorizado. Debes subir una fotografía del libro depositado como evidencia.</p>
+                  </div>
+                  <div className="form-field">
+                    <label>Fotografía de Evidencia</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      required
+                      style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-color)' }}
+                    />
+                    {evidencePhoto && (
+                      <div className="photo-preview-box" style={{ marginTop: '0.8rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <img src={evidencePhoto} alt="Evidencia" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
+                        <span style={{ color: 'var(--accent-success)', fontSize: '0.8rem', fontWeight: 'bold' }}>✓ Evidencia cargada</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="confirm-checkout-btn font-heading"
+                disabled={logisticsLoading}
+                style={{ marginTop: '1.5rem' }}
+              >
+                {logisticsLoading ? 'Registrando Entrega...' : 'Confirmar Método Logístico 📦'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Renderizar el listado general de matches
   return (
     <div className="transactions-page-container">
@@ -450,6 +665,12 @@ export const TransactionsPage: React.FC = () => {
                     <span className={`badge-logistics ${tx.logisticsStatus.toLowerCase()}`}>
                       Logística: {tx.logisticsStatus}
                     </span>
+
+                    {tx.logisticsMethod && (
+                      <span className="badge-logistics-method">
+                        Método: {tx.logisticsMethod}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -478,8 +699,26 @@ export const TransactionsPage: React.FC = () => {
                   </button>
                 )}
 
-                {tx.paymentStatus === 'Hold' && (
-                  <span className="hold-active-info">Coordinando Despacho 📦</span>
+                {(tx.paymentStatus === 'Hold' || tx.paymentStatus === 'Captured') && tx.logisticsStatus === 'Pending' && (
+                  <button
+                    className="pay-fee-btn logistics-btn font-heading"
+                    onClick={() => {
+                      setLogisticsTx(tx);
+                      setSelectedMethod('Presencial');
+                      setTrackingNumber('');
+                      setEvidencePhoto('');
+                      setLogisticsError(null);
+                    }}
+                    style={{ background: 'var(--accent-secondary)' }}
+                  >
+                    Configurar Entrega 📦
+                  </button>
+                )}
+
+                {(tx.paymentStatus === 'Hold' || tx.paymentStatus === 'Captured') && tx.logisticsStatus !== 'Pending' && (
+                  <span className="hold-active-info">
+                    {tx.logisticsStatus === 'InTransit' ? 'En tránsito / Despachado 🚚' : 'Entregado / Finalizado 🎉'}
+                  </span>
                 )}
               </div>
             </div>
