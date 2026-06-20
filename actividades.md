@@ -40,7 +40,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 
 ### Fase 5: Inventario, Logística y Subida de Libros
 - [x] **Tarea 18:** Configurar la infraestructura del proyecto Backend para recibir y almacenar los archivos de imagen de los libros subidos en un **Directorio Local (`/wwwroot/uploads`)** en el VPS.
-- [ ] **Tarea 19:** Desarrollar formulario de ingreso manual (Frontend - Tu Libreta) para Título, Autor, Resumen y Estado físico. Todos los usuarios registrarán su stock de esta forma.
+- [x] **Tarea 19:** Desarrollar formulario de ingreso manual (Frontend - Tu Libreta) para Título, Autor, Resumen y Estado físico. Todos los usuarios registrarán su stock de esta forma.
 - [ ] **Tarea 20:** Desarrollar API para procesar la subida del libro creando la entidad en la base de datos con flag `IsExternalStock = true` y linkeando la imagen local.
 
 ---
