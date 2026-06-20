@@ -46,7 +46,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 ---
 
 ### Fase 6: Motor de Recomendación, Swipe y Límites Diarios
-- [ ] **Tarea 21:** Desarrollar Endpoint público (`/api/books/guest-random`) que devuelva el libro señuelo de portada para invitados (Sin Auth).
+- [x] **Tarea 21:** Desarrollar Endpoint público (`/api/books/guest-random`) que devuelva el libro señuelo de portada para invitados (Sin Auth).
 - [ ] **Tarea 22:** Desarrollar **Algoritmo de Recomendación de libros Ligero (API en C#)**. El motor nativo filtrará eficientemente por coincidencia cruzada de gustos del usuario y etiquetas del catálogo para garantizar rendimiento alto en el VPS.
 - [ ] **Tarea 23:** Implementar en Backend la lógica de contadores de visualizaciones en caché para controlar la cuota gratuita diaria.
 - [ ] **Tarea 24:** Construir visual de tarjeta (UI Frontend) en CSS Puro, incluyendo animaciones de drag/swipe, y manejo de botones (corazón, equis).

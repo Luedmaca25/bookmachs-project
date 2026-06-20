@@ -26,6 +26,14 @@ public class BooksController : ControllerBase
         _mediator = mediator;
     }
 
+    [AllowAnonymous]
+    [HttpGet("guest-random")]
+    public async Task<ActionResult<BookDto>> GetGuestRandom()
+    {
+        var result = await _mediator.Send(new GetGuestRandomBookQuery());
+        return Ok(result);
+    }
+
     [HttpGet("my-inventory")]
     public async Task<ActionResult<IEnumerable<BookDto>>> GetMyInventory()
     {
