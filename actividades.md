@@ -30,7 +30,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 ---
 
 ### Fase 4: Autenticación, Landing y Onboarding
-- [ ] **Tarea 13:** Configurar Autenticación `JwtBearer` y API de **Google OAuth 2.0 (Servicio de SSO 100% Gratuito de Google)** en la capa de API.
+- [x] **Tarea 13:** Configurar Autenticación `JwtBearer` y API de **Google OAuth 2.0 (Servicio de SSO 100% Gratuito de Google)** en la capa de API.
 - [ ] **Tarea 14:** Desarrollar API de Registro Manual e Inicio de Sesión de usuario almacenando correo, nombre, y **Documento de Identidad (Dato dinámico que se adapta al país ingresado)**, validando campos de seguridad.
 - [ ] **Tarea 15:** Construir el "Modal Hard Gate" en Frontend para que la interacción inicial del Swipe obligue al usuario no logueado a registrarse.
 - [ ] **Tarea 16:** Integrar botón "Continuar con Google" (SSO Frontend) y enlazarlo con el backend.
