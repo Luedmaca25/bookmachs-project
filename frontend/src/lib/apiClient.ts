@@ -48,5 +48,58 @@ export const apiClient = {
     }
 
     return response.json();
+  },
+
+  async put<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
+    const headers = new Headers(options?.headers);
+    if (!(body instanceof FormData)) {
+      headers.set('Content-Type', 'application/json');
+    }
+    
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'PUT',
+      headers,
+      body: body instanceof FormData ? body : JSON.stringify(body),
+      ...options,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `Error ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
+  },
+
+  async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const headers = new Headers(options?.headers);
+    
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'DELETE',
+      headers,
+      ...options,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `Error ${response.status}: ${response.statusText}`);
+    }
+
+    // Algunos endpoints de DELETE devuelven bool o vacío
+    try {
+      return await response.json();
+    } catch {
+      return true as unknown as T;
+    }
   }
 };

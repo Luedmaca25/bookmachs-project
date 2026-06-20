@@ -6,6 +6,7 @@ import { InventoryPage } from '../../features/inventory/InventoryPage';
 import { TransactionsPage } from '../../features/transactions/TransactionsPage';
 import { SocialPage } from '../../features/social/SocialPage';
 import { AuthenticationPage } from '../../features/authentication/AuthenticationPage';
+import { AdminSettingsPage } from '../../features/admin/AdminSettingsPage';
 
 export const AppRouter: React.FC = () => {
   return (
@@ -17,6 +18,7 @@ export const AppRouter: React.FC = () => {
           <Route path="transacciones" element={<TransactionsPage />} />
           <Route path="social" element={<SocialPage />} />
           <Route path="auth" element={<AuthenticationPage />} />
+          <Route path="admin" element={<AdminSettingsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

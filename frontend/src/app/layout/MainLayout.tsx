@@ -13,6 +13,7 @@ export const MainLayout: React.FC = () => {
           <Link to="/libreta" className="nav-link">Tu Libreta</Link>
           <Link to="/transacciones" className="nav-link">Matches</Link>
           <Link to="/social" className="nav-link">Impacto</Link>
+          <Link to="/admin" className="nav-link">CMS</Link>
           <Link to="/auth" className="nav-link login-button">Ingresar</Link>
         </nav>
       </header>
