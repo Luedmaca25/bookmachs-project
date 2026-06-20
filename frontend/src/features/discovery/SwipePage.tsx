@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../authentication/store/authStore';
 import { HardGateModal } from '../authentication/components/HardGateModal';
 import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
+import { UpsellModal } from './components/UpsellModal';
 import { apiClient } from '../../lib/apiClient';
 
 interface BookItem {
@@ -26,7 +27,10 @@ export const SwipePage: React.FC = () => {
   // Estados de animación
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
 
-  // Control de límites diarios (se implementará en la Tarea 25)
+  // Control de límites diarios (Fase 6)
+  const [limitReached, setLimitReached] = useState(false);
+  const [limitValue, setLimitValue] = useState(100);
+  const [upsellOpen, setUpsellOpen] = useState(false);
 
   // Control de Onboarding
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
@@ -46,6 +50,7 @@ export const SwipePage: React.FC = () => {
     const loadBooks = async () => {
       setLoading(true);
       setError(null);
+      setLimitReached(false);
       try {
         if (isAuthenticated) {
           // Usuario autenticado: cargar recomendaciones
@@ -79,7 +84,7 @@ export const SwipePage: React.FC = () => {
   const currentBook = books[currentBookIndex];
 
   const triggerSwipe = async (direction: 'left' | 'right') => {
-    if (!currentBook) return;
+    if (limitReached || !currentBook) return;
 
     if (!isAuthenticated) {
       // Si es invitado, cualquier swipe abre el Hard Gate
@@ -104,9 +109,26 @@ export const SwipePage: React.FC = () => {
 
     } catch (err: any) {
       setSwipeDirection(null);
-      // Validar si el error fue por límite diario (403 Forbidden)
-      if (err.message && err.message.includes('403')) {
-        console.warn('Daily limit reached');
+      // Validar si el error fue por límite diario (403 Forbidden o código DailyLimitExceeded)
+      const isLimitError = err.message && (
+        err.message.includes('403') || 
+        err.message.includes('DailyLimitExceeded')
+      );
+      
+      if (isLimitError) {
+        setLimitReached(true);
+        setUpsellOpen(true);
+        
+        let limit = user?.isPremium ? 1000 : 100;
+        try {
+          const parsed = JSON.parse(err.message);
+          if (parsed && typeof parsed.swipeLimit === 'number') {
+            limit = parsed.swipeLimit;
+          }
+        } catch (e) {
+          // No es un JSON válido o no tiene swipeLimit, usamos fallback
+        }
+        setLimitValue(limit);
       } else {
         console.error('Error al registrar swipe:', err);
       }
@@ -146,7 +168,7 @@ export const SwipePage: React.FC = () => {
         <div className="swipe-loading">Cargando recomendaciones personalizadas...</div>
       ) : error ? (
         <div className="swipe-error-state">{error}</div>
-      ) : !currentBook ? (
+      ) : !currentBook && !limitReached ? (
         <div className="swipe-empty-state">
           <span className="empty-icon">📚</span>
           <h3>No hay más recomendaciones por ahora</h3>
@@ -158,24 +180,26 @@ export const SwipePage: React.FC = () => {
             className={`book-swipe-card ${
               swipeDirection === 'right' ? 'swiped-right' : 
               swipeDirection === 'left' ? 'swiped-left' : ''
-            }`}
+            } ${limitReached ? 'blurred-card' : ''}`}
           >
             <div className="book-card-image-placeholder">
-              {currentBook.imageUrl ? (
+              {currentBook?.imageUrl ? (
                 <img src={currentBook.imageUrl} alt={currentBook.title} className="swipe-card-img" />
               ) : (
                 <span className="book-fallback-icon">📖</span>
               )}
               
-              <span className={`condition-badge ${currentBook.condition.toLowerCase()}`}>
-                {currentBook.condition}
-              </span>
+              {currentBook && (
+                <span className={`condition-badge ${currentBook.condition.toLowerCase()}`}>
+                  {currentBook.condition}
+                </span>
+              )}
             </div>
             
             <div className="book-card-info">
-              <h3>{currentBook.title}</h3>
-              <span className="book-author">{currentBook.author}</span>
-              <p className="book-desc">{currentBook.description}</p>
+              <h3>{currentBook?.title || 'Descubre Libros'}</h3>
+              <span className="book-author">{currentBook?.author || 'Bookmachs'}</span>
+              <p className="book-desc">{currentBook?.description || 'Encuentra tu próximo match.'}</p>
             </div>
           </div>
 
@@ -183,6 +207,7 @@ export const SwipePage: React.FC = () => {
             <button 
               className="control-btn dislike-btn" 
               onClick={() => triggerSwipe('left')}
+              disabled={limitReached}
               title="Descartar"
             >
               ❌
@@ -190,17 +215,35 @@ export const SwipePage: React.FC = () => {
             <button 
               className="control-btn like-btn" 
               onClick={() => triggerSwipe('right')}
+              disabled={limitReached}
               title="Me interesa"
             >
               ❤️
             </button>
           </div>
+
+          {limitReached && (
+            <div className="card-blur-overlay">
+              <span className="lock-icon">🔒</span>
+              <h3>Límite diario alcanzado</h3>
+              <p>Regresa mañana para seguir descubriendo libros o pásate a un plan Premium hoy mismo.</p>
+              <button className="upsell-trigger-btn font-heading" onClick={() => setUpsellOpen(true)}>
+                Ver Planes Premium ⚡
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       <HardGateModal 
         isOpen={modalOpen} 
         onSuccess={() => setModalOpen(false)} 
+      />
+
+      <UpsellModal
+        isOpen={upsellOpen}
+        onClose={() => setUpsellOpen(false)}
+        limitValue={limitValue}
       />
     </div>
   );

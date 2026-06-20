@@ -1670,4 +1670,290 @@ p {
   line-height: 1.5;
 }
 
+/* ==========================================================================
+   Swipe Blur Overlay & Upsell Modal Styles
+   ========================================================================== */
+
+/* Desenfoque de la tarjeta de libro al alcanzar límite diario */
+.book-swipe-card.blurred-card {
+  filter: blur(8px) grayscale(15%);
+  pointer-events: none;
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
+/* Contenedor del overlay de bloqueo sobre la tarjeta */
+.card-blur-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(100% - 80px); /* Deja visibles pero deshabilitados los botones de control inferiores */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(7, 10, 19, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  padding: 2rem;
+  z-index: 10;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.4);
+  animation: fadeIn var(--transition-normal);
+}
+
+.card-blur-overlay .lock-icon {
+  font-size: 3.2rem;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 0 15px rgba(255, 71, 126, 0.45));
+  animation: pulseLock 2.5s infinite ease-in-out;
+  user-select: none;
+}
+
+.card-blur-overlay h3 {
+  font-size: 1.5rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-heading);
+}
+
+.card-blur-overlay p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  max-width: 290px;
+}
+
+/* Botón para abrir el Upsell Modal */
+.upsell-trigger-btn {
+  background: var(--gradient-accent);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 71, 126, 0.35);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.upsell-trigger-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 71, 126, 0.55);
+}
+
+.upsell-trigger-btn:active {
+  transform: translateY(0);
+}
+
+/* Upsell Modal: tarjeta adaptada para grid de planes */
+.upsell-modal-card {
+  max-width: 660px !important;
+  padding: 2.5rem 3rem !important;
+  gap: 1.25rem !important;
+}
+
+/* Beneficios del plan Premium */
+.upsell-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0.25rem 0;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast);
+}
+
+.benefit-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.benefit-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.benefit-text h4 {
+  font-size: 0.95rem;
+  color: #fff;
+  margin-bottom: 0.15rem;
+}
+
+.benefit-text p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Grid de planes */
+.upsell-plans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.plan-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.8rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform var(--transition-normal), border-color var(--transition-normal), background-color var(--transition-normal);
+}
+
+.plan-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background-color: rgba(255, 255, 255, 0.04);
+  transform: translateY(-3px);
+}
+
+.plan-card.highlighted {
+  background: linear-gradient(145deg, rgba(255, 71, 126, 0.06) 0%, rgba(114, 9, 183, 0.06) 100%);
+  border: 1px solid rgba(255, 71, 126, 0.35);
+}
+
+.plan-card.highlighted:hover {
+  border-color: rgba(255, 71, 126, 0.55);
+  box-shadow: 0 8px 30px rgba(255, 71, 126, 0.12);
+  background: linear-gradient(145deg, rgba(255, 71, 126, 0.08) 0%, rgba(114, 9, 183, 0.08) 100%);
+}
+
+.popular-badge {
+  position: absolute;
+  top: -12px;
+  background: var(--gradient-accent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 10px rgba(255, 71, 126, 0.35);
+  letter-spacing: 0.05em;
+}
+
+.plan-card h3 {
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-heading);
+}
+
+.plan-price {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.plan-price small {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.plan-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+.plan-btn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.plan-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.premium-btn {
+  background: var(--gradient-accent);
+  border: none;
+  box-shadow: 0 4px 12px rgba(255, 71, 126, 0.3);
+}
+
+.premium-btn:hover {
+  background: var(--gradient-accent);
+  opacity: 0.95;
+  box-shadow: 0 6px 18px rgba(255, 71, 126, 0.5);
+  transform: scale(1.02);
+}
+
+/* Botón cerrar modal */
+.close-upsell-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  font-weight: 500;
+}
+
+.close-upsell-btn:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Animaciones */
+@keyframes pulseLock {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 15px rgba(255, 71, 126, 0.45));
+  }
+  50% {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 25px rgba(255, 71, 126, 0.75));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 15px rgba(255, 71, 126, 0.45));
+  }
+}
+
+/* Responsive para grid de planes */
+@media (max-width: 600px) {
+  .upsell-plans {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .upsell-modal-card {
+    padding: 2rem 1.5rem !important;
+  }
+}
+
 

@@ -50,7 +50,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 - [x] **Tarea 22:** Desarrollar **Algoritmo de Recomendación de libros Ligero (API en C#)**. El motor nativo filtrará eficientemente por coincidencia cruzada de gustos del usuario y etiquetas del catálogo para garantizar rendimiento alto en el VPS.
 - [x] **Tarea 23:** Implementar en Backend la lógica de contadores de visualizaciones en caché para controlar la cuota gratuita diaria.
 - [x] **Tarea 24:** Construir visual de tarjeta (UI Frontend) en CSS Puro, incluyendo animaciones de drag/swipe, y manejo de botones (corazón, equis).
-- [ ] **Tarea 25:** Desarrollar mecánica condicional (Frontend): Renderizar blur (desenfoque) y ventana modal Upsell al recibir el código de rechazo por sobrepasar la cuota diaria gratuita de visualización.
+- [x] **Tarea 25:** Desarrollar mecánica condicional (Frontend): Renderizar blur (desenfoque) y ventana modal Upsell al recibir el código de rechazo por sobrepasar la cuota diaria gratuita de visualización.
 
 ---
 
