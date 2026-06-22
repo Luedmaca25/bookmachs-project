@@ -83,4 +83,20 @@ public interface IPaymentGatewayService
     /// Anula/Reversa los fondos autorizados diferidos en Transbank.
     /// </summary>
     Task<PaymentRefundResult> RefundTransbankHoldAsync(string token, decimal amount);
+
+    /// <summary>
+    /// Recupera los detalles de una pre-autorización recurrente (suscripción) de Mercado Pago.
+    /// </summary>
+    Task<SubscriptionDetailsResult> GetSubscriptionDetailsAsync(string externalSubscriptionId);
+}
+
+public class SubscriptionDetailsResult
+{
+    public bool Success { get; set; }
+    public string? SubscriptionId { get; set; }
+    public string? PayerEmail { get; set; }
+    public string? Status { get; set; } // authorized, active, cancelled
+    public string? PlanName { get; set; } // Premium, Basic
+    public decimal Price { get; set; }
+    public string? ErrorMessage { get; set; }
 }

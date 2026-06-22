@@ -299,3 +299,27 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [TransactionsController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/TransactionsController.cs)
   - [CheckoutTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CheckoutTests.cs) (pruebas de validación de tracking e imágenes de donación).
   - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
+
+---
+
+## 💎 Fase 8: Suscripciones Premium, Catálogos y Reservas
+
+### Tarea 32: Cobro Recurrente (Suscripciones) e Integración de Webhooks con Pasarela
+* **Objetivo:** Desarrollar el flujo para el procesamiento de cobros recurrentes de suscripciones mediante la recepción e interpretación de webhooks enviados por la pasarela de Mercado Pago, actualizando el estado de suscripción del usuario en la base de datos local y habilitando las funciones Premium.
+* **Detalles del Trabajo Realizado:**
+  - **Backend:**
+    - Modificación del servicio de pasarela en [PaymentGatewayService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Payments/PaymentGatewayService.cs) para implementar el método `GetSubscriptionDetailsAsync`. En modo real realiza una petición GET al SDK de Mercado Pago (`PreapprovalClient`), y en modo simulación (mock) procesa y decodifica localmente el ID de la suscripción para resolver el correo electrónico del pagador y el estado correspondiente.
+    - Creación del comando [ProcessMercadoPagoWebhookCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Subscriptions/Commands/ProcessMercadoPagoWebhookCommand.cs) y su respectivo handler en la capa Application. El manejador procesa eventos de tipo `preapproval` o `subscription`:
+      - Si el estado de la suscripción es `authorized`, `active` o `approved`: Setea la bandera `IsPremium = true` y el plan en `"Premium"` para el usuario correspondiente en la base de datos, y registra una nueva entidad `Subscription` con vigencia de 1 mes en la tabla de base de datos.
+      - Si el estado es `cancelled`, `suspended` o `cancelled_by_payer`: Desactiva la suscripción estableciendo al usuario en modo gratuito (`IsPremium = false`, `SubscriptionPlan = "Free"`) y marcando la suscripción como inactiva.
+    - Creación de [WebhooksController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/WebhooksController.cs) expuesto en `/api/webhooks/mercadopago` con la anotación `[AllowAnonymous]` para omitir las validaciones de token JWT globales de la aplicación y así permitir a Mercado Pago entregar notificaciones de forma directa.
+    - Implementación del endpoint utilitario `/api/webhooks/trigger-test` en el mismo controlador para simular webhooks localmente desde el frontend u otras herramientas de desarrollo en QA, codificando el email en el ID de la suscripción simulada para resolver la integración de base de datos.
+  - **Pruebas:**
+    - Creación de la suite de pruebas unitarias [SubscriptionTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/SubscriptionTests.cs), verificando la correcta asignación del flag premium ante webhooks de creación/autorización y la reversión a plan gratuito ante webhooks de cancelación. Las pruebas se ejecutan de manera limpia y exitosa en memoria.
+* **Archivos Clave:**
+  - [IPaymentGatewayService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Services/IPaymentGatewayService.cs)
+  - [PaymentGatewayService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Payments/PaymentGatewayService.cs)
+  - [ProcessMercadoPagoWebhookCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Subscriptions/Commands/ProcessMercadoPagoWebhookCommand.cs)
+  - [WebhooksController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/WebhooksController.cs)
+  - [SubscriptionTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/SubscriptionTests.cs)
+

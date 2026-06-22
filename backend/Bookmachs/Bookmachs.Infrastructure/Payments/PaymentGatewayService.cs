@@ -381,4 +381,69 @@ public class PaymentGatewayService : IPaymentGatewayService
             });
         }
     }
+
+    public async Task<SubscriptionDetailsResult> GetSubscriptionDetailsAsync(string externalSubscriptionId)
+    {
+        if (_useMock || externalSubscriptionId.StartsWith("mp_mock_sub_"))
+        {
+            var email = "payer@example.com";
+            if (externalSubscriptionId.Contains("_email_"))
+            {
+                var parts = externalSubscriptionId.Split("_email_");
+                if (parts.Length > 1)
+                {
+                    email = parts[1].Split("_status")[0].Replace("_", "@");
+                }
+            }
+
+            var status = "authorized";
+            if (externalSubscriptionId.Contains("_status_cancelled"))
+            {
+                status = "cancelled";
+            }
+
+            return new SubscriptionDetailsResult
+            {
+                Success = true,
+                SubscriptionId = externalSubscriptionId,
+                PayerEmail = email,
+                Status = status,
+                PlanName = "Premium",
+                Price = 9990.00m
+            };
+        }
+
+        try
+        {
+            var client = new MercadoPago.Client.Preapproval.PreapprovalClient();
+            var preapproval = await client.GetAsync(externalSubscriptionId);
+            
+            if (preapproval != null)
+            {
+                return new SubscriptionDetailsResult
+                {
+                    Success = true,
+                    SubscriptionId = preapproval.Id,
+                    PayerEmail = preapproval.PayerEmail,
+                    Status = preapproval.Status,
+                    PlanName = "Premium",
+                    Price = preapproval.AutoRecurring?.TransactionAmount ?? 9990.00m
+                };
+            }
+
+            return new SubscriptionDetailsResult
+            {
+                Success = false,
+                ErrorMessage = "No se encontró la pre-aprobación en Mercado Pago."
+            };
+        }
+        catch (Exception ex)
+        {
+            return new SubscriptionDetailsResult
+            {
+                Success = false,
+                ErrorMessage = $"Error al recuperar detalles de suscripción de Mercado Pago: {ex.Message}"
+            };
+        }
+    }
 }
