@@ -344,4 +344,25 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [GetUserProfileQuery.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Authentication/Queries/GetUserProfileQuery.cs)
   - [AuthController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/AuthController.cs)
 
+### Tarea 34: Endpoints Protegidos de Búsqueda y Listado General (Catálogo Avanzado)
+* **Objetivo:** Exponer en el Backend un endpoint protegido para la búsqueda y listado general del catálogo de libros (incluyendo recién llegados), aplicando filtros avanzados y paginación, con validación de acceso restringido solo a usuarios Premium.
+* **Detalles del Trabajo Realizado:**
+  - **Backend:**
+    - Creación del modelo [PaginatedListDto.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Common/Models/PaginatedListDto.cs) en la capa Application para encapsular los resultados paginados (Items, PageNumber, PageSize, TotalCount, TotalPages).
+    - Creación de la consulta [GetAdvancedCatalogQuery.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Books/Queries/GetAdvancedCatalogQuery.cs) y su respectivo handler en la capa Application.
+      - Valida que el usuario solicitante exista y tenga el flag `IsPremium == true`. Si no lo es, arroja una excepción `UnauthorizedAccessException` que se mapea a un código HTTP 403 Forbidden.
+      - Recupera los libros disponibles mediante el repositorio excluyendo los libros propios del usuario solicitante.
+      - Aplica filtros en memoria para `SearchTerm` (búsqueda en Título, Autor y Descripción), `Category` (coincidencia de categorías con la presencia del término en Título, Autor o Descripción del libro) y `Condition` (estado físico exacto del libro).
+      - Aplica ordenamiento dinámico por novedad (`createdAt` descendente, que lista los "Recién Llegados"), título (`title` ascendente) o valor base (`baseValue` ascendente).
+      - Pagina la lista resultante utilizando la fórmula `.Skip((pageNumber - 1) * pageSize).Take(pageSize)`.
+    - Exposición del endpoint `GET /api/books/catalog` en el controlador [BooksController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/BooksController.cs), protegido mediante el atributo `[Authorize]` y consumiendo la consulta mediada por MediatR.
+  - **Pruebas:**
+    - Creación de la suite de pruebas unitarias [CatalogTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CatalogTests.cs), verificando la protección para usuarios no Premium, la exclusión de libros propios, los filtros por texto, por categorías y por condiciones, y el correcto funcionamiento de la paginación y ordenamiento por fecha. Las pruebas se ejecutan de manera limpia y exitosa (36 pruebas totales aprobadas).
+* **Archivos Clave:**
+  - [PaginatedListDto.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Common/Models/PaginatedListDto.cs)
+  - [GetAdvancedCatalogQuery.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Books/Queries/GetAdvancedCatalogQuery.cs)
+  - [BooksController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/BooksController.cs)
+  - [CatalogTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CatalogTests.cs)
+
+
 

@@ -66,8 +66,8 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 
 ### Fase 8: Suscripciones Premium, Catálogos y Reservas
 - [x] **Tarea 32:** Desarrollar cobro recurrente (Suscripciones) interactuando vía Webhooks con la pasarela para setear bandera `is_premium = true`.
-- [ ] **Tarea 33:** Desarrollar página web comparativa interactiva "Planes y Membresías" para gatillar upgrades.
-- [ ] **Tarea 34:** Exponer Endpoints protegidos (Backend) de búsqueda y listado general (Catálogo Avanzado web y libros Recién Llegados), aplicando filtros y paginación.
+- [x] **Tarea 33:** Desarrollar página web comparativa interactiva "Planes y Membresías" para gatillar upgrades.
+- [x] **Tarea 34:** Exponer Endpoints protegidos (Backend) de búsqueda y listado general (Catálogo Avanzado web y libros Recién Llegados), aplicando filtros y paginación.
 - [ ] **Tarea 35:** Diseñar las vistas Grid/List en React para que el usuario Premium navegue el catálogo.
 - [ ] **Tarea 36:** Implementar la lógica de "Reservas" en base de datos. Bloquear y disminuir stock virtual del inventario.
 - [ ] **Tarea 37:** Integración Library-First (Backend): Instalar **Hangfire** y programar un Job (CRON) en background que devuelva el stock automáticamente y anule transacciones pasadas las 48 horas sin pago.

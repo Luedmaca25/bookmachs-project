@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Bookmachs.Application.Books;
 using Bookmachs.Application.Books.Commands;
 using Bookmachs.Application.Books.Queries;
+using Bookmachs.Application.Common.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -166,6 +167,50 @@ public class BooksController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("catalog")]
+    public async Task<ActionResult<PaginatedListDto<BookDto>>> GetCatalog(
+        [FromQuery] string? searchTerm,
+        [FromQuery] string? category,
+        [FromQuery] string? condition,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? sortBy = "createdAt")
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            var query = new GetAdvancedCatalogQuery(
+                UserId: userId,
+                SearchTerm: searchTerm,
+                Category: category,
+                Condition: condition,
+                PageNumber: pageNumber,
+                PageSize: pageSize,
+                SortBy: sortBy
+            );
+
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
         }
         catch (Exception ex)
         {
