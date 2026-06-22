@@ -76,6 +76,9 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Registrar middleware de manejo global de excepciones
+app.UseMiddleware<Bookmachs.Api.Middlewares.ExceptionHandlingMiddleware>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -90,8 +93,18 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Registrar el Dashboard de Hangfire para monitoreo
-app.UseHangfireDashboard();
+// Registrar el Dashboard de Hangfire para monitoreo con filtros de seguridad en producción
+if (app.Environment.IsDevelopment())
+{
+    app.UseHangfireDashboard();
+}
+else
+{
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new Bookmachs.Api.Security.HangfireAuthorizationFilter() }
+    });
+}
 
 // Programar el Job Recurrente (CRON) cada hora
 using (var scope = app.Services.CreateScope())

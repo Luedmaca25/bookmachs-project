@@ -3,6 +3,24 @@
 
 Este documento contiene un registro técnico detallado de cada una de las tareas ejecutadas desde la **Fase 1** hasta la **Fase 7**, reflejando las implementaciones específicas, flujos lógicos, DTOs, componentes de frontend, reglas CSS y pruebas aplicadas.
 
+## Refactorización Técnica y Mejoras de Seguridad (Post-Code Review)
+* **Objetivo:** Implementar los puntos críticos y sugerencias del Code Review para mejorar la seguridad del sistema y simplificar la arquitectura mediante el manejo global de excepciones.
+* **Detalles del Trabajo Realizado:**
+  - **Manejo Global de Excepciones (Middleware):**
+    - Diseñado y creado [ExceptionHandlingMiddleware.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Middlewares/ExceptionHandlingMiddleware.cs) en la capa de API.
+    - Captura excepciones en toda la canalización de solicitudes HTTP, mapeando excepciones de negocio (`KeyNotFoundException` a 404, `UnauthorizedAccessException` a 403, `ArgumentException`/`InvalidOperationException` a 400, y otras a 500) a respuestas de error estructuradas bajo el estándar RFC 7807 `ProblemDetails`.
+    - Registrado en [Program.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Program.cs) para encapsular todo el ciclo de vida de la petición.
+  - **Seguridad del Dashboard de Hangfire:**
+    - Creado el filtro de autorización de panel [HangfireAuthorizationFilter.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Security/HangfireAuthorizationFilter.cs) para restringir el acceso al panel `/hangfire` en entornos que no sean de desarrollo (`!IsDevelopment()`), bloqueando solicitudes externas y permitiendo únicamente conexiones locales (localhost).
+    - Configurado condicionalmente en [Program.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Program.cs) con `DashboardOptions`.
+  - **Compilación y Pruebas:**
+    - Compilación completa exitosa de la solución (0 errores, 0 advertencias).
+    - Ejecución de `dotnet test` confirmando que las 50 pruebas pasan satisfactoriamente.
+* **Archivos Clave:**
+  - [ExceptionHandlingMiddleware.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Middlewares/ExceptionHandlingMiddleware.cs)
+  - [HangfireAuthorizationFilter.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Security/HangfireAuthorizationFilter.cs)
+  - [Program.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Program.cs)
+
 ---
 
 ## 🏛️ Fase 1: Setup Inicial del Proyecto y Arquitectura
