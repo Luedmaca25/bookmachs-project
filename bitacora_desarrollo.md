@@ -472,6 +472,32 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [SocialController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/SocialController.cs)
   - [SocialImpactTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/SocialImpactTests.cs)
 
+### Tarea 39: Pantalla "Dashboard Perfil" con Visualización Gráfica e Indicadores de Impacto Ambiental
+* **Objetivo:** Diseñar y desarrollar una interfaz premium e interactiva en el Frontend (React SPA) bajo el estándar FSD, que consuma el endpoint estadístico y presente al usuario su perfil, sus contadores de impacto ecológico individual, un bosque virtual interactivo y los totales acumulados por la comunidad de Bookmachs.
+* **Detalles del Trabajo Realizado:**
+  - **Frontend - Vista de Invitado (Guest Flow):**
+    - Si el usuario no ha iniciado sesión, el componente renderiza un Hero Card con un badge ambiental animado y un botón de llamada a la acción ("Crear mi Cuenta de Impacto 🚀") que despliega el modal `HardGateModal` de forma directa para loguearse o registrarse.
+    - Presenta un panel educativo detallando la metodología y constantes de cálculo ambiental (400g peso de libro, 2.71 kg CO₂ evitado por kg de papel, y 22.0 kg de absorción anual por árbol maduro).
+  - **Frontend - Vista de Usuario Autenticado (Dashboard de Impacto):**
+    - **Header de Perfil:** Muestra una cabecera con avatar personalizado (gradiente dinámico y las iniciales del usuario), nombre, email, país, documento de identidad y un badge animado que resalta su nivel de membresía (`🏆 Premium` vs `⭐ Plan Básico`).
+    - **Grilla de Indicadores (Métricas del Usuario):** Tarjetas con efectos de desenfoque, bordes difuminados y un resplandor de color personalizado (`card-glow` mediante HSL y transparencias) que exponen de forma clara:
+      - Libros Rescatados (con desglose detallado de Intercambios y Donaciones).
+      - CO₂ Evitado (indicando el ahorro en kilogramos y su equivalencia en peso de papel reutilizado).
+      - Bosque Personal (cantidad de árboles anuales equivalentes que ha salvado el lector).
+    - **Simulador de Bosque Virtual Interactivo:** Genera dinámicamente un grid con ilustraciones SVG personalizadas de pinos de bosque. Si el valor es `0` dibuja un brote/semilla (🌱) con una animación de flote. Si es mayor a `0`, dibuja tantos árboles como equivalentes tenga el usuario (máximo de 12 visibles, añadiendo un badge con el conteo de árboles excedentes "+ X más"). Los árboles se balancean dinámicamente mediante la animación CSS `treeSway` al colocar el cursor encima.
+    - **Indicador de Aporte Porcentual (Progress Ring):** Un gráfico circular SVG que dibuja el porcentaje de contribución que representa la huella del lector sobre el impacto total de la comunidad, acompañado de barras de progreso estéticas.
+    - **Banner de Impacto Global de la Comunidad:** Un panel horizontal premium que totaliza el esfuerzo colectivo: libros circulados, CO₂ evitado y bosque comunitario consolidado.
+  - **Estilos en index.css:**
+    - Incorporación de todas las reglas CSS en [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css), utilizando variables del sistema de estilos, media queries responsivas para pantallas móviles, animaciones fluidas (`spin`, `seedlingFloat`, `treeSway`, `shine`), efectos hover de escalamiento e iluminación con sombras.
+  - **Validación del Bundle:**
+    - Ejecución exitosa de `npm run build` en el frontend, confirmando la integración correcta de TypeScript y la generación limpia de los archivos productivos.
+* **Archivos Clave:**
+  - [SocialPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/social/SocialPage.tsx)
+  - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
+  - [AppRouter.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/router/AppRouter.tsx)
+  - [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)
+
+
 
 
 
