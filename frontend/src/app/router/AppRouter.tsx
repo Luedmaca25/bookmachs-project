@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MainLayout } from '../layout/MainLayout';
 import { SwipePage } from '../../features/discovery/SwipePage';
+import { CatalogPage } from '../../features/discovery/CatalogPage';
 import { InventoryPage } from '../../features/inventory/InventoryPage';
 import { TransactionsPage } from '../../features/transactions/TransactionsPage';
 import { SocialPage } from '../../features/social/SocialPage';
@@ -15,6 +16,7 @@ export const AppRouter: React.FC = () => {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<SwipePage />} />
+          <Route path="catalogo" element={<CatalogPage />} />
           <Route path="libreta" element={<InventoryPage />} />
           <Route path="transacciones" element={<TransactionsPage />} />
           <Route path="planes" element={<PlansPage />} />

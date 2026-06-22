@@ -364,5 +364,29 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [BooksController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/BooksController.cs)
   - [CatalogTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CatalogTests.cs)
 
+### Tarea 35: Diseñar las vistas Grid/List en React para que el usuario Premium navegue el catálogo
+* **Objetivo:** Desarrollar e integrar una interfaz de usuario avanzada que permita a los usuarios Premium navegar por el catálogo general mediante dos modos de visualización alternativos (Grilla y Lista), aplicando filtros en tiempo real (búsqueda por texto, dropdown de géneros/categorías cargados dinámicamente y dropdown de estado físico de conservación) y paginación, protegiendo el acceso a los usuarios gratuitos mediante una pantalla de Paywall informativa.
+* **Detalles del Trabajo Realizado:**
+  - **Frontend:**
+    - Creación del componente de React [CatalogPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/CatalogPage.tsx).
+      - **Validación del Lado del Cliente (Paywall):** Si el usuario no está autenticado o tiene `isPremium === false`, el componente bloquea de forma inmediata el acceso y renderiza un paywall de cristal pulido (glassmorphism) informándole los beneficios de la membresía premium con un botón directo para actualizar su plan en `/planes`.
+      - **Búsqueda y Filtros en Vivo:** Implementa inputs controlados para búsqueda de texto libre, filtro de estado de conservación (Excelente, Bueno, Aceptable, Desgastado) y un filtro selector de géneros/categorías que consulta las etiquetas activas del backend en `/api/masterpreferencetags` (con fallback local seguro en caso de catálogo vacío).
+      - **Ordenamiento y Paginación:** Permite ordenar los libros por fecha de creación (Recién Llegados 🆕), alfabéticamente (Título 🔤) o por valor base del libro (Precio 💰). Incluye una botonera de paginación que calcula dinámicamente la página actual y los límites permitidos.
+      - **Toggle de Modos de Vista (Grid/List):** Permite cambiar al instante entre vista de Grilla (tarjetas cuadradas con foto de portada y badges) y vista de Lista (filas horizontales detalladas con descripción y sección lateral de precio y acción).
+      - **Badge de Recién Llegado:** Muestra dinámicamente una etiqueta `✨ Recién Llegado` a los libros cuya fecha de registro sea igual o menor a 7 días.
+      - **Acciones Directas (Reserva):** Agrega el botón de "Reservar 🔒" en las tarjetas/filas para gatillar de forma inmediata la retención del libro, simulado mediante alert en esta fase.
+    - Registro de la ruta `/catalogo` dentro de [AppRouter.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/router/AppRouter.tsx).
+    - Inclusión del enlace "Catálogo 💎" en la barra de navegación del layout principal en [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx).
+  - **Estilos:**
+    - Incorporación de reglas estéticas premium detalladas en [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css) al final del archivo, incluyendo sombras degradadas, efectos de hover con escalado fluido de imagen de portada, adaptabilidad responsiva con *Media Queries* para dispositivos móviles, y la animación flotante para el ícono del Paywall.
+  - **Validación de Compilación:**
+    - Verificación satisfactoria de los tipos de TypeScript y del bundle general ejecutando `npm run build` sin errores.
+* **Archivos Clave:**
+  - [CatalogPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/CatalogPage.tsx)
+  - [AppRouter.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/router/AppRouter.tsx)
+  - [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)
+  - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
+
+
 
 

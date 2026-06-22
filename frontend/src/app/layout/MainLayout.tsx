@@ -10,6 +10,7 @@ export const MainLayout: React.FC = () => {
         </div>
         <nav className="app-nav">
           <Link to="/" className="nav-link">Descubrir</Link>
+          <Link to="/catalogo" className="nav-link">Catálogo 💎</Link>
           <Link to="/libreta" className="nav-link">Tu Libreta</Link>
           <Link to="/transacciones" className="nav-link">Matches</Link>
           <Link to="/planes" className="nav-link">Planes</Link>
