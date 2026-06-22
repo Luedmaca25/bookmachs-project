@@ -413,6 +413,32 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [CatalogPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/CatalogPage.tsx)
   - [ReservationTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/ReservationTests.cs)
 
+### Tarea 37: Integración de Hangfire y Tarea en Background (CRON) para Liberación de Stock
+* **Objetivo:** Integrar el motor de tareas en segundo plano Hangfire en la API del backend, configurando persistencia sobre SQL Server y programando una tarea recurrente (CRON) por hora para liberar de forma automática los libros cuyas reservas de 48 horas hayan expirado y para anular las transacciones huérfanas sin pago, retornando sus libros al stock general.
+* **Detalles del Trabajo Realizado:**
+  - **Instalación de Paquetes NuGet:**
+    - Instalación de `Hangfire.AspNetCore` (versión `1.8.14`) en los proyectos `Bookmachs.Api` y `Bookmachs.Infrastructure`.
+    - Instalación de `Hangfire.SqlServer` (versión `1.8.14`) en el proyecto `Bookmachs.Infrastructure`.
+  - **Backend - Infraestructura y Configuración:**
+    - Registro de Hangfire utilizando la base de datos central de la solución en [DependencyInjection.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/DependencyInjection.cs) de la capa Infrastructure, configurando `UseSqlServerStorage` con opciones óptimas (aislamiento recomendado, reintentos y batches).
+    - Inyección y puesta en marcha del servidor de procesamiento en background a través de `services.AddHangfireServer()`.
+    - Activación del middleware del Dashboard de Hangfire mediante `app.UseHangfireDashboard()` en [Program.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Program.cs), habilitando la ruta `/hangfire` para el monitoreo visual en QA/producción.
+  - **Backend - Lógica del Job Recurrente (CRON):**
+    - Creación de la clase de tarea [CleanupBooksJob.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Books/Jobs/CleanupBooksJob.cs) en la capa Application.
+      - Libera reservas de libros huérfanas: busca libros donde `IsReserved == true` y `ReservedUntil < DateTime.UtcNow` y remueve el bloqueo.
+      - Anula transacciones pendientes: busca transacciones en estado `PaymentStatus == "Pending"` creadas hace más de 48 horas, marcándolas con estado `Failed`/`Cancelled` y liberando sus libros respectivos (estableciendo `IsAvailable = true`) para devolverlos al inventario disponible.
+      - Registra y audita el proceso utilizando logs inyectados mediante `ILogger`.
+    - Programación de la ejecución recurrente cada hora (`Cron.Hourly()`) de la tarea utilizando `IRecurringJobManager` dentro del método bootstrap del API en `Program.cs`.
+    - Registro de la clase de job en el contenedor de Inyección de Dependencias como servicio Transient en [DependencyInjection.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/DependencyInjection.cs) de la capa Application.
+  - **Pruebas:**
+    - Creación de la suite de pruebas unitarias [CleanupJobTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CleanupJobTests.cs), validando de forma simulada en memoria que el job limpie adecuadamente reservas expiradas manteniendo reservas activas intactas, y anule de forma correcta transacciones huérfanas de 48 horas sin pago. Las pruebas se ejecutan satisfactoriamente (44 pruebas totales aprobadas).
+* **Archivos Clave:**
+  - [DependencyInjection.cs (Infrastructure)](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/DependencyInjection.cs)
+  - [Program.cs (Api)](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Program.cs)
+  - [CleanupBooksJob.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Books/Jobs/CleanupBooksJob.cs)
+  - [CleanupJobTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CleanupJobTests.cs)
+
+
 
 
 

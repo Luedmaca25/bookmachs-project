@@ -11,6 +11,8 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
         });
 
+        services.AddTransient<Books.Jobs.CleanupBooksJob>();
+
         return services;
     }
 }

@@ -1,5 +1,6 @@
 using Bookmachs.Application;
 using Bookmachs.Infrastructure;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -88,6 +89,19 @@ app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Registrar el Dashboard de Hangfire para monitoreo
+app.UseHangfireDashboard();
+
+// Programar el Job Recurrente (CRON) cada hora
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddOrUpdate<Bookmachs.Application.Books.Jobs.CleanupBooksJob>(
+        "cleanup-expired-reservations-and-transactions",
+        job => job.ExecuteAsync(),
+        Cron.Hourly());
+}
 
 app.MapControllers();
 
