@@ -54,6 +54,18 @@ public class MatchTransactionRepository : IMatchTransactionRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<MatchTransaction>> GetGlobalHistoryAsync()
+    {
+        return await _context.MatchTransactions
+            .Where(t => t.LogisticsStatus == "Delivered")
+            .Include(t => t.Book)
+            .Include(t => t.RequesterUser)
+            .Include(t => t.OwnerUser)
+            .OrderByDescending(t => t.StatusUpdatedAt)
+            .Take(50)
+            .ToListAsync();
+    }
+
     public async Task AddAsync(MatchTransaction transaction)
     {
         await _context.MatchTransactions.AddAsync(transaction);

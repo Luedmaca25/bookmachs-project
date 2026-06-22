@@ -11,6 +11,7 @@ public interface IMatchTransactionRepository
     Task<IEnumerable<MatchTransaction>> GetTransactionsByUserIdAsync(Guid userId);
     Task<IEnumerable<MatchTransaction>> GetPendingTransactionsAsync();
     Task<IEnumerable<MatchTransaction>> GetAllCompletedTransactionsAsync();
+    Task<IEnumerable<MatchTransaction>> GetGlobalHistoryAsync();
     Task AddAsync(MatchTransaction transaction);
     void Update(MatchTransaction transaction);
 }

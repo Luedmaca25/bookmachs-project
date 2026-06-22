@@ -135,4 +135,88 @@ public class SocialImpactTests
         // Árboles equivalentes comunidad = 3.25 / 22.0 = 0.15
         Assert.Equal(0.15, result.CommunityEquivalentTrees);
     }
+
+    [Fact]
+    public async Task GetGlobalExchangeHistoryQuery_ShouldReturnOnlyDeliveredTransactionsSortedByDate()
+    {
+        // Arrange
+        using var context = GetInMemoryDbContext();
+        using var unitOfWork = new UnitOfWork(context);
+
+        var userA = new User { Id = Guid.NewGuid(), Email = "usera@example.com", Name = "User A" };
+        var userB = new User { Id = Guid.NewGuid(), Email = "userb@example.com", Name = "User B" };
+        await context.Users.AddRangeAsync(userA, userB);
+
+        var book1 = new Book { Id = Guid.NewGuid(), Title = "Book 1", Author = "Author 1", BaseValue = 100, OwnerId = userB.Id };
+        var book2 = new Book { Id = Guid.NewGuid(), Title = "Book 2", Author = "Author 2", BaseValue = 120, OwnerId = userA.Id };
+        await context.Books.AddRangeAsync(book1, book2);
+
+        // Transacción 1: Completada hace 2 horas (Presencial)
+        var tx1 = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = userA.Id,
+            OwnerUserId = userB.Id,
+            BookId = book1.Id,
+            LogisticsMethod = "Presencial",
+            LogisticsStatus = "Delivered",
+            PaymentStatus = "Hold",
+            CreatedAt = DateTime.UtcNow.AddHours(-3),
+            StatusUpdatedAt = DateTime.UtcNow.AddHours(-2)
+        };
+
+        // Transacción 2: Completada hace 1 hora (Donación)
+        var tx2 = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = userB.Id,
+            OwnerUserId = null,
+            BookId = book2.Id,
+            LogisticsMethod = "Donacion",
+            LogisticsStatus = "Delivered",
+            PaymentStatus = "Hold",
+            CreatedAt = DateTime.UtcNow.AddHours(-2),
+            StatusUpdatedAt = DateTime.UtcNow.AddHours(-1)
+        };
+
+        // Transacción 3: Pendiente (no debe aparecer en el historial global)
+        var tx3 = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = userA.Id,
+            OwnerUserId = userB.Id,
+            BookId = book1.Id,
+            LogisticsMethod = "P2P",
+            LogisticsStatus = "Pending",
+            PaymentStatus = "Pending",
+            CreatedAt = DateTime.UtcNow,
+            StatusUpdatedAt = DateTime.UtcNow
+        };
+
+        await context.MatchTransactions.AddRangeAsync(tx1, tx2, tx3);
+        await context.SaveChangesAsync();
+
+        var query = new GetGlobalExchangeHistoryQuery();
+        var handler = new GetGlobalExchangeHistoryQueryHandler(unitOfWork);
+
+        // Act
+        var result = (await handler.Handle(query, CancellationToken.None)).ToList();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count); // Solo completadas (tx1, tx2)
+
+        // Orden descendente por StatusUpdatedAt: tx2 primero (hace 1 hora), luego tx1 (hace 2 horas)
+        Assert.Equal(tx2.Id, result[0].Id);
+        Assert.Equal("User B", result[0].RequesterName);
+        Assert.Equal("Bookmachs (Donación)", result[0].OwnerName);
+        Assert.Equal("Book 2", result[0].BookTitle);
+        Assert.Equal("Donacion", result[0].LogisticsMethod);
+
+        Assert.Equal(tx1.Id, result[1].Id);
+        Assert.Equal("User A", result[1].RequesterName);
+        Assert.Equal("User B", result[1].OwnerName);
+        Assert.Equal("Book 1", result[1].BookTitle);
+        Assert.Equal("Presencial", result[1].LogisticsMethod);
+    }
 }

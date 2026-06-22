@@ -14,12 +14,28 @@ interface UserImpactMetrics {
   communityEquivalentTrees: number;
 }
 
+interface GlobalExchangeHistoryItem {
+  id: string;
+  requesterName: string;
+  ownerName: string;
+  bookTitle: string;
+  bookAuthor: string;
+  bookImageUrl: string;
+  logisticsMethod: string;
+  completedAt: string;
+}
+
 export const SocialPage: React.FC = () => {
   const { user, isAuthenticated, login } = useAuthStore();
   const [metrics, setMetrics] = useState<UserImpactMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Estados de Historial Global (Tarea 40)
+  const [history, setHistory] = useState<GlobalExchangeHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   // Cargar datos del perfil y de impacto ambiental
   const loadData = async () => {
@@ -45,6 +61,28 @@ export const SocialPage: React.FC = () => {
     }
   };
 
+  // Cargar historial global sin restricciones (Tarea 40)
+  const loadHistory = async () => {
+    setLoadingHistory(true);
+    setHistoryError(null);
+    try {
+      const result = await apiClient.get<GlobalExchangeHistoryItem[]>('/social/history');
+      setHistory(result);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setHistoryError(err.message || 'Error al cargar el historial de intercambios.');
+      } else {
+        setHistoryError('Error inesperado al cargar el historial.');
+      }
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
@@ -56,6 +94,7 @@ export const SocialPage: React.FC = () => {
   const handleLoginSuccess = () => {
     setIsAuthModalOpen(false);
     loadData();
+    loadHistory();
   };
 
   // Función para renderizar los árboles SVG del bosque virtual del usuario
@@ -114,6 +153,95 @@ export const SocialPage: React.FC = () => {
     );
   };
 
+  // Función para renderizar la sección de historial global
+  const renderHistorySection = () => {
+    return (
+      <div className="global-history-section">
+        <h2>Historial de Intercambios Recientes 🕒</h2>
+        <p className="history-subtitle">Conoce los últimos libros que han encontrado un nuevo hogar en nuestra red.</p>
+        
+        {loadingHistory ? (
+          <div className="history-loading">
+            <div className="history-mini-spinner"></div>
+            <span>Cargando transacciones recientes...</span>
+          </div>
+        ) : historyError ? (
+          <div className="history-error">
+            <p>⚠️ {historyError}</p>
+            <button onClick={loadHistory} className="history-retry-btn">Reintentar</button>
+          </div>
+        ) : history.length === 0 ? (
+          <div className="history-empty">
+            <span className="history-empty-icon">📖</span>
+            <p>Aún no se registran transacciones de intercambio completadas.</p>
+            <small>¡Sé el primero en iniciar un intercambio de libros!</small>
+          </div>
+        ) : (
+          <div className="history-timeline-list">
+            {history.map((item) => {
+              // Obtener emoji o icono de método de logística
+              let methodEmoji = '📦';
+              let methodLabel = item.logisticsMethod;
+              if (item.logisticsMethod.toLowerCase() === 'presencial') {
+                methodEmoji = '🤝';
+                methodLabel = 'Entrega Presencial';
+              } else if (item.logisticsMethod.toLowerCase() === 'bodega') {
+                methodEmoji = '🏢';
+                methodLabel = 'Envío a Bodega';
+              } else if (item.logisticsMethod.toLowerCase() === 'p2p') {
+                methodEmoji = '📮';
+                methodLabel = 'Envío Directo P2P';
+              } else if (item.logisticsMethod.toLowerCase() === 'donacion') {
+                methodEmoji = '🎁';
+                methodLabel = 'Donación';
+              }
+
+              // Formatear fecha
+              const dateObj = new Date(item.completedAt);
+              const formattedDate = dateObj.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+
+              return (
+                <div key={item.id} className="history-timeline-item">
+                  <div className="timeline-book-cover">
+                    {item.bookImageUrl ? (
+                      <img src={item.bookImageUrl} alt={item.bookTitle} onError={(e) => {
+                        (e.target as HTMLImageElement).src = ''; // Ocultar para mostrar fallback
+                      }} />
+                    ) : (
+                      <div className="timeline-book-placeholder">📖</div>
+                    )}
+                  </div>
+                  <div className="timeline-item-content">
+                    <div className="timeline-item-header">
+                      <span className="timeline-user-badge requester">{item.requesterName}</span>
+                      <span className="timeline-connector">recibió un libro de</span>
+                      <span className="timeline-user-badge owner">{item.ownerName}</span>
+                    </div>
+                    <div className="timeline-book-details">
+                      <strong className="timeline-book-title">{item.bookTitle}</strong>
+                      <span className="timeline-book-author">de {item.bookAuthor}</span>
+                    </div>
+                    <div className="timeline-item-footer">
+                      <span className="timeline-logistics-badge">
+                        {methodEmoji} {methodLabel}
+                      </span>
+                      <span className="timeline-date">⏱️ {formattedDate}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // VISTA INVITADO (NO AUTENTICADO)
   if (!isAuthenticated) {
     return (
@@ -153,6 +281,9 @@ export const SocialPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Historial de Intercambios Global sin restricciones (Tarea 40) */}
+        {renderHistorySection()}
 
         <HardGateModal isOpen={isAuthModalOpen} onSuccess={handleLoginSuccess} />
       </div>
@@ -368,6 +499,9 @@ export const SocialPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Historial de Intercambios Global sin restricciones (Tarea 40) */}
+          {renderHistorySection()}
         </>
       )}
     </div>

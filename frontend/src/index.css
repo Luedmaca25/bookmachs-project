@@ -4546,6 +4546,246 @@ p {
   }
 }
 
+/* ==========================================================================
+   Historial de Intercambios Global sin Restricciones (Tarea 40)
+   ========================================================================== */
+
+.global-history-section {
+  margin-top: 4.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 3.5rem;
+}
+
+.global-history-section h2 {
+  font-size: 1.8rem;
+  font-family: var(--font-heading);
+  margin: 0 0 0.4rem 0;
+}
+
+.history-subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 0 0 2rem 0;
+}
+
+/* Loading, Error & Empty states for history */
+.history-loading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.history-mini-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-top-color: #06d6a0;
+  border-radius: 50%;
+  animation: spin 0.8s infinite linear;
+}
+
+.history-error {
+  background: rgba(239, 71, 111, 0.05);
+  border: 1px dashed #ef476f;
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  text-align: center;
+}
+
+.history-error p {
+  margin: 0 0 1rem 0;
+  color: #ef476f;
+}
+
+.history-retry-btn {
+  background: #ef476f;
+  border: none;
+  color: #fff;
+  padding: 0.4rem 1.2rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.history-empty {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 3rem 2rem;
+}
+
+.history-empty-icon {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 0.8rem;
+}
+
+.history-empty p {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin: 0 0 0.3rem 0;
+}
+
+.history-empty small {
+  color: var(--text-muted);
+}
+
+/* History Timeline List */
+.history-timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.history-timeline-item {
+  display: flex;
+  gap: 1.5rem;
+  background: var(--gradient-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.2rem 1.5rem;
+  align-items: center;
+  transition: all var(--transition-fast);
+}
+
+.history-timeline-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.timeline-book-cover {
+  width: 60px;
+  height: 85px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.timeline-book-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.timeline-book-placeholder {
+  font-size: 1.8rem;
+}
+
+.timeline-item-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 0.4rem;
+}
+
+.timeline-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.timeline-user-badge {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.timeline-user-badge.requester {
+  border-color: rgba(6, 214, 160, 0.35);
+  color: #06d6a0;
+  background: rgba(6, 214, 160, 0.03);
+}
+
+.timeline-user-badge.owner {
+  border-color: rgba(27, 154, 170, 0.35);
+  color: #1b9aaa;
+  background: rgba(27, 154, 170, 0.03);
+}
+
+.timeline-connector {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.timeline-book-details {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.timeline-book-title {
+  font-size: 1.1rem;
+  color: #fff;
+  font-family: var(--font-heading);
+}
+
+.timeline-book-author {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.timeline-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  padding-top: 0.6rem;
+  margin-top: 0.2rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.timeline-logistics-badge {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-secondary);
+}
+
+.timeline-date {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+@media (max-width: 576px) {
+  .history-timeline-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .timeline-book-cover {
+    width: 50px;
+    height: 70px;
+  }
+}
+
 
 
 

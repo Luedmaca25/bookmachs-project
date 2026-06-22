@@ -46,4 +46,20 @@ public class SocialController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [AllowAnonymous]
+    [HttpGet("history")]
+    public async Task<ActionResult<IEnumerable<GlobalExchangeHistoryDto>>> GetGlobalHistory()
+    {
+        try
+        {
+            var query = new GetGlobalExchangeHistoryQuery();
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

@@ -497,6 +497,35 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [AppRouter.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/router/AppRouter.tsx)
   - [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)
 
+### Tarea 40: Historial de Intercambios Global sin Restricciones de Cuenta
+* **Objetivo:** Implementar un endpoint público (anónimo) en el Backend y una vista cronológica interactiva en el Frontend que permita a cualquier usuario (tanto visitantes no logueados como miembros autenticados) ver el historial de los últimos 50 intercambios y donaciones de libros completados con éxito en la plataforma.
+* **Detalles del Trabajo Realizado:**
+  - **Backend - Modificación de Repositorio:**
+    - Incorporación de `GetGlobalHistoryAsync()` en la interfaz [IMatchTransactionRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Repositories/IMatchTransactionRepository.cs) e implementado en [MatchTransactionRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Repositories/MatchTransactionRepository.cs). Retorna las últimas 50 transacciones en estado `Delivered` ordenadas de forma descendente por `StatusUpdatedAt` e incluyendo las relaciones de `Book`, `RequesterUser` y `OwnerUser` en una sola consulta optimizada.
+  - **Backend - Caso de Uso (CQRS):**
+    - Creación de [GlobalExchangeHistoryDto.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/GlobalExchangeHistoryDto.cs) y la consulta [GetGlobalExchangeHistoryQuery.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/Queries/GetGlobalExchangeHistoryQuery.cs) con su manejador en la capa Application.
+    - El handler resuelve dinámicamente los nombres de los usuarios participantes, manejando de forma segura valores nulos en el propietario cuando se trata de donaciones (sustituyéndolo por `"Bookmachs (Donación)"` o `"Bookmachs"`).
+  - **Backend - Controlador:**
+    - Añadido el endpoint `GET /api/social/history` en [SocialController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/SocialController.cs). Se le asignó el atributo `[AllowAnonymous]` permitiendo su consumo público por el frontend sin enviar cabeceras Bearer JWT.
+  - **Pruebas Unitarias del Backend:**
+    - Creación del test `GetGlobalExchangeHistoryQuery_ShouldReturnOnlyDeliveredTransactionsSortedByDate` en [SocialImpactTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/SocialImpactTests.cs). Confirma el correcto filtrado de estados, ordenamiento cronológico descendente y mapeo de nombres. Las pruebas de la solución se ejecutaron con éxito total (**47 aprobadas**).
+  - **Frontend - Vista del Historial:**
+    - Modificado [SocialPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/social/SocialPage.tsx) para definir la sección de historial. Consume el endpoint público mediante `apiClient` e implementa estados interactivos de carga (spinner), error con botón de reintento, y timeline vacío en caso de no haber datos.
+    - Cada fila del timeline dibuja la foto de portada del libro (con fallback de icono de libro físico), los nombres del emisor y receptor resaltados con badges distintivos de colores (`requester` en turquesa, `owner` en azul), y un footer que detalla la fecha del intercambio formateada y un badge que describe el tipo de envío (Presencial, Envío a Bodega, P2P, Donación) con su emoji respectivo (🤝, 🏢, 📦, 🎁).
+    - La sección se visualiza tanto en la vista de invitados (pública) como al fondo del dashboard de impacto del perfil de usuarios autenticados.
+  - **Estilos en index.css:**
+    - Incorporación de las reglas CSS de diseño del timeline al final de [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css), definiendo bordes de cristal (glassmorphism), sombras fluidas, transiciones de hover y un diseño responsivo para dispositivos móviles que convierte el timeline en filas adaptables.
+* **Archivos Clave:**
+  - [IMatchTransactionRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Repositories/IMatchTransactionRepository.cs)
+  - [MatchTransactionRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Repositories/MatchTransactionRepository.cs)
+  - [GlobalExchangeHistoryDto.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/GlobalExchangeHistoryDto.cs)
+  - [GetGlobalExchangeHistoryQuery.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/Queries/GetGlobalExchangeHistoryQuery.cs)
+  - [SocialController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/SocialController.cs)
+  - [SocialImpactTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/SocialImpactTests.cs)
+  - [SocialPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/social/SocialPage.tsx)
+  - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
+
+
 
 
 
