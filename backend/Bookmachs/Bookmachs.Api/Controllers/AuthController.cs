@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Bookmachs.Application.Authentication;
 using Bookmachs.Application.Authentication.Commands;
+using Bookmachs.Application.Authentication.Queries;
 using Google.Apis.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -159,6 +160,32 @@ public class AuthController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<ActionResult<UserProfileDto>> GetProfile()
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            var query = new GetUserProfileQuery(userId);
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
         }
         catch (Exception ex)
         {

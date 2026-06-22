@@ -7,6 +7,7 @@ import { TransactionsPage } from '../../features/transactions/TransactionsPage';
 import { SocialPage } from '../../features/social/SocialPage';
 import { AuthenticationPage } from '../../features/authentication/AuthenticationPage';
 import { AdminSettingsPage } from '../../features/admin/AdminSettingsPage';
+import { PlansPage } from '../../features/subscriptions/PlansPage';
 
 export const AppRouter: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ export const AppRouter: React.FC = () => {
           <Route index element={<SwipePage />} />
           <Route path="libreta" element={<InventoryPage />} />
           <Route path="transacciones" element={<TransactionsPage />} />
+          <Route path="planes" element={<PlansPage />} />
           <Route path="social" element={<SocialPage />} />
           <Route path="auth" element={<AuthenticationPage />} />
           <Route path="admin" element={<AdminSettingsPage />} />

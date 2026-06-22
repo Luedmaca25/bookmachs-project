@@ -323,3 +323,25 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [WebhooksController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/WebhooksController.cs)
   - [SubscriptionTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/SubscriptionTests.cs)
 
+### Tarea 33: Página Web Comparativa de "Planes y Membresías"
+* **Objetivo:** Desarrollar una interfaz interactiva de comparación de planes de membresía (Gratuito, Premium, Lector Infantil) en el frontend, integrada con el flujo de simulación de upgrades mediante webhooks para actualizar en tiempo real la experiencia del usuario y desbloquear funciones.
+* **Detalles del Trabajo Realizado:**
+  - **Backend:**
+    - Creación de [GetUserProfileQuery.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Authentication/Queries/GetUserProfileQuery.cs) para recuperar el perfil del usuario autenticado actual, incluyendo el flag premium (`IsPremium`) y el plan de suscripción (`SubscriptionPlan`).
+    - Exposición del endpoint `GET /api/auth/me` en [AuthController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/AuthController.cs) para servir el perfil a peticiones del cliente y permitir refrescar el estado del usuario tras un upgrade.
+  - **Frontend:**
+    - Creación de [PlansPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/subscriptions/PlansPage.tsx) para presentar la comparación detallada de cuotas, precios, límites y características de cada nivel de membresía (Free, Premium, Infantil).
+    - Integración con el store de autenticación `useAuthStore` para identificar el plan actual del usuario y renderizar badges ("Tu Plan Actual").
+    - Implementación de gatillado del Upgrade: Cuando un usuario gratuito hace clic en el plan Premium, se envía una petición POST al endpoint de simulación de webhook `/api/webhooks/trigger-test`. Al completarse con éxito, se refresca el perfil del usuario mediante `GET /api/auth/me` y se actualiza el estado global en la aplicación React de forma inmediata.
+    - Se agregaron las rutas correspondientes en [AppRouter.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/router/AppRouter.tsx) para el path `/planes`, y se enlazó en la barra de navegación del layout principal en [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx).
+  - **Estilos:**
+    - Se incorporaron las reglas de estilo CSS para el layout, grilla y tarjetas de precios en [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css), empleando efectos hover, gradientes y colores acordes al diseño Sleek Dark Mode.
+* **Archivos Clave:**
+  - [PlansPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/subscriptions/PlansPage.tsx)
+  - [AppRouter.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/router/AppRouter.tsx)
+  - [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)
+  - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
+  - [GetUserProfileQuery.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Authentication/Queries/GetUserProfileQuery.cs)
+  - [AuthController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/AuthController.cs)
+
+
