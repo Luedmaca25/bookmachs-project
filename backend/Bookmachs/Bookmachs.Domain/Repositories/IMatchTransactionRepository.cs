@@ -10,6 +10,7 @@ public interface IMatchTransactionRepository
     Task<MatchTransaction?> GetByIdAsync(Guid id);
     Task<IEnumerable<MatchTransaction>> GetTransactionsByUserIdAsync(Guid userId);
     Task<IEnumerable<MatchTransaction>> GetPendingTransactionsAsync();
+    Task<IEnumerable<MatchTransaction>> GetAllCompletedTransactionsAsync();
     Task AddAsync(MatchTransaction transaction);
     void Update(MatchTransaction transaction);
 }

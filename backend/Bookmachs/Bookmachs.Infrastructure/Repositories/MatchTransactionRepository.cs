@@ -46,6 +46,14 @@ public class MatchTransactionRepository : IMatchTransactionRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<MatchTransaction>> GetAllCompletedTransactionsAsync()
+    {
+        return await _context.MatchTransactions
+            .Where(t => t.LogisticsStatus == "Delivered")
+            .Include(t => t.Book)
+            .ToListAsync();
+    }
+
     public async Task AddAsync(MatchTransaction transaction)
     {
         await _context.MatchTransactions.AddAsync(transaction);

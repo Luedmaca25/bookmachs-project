@@ -438,6 +438,41 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [CleanupBooksJob.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Books/Jobs/CleanupBooksJob.cs)
   - [CleanupJobTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CleanupJobTests.cs)
 
+---
+
+## 🍃 Fase 9: Capa Social y de Impacto Ambiental
+
+### Tarea 38: Endpoint Estadístico de Impacto Ambiental (CO2 y Árboles Equivalentes)
+* **Objetivo:** Implementar un endpoint estadístico en el Backend para calcular y retornar el impacto ambiental positivo (tanto del usuario individual como de toda la comunidad) derivado del intercambio y donación de libros, basándose en constantes físicas científicamente fundamentadas.
+* **Detalles del Trabajo Realizado:**
+  - **Constantes de Impacto Ambiental Establecidas:**
+    - `AverageBookWeightKg = 0.4` (Peso promedio de un libro estándar: 400 gramos).
+    - `Co2SavedPerKgOfPaper = 2.71` (Evita la emisión de 2.71 kg de CO2 por cada kilogramo de papel que se reutiliza o recicla en lugar de producir papel nuevo).
+    - `AnnualTreeAbsorptionKg = 22.0` (Un árbol maduro promedio absorbe aproximadamente 22 kg de CO2 al año).
+  - **Backend - Repositorio:**
+    - Incorporación del método `GetAllCompletedTransactionsAsync` en la interfaz [IMatchTransactionRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Repositories/IMatchTransactionRepository.cs) e implementación en [MatchTransactionRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Repositories/MatchTransactionRepository.cs). Recupera todas las transacciones de match cuyo estado de entrega (`LogisticsStatus`) sea `"Delivered"`.
+  - **Backend - Lógica CQRS y DTO:**
+    - Creación de [UserImpactMetricsDto.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/UserImpactMetricsDto.cs) para estructurar la respuesta con métricas de usuario (libros intercambiados, donados, CO2 evitado y equivalencia en árboles) y métricas comunitarias.
+    - Creación de la consulta [GetUserImpactMetricsQuery.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/Queries/GetUserImpactMetricsQuery.cs) y su respectivo handler en la capa Application.
+      - Valida la existencia del usuario solicitante, lanzando `KeyNotFoundException` en caso de no encontrarse.
+      - Divide los libros del usuario en intercambios vs. donaciones: detecta las donaciones evaluando si el campo `LogisticsMethod` es `"Donacion"` (ignorando mayúsculas/minúsculas).
+      - Multiplica el total de libros procesados por las constantes físicas para calcular el CO2 evitado (redondeado a 2 decimales) y los árboles equivalentes (CO2 evitado dividido por 22.0, redondeado a 2 decimales).
+  - **Backend - Controlador:**
+    - Exposición del endpoint protegido `GET /api/social/my-impact` en [SocialController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/SocialController.cs). Utiliza el atributo `[Authorize]` para garantizar que el usuario esté autenticado, extrayendo su ID directamente de los claims (`ClaimTypes.NameIdentifier`) de forma segura.
+  - **Pruebas Unitarias:**
+    - Creación e implementación de la suite de pruebas unitarias [SocialImpactTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/SocialImpactTests.cs).
+      - Verifica que se arroje una excepción si el usuario no existe.
+      - Valida que los cálculos de CO2 y árboles sean matemáticamente correctos y que se descarten transacciones que no estén completadas (`Pending`).
+      - Las pruebas se ejecutan de manera satisfactoria.
+* **Archivos Clave:**
+  - [IMatchTransactionRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Repositories/IMatchTransactionRepository.cs)
+  - [MatchTransactionRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Repositories/MatchTransactionRepository.cs)
+  - [UserImpactMetricsDto.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/UserImpactMetricsDto.cs)
+  - [GetUserImpactMetricsQuery.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/Queries/GetUserImpactMetricsQuery.cs)
+  - [SocialController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/SocialController.cs)
+  - [SocialImpactTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/SocialImpactTests.cs)
+
+
 
 
 
