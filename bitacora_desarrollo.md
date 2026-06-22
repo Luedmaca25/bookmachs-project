@@ -555,6 +555,34 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [UpdateLogisticsCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Transactions/Commands/UpdateLogisticsCommand.cs)
   - [CheckoutTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CheckoutTests.cs)
 
+### Tarea 42: Construir Frontend del Timeline Interactivo y modal de notas/reseñas usando CSS Puro
+* **Objetivo:** Diseñar y desarrollar la interfaz del Timeline Público interactivo en el Frontend (React SPA) y crear un modal modalizado (empleando exclusivamente CSS Puro) que permita a los participantes calificar (1 a 5 estrellas) y redactar notas o reseñas detalladas sobre el estado de la entrega física de sus libros intercambiados.
+* **Detalles del Trabajo Realizado:**
+  - **Frontend - Visualización del Timeline Interactivo:**
+    - Modificado [SocialPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/social/SocialPage.tsx) para renderizar dinámicamente el timeline de transacciones públicas (tipo `Exchange` o `Donation`) consumido desde la API `/api/social/history`.
+    - Cada tarjeta del timeline presenta la foto de portada del libro (con fallback de icono de libro físico `📖` si no tiene imagen), nombres del receptor y emisor en badges estilizados con variables de colores (`requester` en verde esmeralda, `owner` en azul turquesa), desglose del método logístico con emojis distintivos y la fecha local del intercambio.
+    - Se integró el bloque de reseñas `.timeline-item-review` que expone en cursiva y con estrellas doradas la calificación y comentarios que los usuarios han asignado al intercambio.
+  - **Frontend - Modal de Notas y Reseñas:**
+    - Se implementó un modal interactivo controlado por el estado `isReviewModalOpen` que se activa al hacer clic en el botón "✍️ Calificar Entrega".
+    - El formulario dentro del modal permite elegir interactivamente entre 1 y 5 estrellas mediante el selector `.rating-stars-input`, coloreándose de dorado de forma fluida con sombras de resplandor.
+    - Contiene una caja de texto `.modal-textarea` con límite máximo de 500 caracteres para describir la experiencia del envío y el estado del libro.
+    - Permite enviar los datos asíncronamente mediante `apiClient.post` al endpoint de la API `/api/social/timeline/{eventId}/review`, actualizando la UI de inmediato tras cerrarse el modal recargando el timeline.
+  - **Estilos en CSS Puro (index.css):**
+    - Añadidas reglas detalladas en [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css) (líneas 4790-4917) para dar soporte al timeline de reseñas y al formulario del modal:
+      - `.timeline-item-review`: Fondo oscuro translúcido sutil con borde izquierdo dorado e inset shadows.
+      - `.star-btn`: Botón interactivo de estrella transparente, con escalado dinámico al pasar el cursor (`:hover`) y efecto de brillo neon/dorado cuando está seleccionado (`.selected`).
+      - `.modal-textarea`: Estilizado premium consistente con el tema oscuro de la plataforma, bordes adaptables y transiciones rápidas de enfoque.
+      - `.modal-cancel-btn` y `.modal-submit-btn`: Botones y acciones de envío con soporte responsivo, efectos hover tridimensionales y opacidades para estados de carga (`disabled`).
+  - **Validación y Pruebas:**
+    - Compilación exitosa del frontend (`npm run build`), confirmando la correcta tipificación de TypeScript y generación de recursos finales de Vite.
+    - Ejecución satisfactoria de todas las pruebas unitarias e integrales en el Backend mediante `dotnet test` (50 pruebas aprobadas exitosamente).
+* **Archivos Clave:**
+  - [SocialPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/social/SocialPage.tsx)
+  - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
+  - [SocialController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/SocialController.cs)
+  - [AddTimelineReviewCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/Commands/AddTimelineReviewCommand.cs)
+
+
 
 
 

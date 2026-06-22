@@ -4786,6 +4786,134 @@ p {
   }
 }
 
+/* ==========================================================================
+   Timeline reviews modal and notes styling (Tarea 42)
+   ========================================================================== */
+
+.timeline-item-review {
+  background: rgba(255, 255, 255, 0.015);
+  border-left: 3px solid #ffd166;
+  padding: 0.7rem 1.1rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-top: 0.6rem;
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.review-stars {
+  color: #ffd166;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  letter-spacing: 1px;
+}
+
+.review-comment {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.footer-left-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.timeline-review-action-btn {
+  background: none;
+  border: 1px solid rgba(255, 209, 102, 0.35);
+  color: #ffd166;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.timeline-review-action-btn:hover {
+  background: rgba(255, 209, 102, 0.1);
+  border-color: #ffd166;
+  transform: translateY(-0.5px);
+}
+
+/* Rating Stars Input inside Modal */
+.rating-stars-input {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 2.2rem;
+  color: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s, transform 0.1s;
+}
+
+.star-btn:hover {
+  transform: scale(1.1);
+}
+
+.star-btn.selected {
+  color: #ffd166;
+  text-shadow: 0 0 10px rgba(255, 209, 102, 0.4);
+}
+
+.modal-textarea {
+  background: rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid var(--border-color) !important;
+  color: #fff !important;
+  padding: 0.8rem !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 0.9rem !important;
+  font-family: inherit !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+.modal-textarea:focus {
+  border-color: var(--border-hover) !important;
+  outline: none !important;
+}
+
+.modal-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.8rem;
+  width: 100%;
+}
+
+.modal-cancel-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  padding: 0.6rem 1.4rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.modal-cancel-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-cancel-btn:disabled,
+.modal-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 
 
 

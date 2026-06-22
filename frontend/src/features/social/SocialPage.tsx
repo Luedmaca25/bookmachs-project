@@ -22,6 +22,8 @@ interface GlobalExchangeHistoryItem {
   bookAuthor: string;
   bookImageUrl: string;
   logisticsMethod: string;
+  reviewComment?: string;
+  reviewRating?: number;
   completedAt: string;
 }
 
@@ -36,6 +38,15 @@ export const SocialPage: React.FC = () => {
   const [history, setHistory] = useState<GlobalExchangeHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+
+  // Estados de Modal de Reseñas y Notas (Tarea 42)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedBookTitle, setSelectedBookTitle] = useState<string>('');
+  const [ratingInput, setRatingInput] = useState(5);
+  const [commentInput, setCommentInput] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   // Cargar datos del perfil y de impacto ambiental
   const loadData = async () => {
@@ -95,6 +106,40 @@ export const SocialPage: React.FC = () => {
     setIsAuthModalOpen(false);
     loadData();
     loadHistory();
+  };
+
+  const handleOpenReviewModal = (eventId: string, bookTitle: string) => {
+    setSelectedEventId(eventId);
+    setSelectedBookTitle(bookTitle);
+    setRatingInput(5);
+    setCommentInput('');
+    setReviewError(null);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEventId) return;
+
+    setSubmittingReview(true);
+    setReviewError(null);
+
+    try {
+      await apiClient.post(`/social/timeline/${selectedEventId}/review`, {
+        comment: commentInput,
+        rating: ratingInput
+      });
+      setIsReviewModalOpen(false);
+      loadHistory(); // Recargar timeline para ver la nueva reseña
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setReviewError(err.message || 'Error al guardar la reseña.');
+      } else {
+        setReviewError('Ocurrió un error inesperado al procesar la reseña.');
+      }
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   // Función para renderizar los árboles SVG del bosque virtual del usuario
@@ -205,6 +250,12 @@ export const SocialPage: React.FC = () => {
                 minute: '2-digit'
               });
 
+              // Verificar si el usuario autenticado es participante
+              const isParticipant = isAuthenticated && user && (
+                item.requesterName.trim().toLowerCase() === user.name.trim().toLowerCase() ||
+                item.ownerName.trim().toLowerCase() === user.name.trim().toLowerCase()
+              );
+
               return (
                 <div key={item.id} className="history-timeline-item">
                   <div className="timeline-book-cover">
@@ -226,10 +277,34 @@ export const SocialPage: React.FC = () => {
                       <strong className="timeline-book-title">{item.bookTitle}</strong>
                       <span className="timeline-book-author">de {item.bookAuthor}</span>
                     </div>
+
+                    {/* Mostrar calificación y comentario si existe (Tarea 42) */}
+                    {item.reviewComment && (
+                      <div className="timeline-item-review">
+                        <div className="review-stars" title={`Calificación: ${item.reviewRating} estrellas`}>
+                          {'★'.repeat(item.reviewRating || 0)}{'☆'.repeat(5 - (item.reviewRating || 0))}
+                        </div>
+                        <p className="review-comment">"{item.reviewComment}"</p>
+                      </div>
+                    )}
+
                     <div className="timeline-item-footer">
-                      <span className="timeline-logistics-badge">
-                        {methodEmoji} {methodLabel}
-                      </span>
+                      <div className="footer-left-badges">
+                        <span className="timeline-logistics-badge">
+                          {methodEmoji} {methodLabel}
+                        </span>
+                        
+                        {/* Botón para añadir reseña si es participante y no se ha calificado (Tarea 42) */}
+                        {isParticipant && !item.reviewComment && (
+                          <button 
+                            className="timeline-review-action-btn"
+                            onClick={() => handleOpenReviewModal(item.id, item.bookTitle)}
+                          >
+                            ✍️ Calificar Entrega
+                          </button>
+                        )}
+                      </div>
+                      
                       <span className="timeline-date">⏱️ {formattedDate}</span>
                     </div>
                   </div>
@@ -503,6 +578,70 @@ export const SocialPage: React.FC = () => {
           {/* Historial de Intercambios Global sin restricciones (Tarea 40) */}
           {renderHistorySection()}
         </>
+      )}
+
+      {/* Modal para ingresar Calificación y Reseña (Tarea 42) */}
+      {isReviewModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h2>✍️ Escribir Reseña / Nota</h2>
+              <p>Valora tu experiencia con el libro <strong>"{selectedBookTitle}"</strong></p>
+            </div>
+            
+            {reviewError && <div className="modal-error">{reviewError}</div>}
+            
+            <form onSubmit={handleSubmitReview} className="modal-form">
+              <div className="modal-field">
+                <label>Calificación</label>
+                <div className="rating-stars-input">
+                  {[1, 2, 3, 4, 5].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`star-btn ${val <= ratingInput ? 'selected' : ''}`}
+                      onClick={() => setRatingInput(val)}
+                      title={`Calificar con ${val} estrellas`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="modal-field">
+                <label>Tu Reseña / Comentario sobre la Entrega</label>
+                <textarea
+                  className="modal-textarea"
+                  rows={4}
+                  placeholder="Describe cómo estuvo el intercambio, la entrega y el estado del libro..."
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  maxLength={500}
+                  required
+                />
+              </div>
+
+              <div className="modal-actions-row">
+                <button 
+                  type="button" 
+                  className="modal-cancel-btn" 
+                  onClick={() => setIsReviewModalOpen(false)}
+                  disabled={submittingReview}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="modal-submit-btn" 
+                  disabled={submittingReview}
+                >
+                  {submittingReview ? 'Guardando...' : 'Guardar Reseña'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

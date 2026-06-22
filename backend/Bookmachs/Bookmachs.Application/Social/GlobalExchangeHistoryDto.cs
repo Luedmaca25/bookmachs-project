@@ -11,5 +11,7 @@ public class GlobalExchangeHistoryDto
     public string BookAuthor { get; set; } = string.Empty;
     public string BookImageUrl { get; set; } = string.Empty;
     public string LogisticsMethod { get; set; } = string.Empty;
+    public string? ReviewComment { get; set; }
+    public int? ReviewRating { get; set; }
     public DateTime CompletedAt { get; set; }
 }

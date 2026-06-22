@@ -79,7 +79,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 - [x] **Tarea 39:** Desarrollar pantalla "Dashboard Perfil" con visualización gráfica y contadores de impacto.
 - [x] **Tarea 40:** Integrar endpoint y vista del "Historial de Intercambios" global sin restricciones de cuenta.
 - [x] **Tarea 41:** Desarrollar tabla transaccional (Backend) de Eventos de Timeline, generando registros cuando el sistema gatilla un intercambio exitoso marcado como público.
-- [ ] **Tarea 42:** Construir Frontend del *Timeline Interactivo* y modal de notas/reseñas usando CSS Puro.
+- [x] **Tarea 42:** Construir Frontend del *Timeline Interactivo* y modal de notas/reseñas usando CSS Puro.
 
 ---
 

@@ -23,6 +23,13 @@ public class TimelineEventRepository : ITimelineEventRepository
         await _context.TimelineEvents.AddAsync(timelineEvent);
     }
 
+    public async Task<TimelineEvent?> GetByIdAsync(Guid id)
+    {
+        return await _context.TimelineEvents
+            .Include(e => e.MatchTransaction)
+            .FirstOrDefaultAsync(e => e.Id == id);
+    }
+
     public async Task<IEnumerable<TimelineEvent>> GetPublicEventsAsync(int limit)
     {
         return await _context.TimelineEvents

@@ -21,20 +21,22 @@ public class GetGlobalExchangeHistoryQueryHandler : IRequestHandler<GetGlobalExc
 
     public async Task<IEnumerable<GlobalExchangeHistoryDto>> Handle(GetGlobalExchangeHistoryQuery request, CancellationToken cancellationToken)
     {
-        var completedTransactions = await _unitOfWork.MatchTransactions.GetGlobalHistoryAsync();
+        var timelineEvents = await _unitOfWork.TimelineEvents.GetPublicEventsAsync(50);
 
-        return completedTransactions.Select(t => new GlobalExchangeHistoryDto
+        return timelineEvents.Select(e => new GlobalExchangeHistoryDto
         {
-            Id = t.Id,
-            RequesterName = t.RequesterUser?.Name ?? "Lector Anónimo",
-            OwnerName = t.OwnerUser?.Name ?? (string.Equals(t.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase) 
+            Id = e.Id,
+            RequesterName = e.MatchTransaction?.RequesterUser?.Name ?? "Lector Anónimo",
+            OwnerName = e.MatchTransaction?.OwnerUser?.Name ?? (string.Equals(e.MatchTransaction?.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase) 
                 ? "Bookmachs (Donación)" 
                 : "Bookmachs"),
-            BookTitle = t.Book?.Title ?? "Libro sin título",
-            BookAuthor = t.Book?.Author ?? "Autor Desconocido",
-            BookImageUrl = t.Book?.ImageUrl ?? string.Empty,
-            LogisticsMethod = t.LogisticsMethod ?? "Intercambio",
-            CompletedAt = t.StatusUpdatedAt
+            BookTitle = e.MatchTransaction?.Book?.Title ?? "Libro sin título",
+            BookAuthor = e.MatchTransaction?.Book?.Author ?? "Autor Desconocido",
+            BookImageUrl = e.MatchTransaction?.Book?.ImageUrl ?? string.Empty,
+            LogisticsMethod = e.MatchTransaction?.LogisticsMethod ?? "Intercambio",
+            ReviewComment = e.ReviewComment,
+            ReviewRating = e.ReviewRating,
+            CompletedAt = e.CreatedAt
         }).ToList();
     }
 }

@@ -8,5 +8,6 @@ namespace Bookmachs.Domain.Repositories;
 public interface ITimelineEventRepository
 {
     Task AddAsync(TimelineEvent timelineEvent);
+    Task<TimelineEvent?> GetByIdAsync(Guid id);
     Task<IEnumerable<TimelineEvent>> GetPublicEventsAsync(int limit);
 }

@@ -141,6 +141,7 @@ public class BookmachsDbContext : DbContext
             entity.Property(e => e.EventType).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.ReviewComment).HasMaxLength(500);
 
             entity.HasOne(e => e.MatchTransaction)
                 .WithMany()

@@ -193,7 +193,30 @@ public class SocialImpactTests
             StatusUpdatedAt = DateTime.UtcNow
         };
 
+        var event1 = new TimelineEvent
+        {
+            Id = Guid.NewGuid(),
+            MatchTransactionId = tx1.Id,
+            MatchTransaction = tx1,
+            EventType = "Exchange",
+            Title = "Intercambio completado",
+            Description = "Intercambio realizado",
+            CreatedAt = DateTime.UtcNow.AddHours(-2)
+        };
+
+        var event2 = new TimelineEvent
+        {
+            Id = Guid.NewGuid(),
+            MatchTransactionId = tx2.Id,
+            MatchTransaction = tx2,
+            EventType = "Donation",
+            Title = "Donación completada",
+            Description = "Donación realizada",
+            CreatedAt = DateTime.UtcNow.AddHours(-1)
+        };
+
         await context.MatchTransactions.AddRangeAsync(tx1, tx2, tx3);
+        await context.TimelineEvents.AddRangeAsync(event1, event2);
         await context.SaveChangesAsync();
 
         var query = new GetGlobalExchangeHistoryQuery();
@@ -204,19 +227,131 @@ public class SocialImpactTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(2, result.Count); // Solo completadas (tx1, tx2)
+        Assert.Equal(2, result.Count);
 
-        // Orden descendente por StatusUpdatedAt: tx2 primero (hace 1 hora), luego tx1 (hace 2 horas)
-        Assert.Equal(tx2.Id, result[0].Id);
+        // Orden descendente por CreatedAt: event2 primero (hace 1 hora), luego event1 (hace 2 horas)
+        Assert.Equal(event2.Id, result[0].Id);
         Assert.Equal("User B", result[0].RequesterName);
         Assert.Equal("Bookmachs (Donación)", result[0].OwnerName);
         Assert.Equal("Book 2", result[0].BookTitle);
         Assert.Equal("Donacion", result[0].LogisticsMethod);
 
-        Assert.Equal(tx1.Id, result[1].Id);
+        Assert.Equal(event1.Id, result[1].Id);
         Assert.Equal("User A", result[1].RequesterName);
         Assert.Equal("User B", result[1].OwnerName);
         Assert.Equal("Book 1", result[1].BookTitle);
         Assert.Equal("Presencial", result[1].LogisticsMethod);
+    }
+
+    [Fact]
+    public async Task AddTimelineReviewCommand_ShouldSuccessfullyAddReview_WhenUserIsParticipant()
+    {
+        // Arrange
+        using var context = GetInMemoryDbContext();
+        using var unitOfWork = new UnitOfWork(context);
+
+        var requester = new User { Id = Guid.NewGuid(), Email = "requester@example.com", Name = "Requester" };
+        var owner = new User { Id = Guid.NewGuid(), Email = "owner@example.com", Name = "Owner" };
+        await context.Users.AddRangeAsync(requester, owner);
+
+        var book = new Book { Id = Guid.NewGuid(), Title = "Book", Author = "Author", BaseValue = 100, OwnerId = owner.Id };
+        await context.Books.AddAsync(book);
+
+        var tx = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = requester.Id,
+            OwnerUserId = owner.Id,
+            BookId = book.Id,
+            LogisticsMethod = "P2P",
+            LogisticsStatus = "Delivered",
+            PaymentStatus = "Hold"
+        };
+        await context.MatchTransactions.AddAsync(tx);
+
+        var ev = new TimelineEvent
+        {
+            Id = Guid.NewGuid(),
+            MatchTransactionId = tx.Id,
+            MatchTransaction = tx,
+            EventType = "Exchange",
+            Title = "Title",
+            Description = "Description"
+        };
+        await context.TimelineEvents.AddAsync(ev);
+        await context.SaveChangesAsync();
+
+        var command = new Bookmachs.Application.Social.Commands.AddTimelineReviewCommand
+        {
+            TimelineEventId = ev.Id,
+            UserId = requester.Id, // Participante
+            ReviewComment = "¡Increíble servicio!",
+            ReviewRating = 5
+        };
+        var handler = new Bookmachs.Application.Social.Commands.AddTimelineReviewCommandHandler(unitOfWork);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+
+        var dbEv = await context.TimelineEvents.FindAsync(ev.Id);
+        Assert.NotNull(dbEv);
+        Assert.Equal("¡Increíble servicio!", dbEv.ReviewComment);
+        Assert.Equal(5, dbEv.ReviewRating);
+    }
+
+    [Fact]
+    public async Task AddTimelineReviewCommand_ShouldThrowUnauthorizedAccessException_WhenUserIsNotParticipant()
+    {
+        // Arrange
+        using var context = GetInMemoryDbContext();
+        using var unitOfWork = new UnitOfWork(context);
+
+        var requester = new User { Id = Guid.NewGuid(), Email = "requester@example.com", Name = "Requester" };
+        var owner = new User { Id = Guid.NewGuid(), Email = "owner@example.com", Name = "Owner" };
+        var stranger = new User { Id = Guid.NewGuid(), Email = "stranger@example.com", Name = "Stranger" };
+        await context.Users.AddRangeAsync(requester, owner, stranger);
+
+        var book = new Book { Id = Guid.NewGuid(), Title = "Book", Author = "Author", BaseValue = 100, OwnerId = owner.Id };
+        await context.Books.AddAsync(book);
+
+        var tx = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = requester.Id,
+            OwnerUserId = owner.Id,
+            BookId = book.Id,
+            LogisticsMethod = "P2P",
+            LogisticsStatus = "Delivered",
+            PaymentStatus = "Hold"
+        };
+        await context.MatchTransactions.AddAsync(tx);
+
+        var ev = new TimelineEvent
+        {
+            Id = Guid.NewGuid(),
+            MatchTransactionId = tx.Id,
+            MatchTransaction = tx,
+            EventType = "Exchange",
+            Title = "Title",
+            Description = "Description"
+        };
+        await context.TimelineEvents.AddAsync(ev);
+        await context.SaveChangesAsync();
+
+        var command = new Bookmachs.Application.Social.Commands.AddTimelineReviewCommand
+        {
+            TimelineEventId = ev.Id,
+            UserId = stranger.Id, // No es participante
+            ReviewComment = "Intento hack",
+            ReviewRating = 1
+        };
+        var handler = new Bookmachs.Application.Social.Commands.AddTimelineReviewCommandHandler(unitOfWork);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => handler.Handle(command, CancellationToken.None));
     }
 }
