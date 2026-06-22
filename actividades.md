@@ -69,7 +69,7 @@ Este archivo enumera la secuencia lógica de ejecución de tareas para garantiza
 - [x] **Tarea 33:** Desarrollar página web comparativa interactiva "Planes y Membresías" para gatillar upgrades.
 - [x] **Tarea 34:** Exponer Endpoints protegidos (Backend) de búsqueda y listado general (Catálogo Avanzado web y libros Recién Llegados), aplicando filtros y paginación.
 - [x] **Tarea 35:** Diseñar las vistas Grid/List en React para que el usuario Premium navegue el catálogo.
-- [ ] **Tarea 36:** Implementar la lógica de "Reservas" en base de datos. Bloquear y disminuir stock virtual del inventario.
+- [x] **Tarea 36:** Implementar la lógica de "Reservas" en base de datos. Bloquear y disminuir stock virtual del inventario.
 - [ ] **Tarea 37:** Integración Library-First (Backend): Instalar **Hangfire** y programar un Job (CRON) en background que devuelva el stock automáticamente y anule transacciones pasadas las 48 horas sin pago.
 
 ---

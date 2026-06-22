@@ -387,6 +387,33 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)
   - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
 
+### Tarea 36: Lógica de Reservas de Stock Virtual por 48 horas en Base de Datos
+* **Objetivo:** Desarrollar en el Backend la lógica de reservas temporales para usuarios Premium, bloqueando y disminuyendo el stock virtual del inventario de libros al establecer campos de control en la base de datos, e integrar las llamadas de acción en la interfaz del cliente.
+* **Detalles del Trabajo Realizado:**
+  - **Backend:**
+    - Creación del comando [ReserveBookCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Books/Commands/ReserveBookCommand.cs) y su manejador.
+      - Valida que el usuario exista y tenga la suscripción Premium activa.
+      - Recupera el libro y valida que no sea del propio usuario solicitante y que esté disponible.
+      - Controla la concurrencia: si el libro ya está reservado por otro usuario con fecha vigente, lanza una `InvalidOperationException`. Si es el mismo usuario, retorna éxito.
+      - Activa los campos de bloqueo: `IsReserved = true`, `ReservedByUserId = userId` y `ReservedUntil = DateTime.UtcNow.AddHours(48)`.
+      - Registra los cambios mediante `SaveChangesAsync` coordinado con `IUnitOfWork`.
+    - Creación del comando [CancelReservationCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Books/Commands/CancelReservationCommand.cs) para liberar de forma manual y anticipada un bloqueo de libro por parte de su respectivo reservante.
+    - Exposición de dos endpoints REST en [BooksController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/BooksController.cs):
+      - `POST /api/books/{id}/reserve` (para solicitar el bloqueo).
+      - `POST /api/books/{id}/cancel-reservation` (para liberar el bloqueo).
+  - **Frontend:**
+    - Modificación de [CatalogPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/CatalogPage.tsx) para conectar el botón interactivo **"Reservar 🔒"** de cada tarjeta de libro y fila de lista con la API del servidor.
+    - Al confirmarse el bloqueo de 48 horas por parte del backend, se muestra una alerta informativa y se recarga automáticamente el catálogo. Dado que el catálogo excluye libros reservados, el libro bloqueado desaparece del stock virtual disponible de forma inmediata para el resto de usuarios.
+  - **Pruebas:**
+    - Creación de la suite de pruebas unitarias [ReservationTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/ReservationTests.cs) cubriendo todos los límites comerciales (restricción premium, auto-reserva, doble reserva sobre el mismo libro, cancelación por parte del usuario correcto y denegación por parte de terceros). Se ejecutaron con éxito (42 pruebas totales aprobadas).
+* **Archivos Clave:**
+  - [ReserveBookCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Books/Commands/ReserveBookCommand.cs)
+  - [CancelReservationCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Books/Commands/CancelReservationCommand.cs)
+  - [BooksController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/BooksController.cs)
+  - [CatalogPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/CatalogPage.tsx)
+  - [ReservationTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/ReservationTests.cs)
+
+
 
 
 

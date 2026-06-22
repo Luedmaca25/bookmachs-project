@@ -217,6 +217,68 @@ public class BooksController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost("{id}/reserve")]
+    public async Task<ActionResult<ReservationResultDto>> ReserveBook(Guid id)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            var command = new ReserveBookCommand(id, userId);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/cancel-reservation")]
+    public async Task<ActionResult<ReservationResultDto>> CancelReservation(Guid id)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            var command = new CancelReservationCommand(id, userId);
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
+        }
+    }
 }
 
 public class UploadBookRequest

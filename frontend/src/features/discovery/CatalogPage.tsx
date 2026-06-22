@@ -128,8 +128,36 @@ export const CatalogPage: React.FC = () => {
     }
   };
 
-  const handleReserveBook = (bookTitle: string) => {
-    alert(`⚡ [DEMO] Solicitud de Reserva de "${bookTitle}" por 48 horas enviada correctamente.`);
+  const handleReserveBook = async (bookId: string, bookTitle: string) => {
+    try {
+      setLoading(true);
+      interface ReserveResponse {
+        success: boolean;
+        message: string;
+        reservedUntil?: string;
+      }
+      const response = await apiClient.post<ReserveResponse>(`/books/${bookId}/reserve`);
+      alert(response.message || `El libro "${bookTitle}" ha sido reservado.`);
+      
+      // Recargar catálogo para actualizar la disponibilidad virtual de stock
+      const queryParams = new URLSearchParams();
+      if (searchTerm.trim()) queryParams.append('searchTerm', searchTerm.trim());
+      if (category) queryParams.append('category', category);
+      if (condition) queryParams.append('condition', condition);
+      queryParams.append('pageNumber', pageNumber.toString());
+      queryParams.append('pageSize', pageSize.toString());
+      queryParams.append('sortBy', sortBy);
+
+      const refreshResponse = await apiClient.get<PaginatedBooks>(`/books/catalog?${queryParams.toString()}`);
+      setBooks(refreshResponse.items);
+      setTotalPages(refreshResponse.totalPages);
+      setTotalCount(refreshResponse.totalCount);
+    } catch (err: any) {
+      console.error('Error al reservar libro:', err);
+      alert(err.message || 'No se pudo reservar el libro. Por favor intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Render para usuarios sin premium (Paywall)
@@ -304,7 +332,7 @@ export const CatalogPage: React.FC = () => {
                   </div>
                   <button
                     className="catalog-reserve-btn"
-                    onClick={() => handleReserveBook(book.title)}
+                    onClick={() => handleReserveBook(book.id, book.title)}
                   >
                     Reservar 🔒
                   </button>
@@ -344,7 +372,7 @@ export const CatalogPage: React.FC = () => {
                 <div className="action-buttons">
                   <button
                     className="catalog-reserve-btn"
-                    onClick={() => handleReserveBook(book.title)}
+                    onClick={() => handleReserveBook(book.id, book.title)}
                   >
                     Reservar 🔒
                   </button>
