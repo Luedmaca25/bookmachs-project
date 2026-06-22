@@ -93,6 +93,38 @@ public class UpdateLogisticsCommandHandler : IRequestHandler<UpdateLogisticsComm
         transaction.StatusUpdatedAt = DateTime.UtcNow;
 
         _unitOfWork.MatchTransactions.Update(transaction);
+
+        // Generar evento en el Timeline si el intercambio/donación se completa y es marcado como público
+        if (transaction.LogisticsStatus == "Delivered" && transaction.IsPublic)
+        {
+            var requester = await _unitOfWork.Users.GetByIdAsync(transaction.RequesterUserId);
+            var owner = transaction.OwnerUserId.HasValue 
+                ? await _unitOfWork.Users.GetByIdAsync(transaction.OwnerUserId.Value) 
+                : null;
+            var book = await _unitOfWork.Books.GetByIdAsync(transaction.BookId);
+
+            var requesterName = requester?.Name ?? "Lector Anónimo";
+            var ownerName = owner?.Name ?? (string.Equals(transaction.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase) 
+                ? "Bookmachs (Donación)" 
+                : "Bookmachs");
+
+            var timelineEvent = new Bookmachs.Domain.Entities.TimelineEvent
+            {
+                Id = Guid.NewGuid(),
+                MatchTransactionId = transaction.Id,
+                EventType = string.Equals(transaction.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase) ? "Donation" : "Exchange",
+                Title = string.Equals(transaction.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase) 
+                    ? "¡Donación completada exitosamente!" 
+                    : "¡Libro intercambiado con éxito!",
+                Description = string.Equals(transaction.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase)
+                    ? $"{requesterName} completó la donación del libro '{book?.Title}'."
+                    : $"{requesterName} recibió '{book?.Title}' de {ownerName}.",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.TimelineEvents.AddAsync(timelineEvent);
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new LogisticsResultDto

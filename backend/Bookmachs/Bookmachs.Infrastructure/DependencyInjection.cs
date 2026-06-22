@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<IGlobalSettingsRepository, GlobalSettingsRepository>();
         services.AddScoped<IMasterPreferenceTagRepository, MasterPreferenceTagRepository>();
+        services.AddScoped<ITimelineEventRepository, TimelineEventRepository>();
 
         // Registrar Servicios de Autenticación y Seguridad
         services.AddMemoryCache();

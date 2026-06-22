@@ -16,6 +16,7 @@ public class UnitOfWork : IUnitOfWork
     private ISubscriptionRepository? _subscriptions;
     private IGlobalSettingsRepository? _globalSettings;
     private IMasterPreferenceTagRepository? _masterPreferenceTags;
+    private ITimelineEventRepository? _timelineEvents;
 
     public UnitOfWork(BookmachsDbContext context)
     {
@@ -28,6 +29,7 @@ public class UnitOfWork : IUnitOfWork
     public ISubscriptionRepository Subscriptions => _subscriptions ??= new SubscriptionRepository(_context);
     public IGlobalSettingsRepository GlobalSettings => _globalSettings ??= new GlobalSettingsRepository(_context);
     public IMasterPreferenceTagRepository MasterPreferenceTags => _masterPreferenceTags ??= new MasterPreferenceTagRepository(_context);
+    public ITimelineEventRepository TimelineEvents => _timelineEvents ??= new TimelineEventRepository(_context);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

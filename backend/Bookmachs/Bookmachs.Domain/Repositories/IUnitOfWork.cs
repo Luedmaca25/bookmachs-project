@@ -12,6 +12,7 @@ public interface IUnitOfWork : IDisposable
     ISubscriptionRepository Subscriptions { get; }
     IGlobalSettingsRepository GlobalSettings { get; }
     IMasterPreferenceTagRepository MasterPreferenceTags { get; }
+    ITimelineEventRepository TimelineEvents { get; }
     
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

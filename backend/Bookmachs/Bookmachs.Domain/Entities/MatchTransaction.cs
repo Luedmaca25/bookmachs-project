@@ -31,6 +31,7 @@ public class MatchTransaction
 
     // Advertencia geográfica (si es transacción entre países diferentes)
     public bool IsCrossBorder { get; set; } = false;
+    public bool IsPublic { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime StatusUpdatedAt { get; set; } = DateTime.UtcNow;

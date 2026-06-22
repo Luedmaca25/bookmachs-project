@@ -525,6 +525,37 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [SocialPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/social/SocialPage.tsx)
   - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
 
+### Tarea 41: Tabla Transaccional de Eventos del Timeline en Backend
+* **Objetivo:** Diseñar y estructurar la base de datos y la lógica del Backend para registrar eventos en una tabla transaccional de timeline (`TimelineEvent`) de manera automática cada vez que un intercambio o donación de libros se complete con éxito (estado de entrega en `Delivered`), respetando las preferencias de visibilidad del usuario (si la transacción está marcada como pública `IsPublic == true`).
+* **Detalles del Trabajo Realizado:**
+  - **Backend - Entidad del Dominio:**
+    - Creación de la entidad transaccional [TimelineEvent.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Entities/TimelineEvent.cs) con propiedades: `Id` (clave primaria), `MatchTransactionId` (clave foránea), `EventType` (Exchange, Donation), `Title` (encabezado del evento), `Description` (contenido narrativo del evento) y `CreatedAt` (marca de tiempo).
+  - **Backend - Persistencia y DbContext:**
+    - Registro del `DbSet<TimelineEvent> TimelineEvents` en [BookmachsDbContext.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Persistence/BookmachsDbContext.cs).
+    - Configuración mediante Fluent API para el mapeo estricto, especificando longitudes de caracteres máximas en `Title` (200) y `Description` (500), claves primarias, y configurando la regla de borrado en cascada (`OnDelete(DeleteBehavior.Cascade)`) en la relación con `MatchTransaction`.
+    - Modificado `MatchTransaction.cs` para incorporar la propiedad boolean `IsPublic` (por defecto `true`) para guardar las preferencias de privacidad del intercambio.
+  - **Backend - Repositorios & Unit of Work:**
+    - Creada la interfaz de repositorio [ITimelineEventRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Repositories/ITimelineEventRepository.cs) y su respectiva implementación [TimelineEventRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Repositories/TimelineEventRepository.cs).
+    - Declarado e implementado el repositorio en [IUnitOfWork.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Repositories/IUnitOfWork.cs) and [UnitOfWork.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Repositories/UnitOfWork.cs) para integrarlo en el flujo transaccional.
+    - Registrado el repositorio en el contenedor de dependencias del archivo [DependencyInjection.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/DependencyInjection.cs).
+  - **Backend - Migraciones:**
+    - Generada la migración de Entity Framework Core (`AddTimelineEvents`) y aplicada con éxito a la base de datos SQL Server local (`dotnet ef database update`).
+  - **Backend - Lógica de Registro Automático:**
+    - Modificado el handler [UpdateLogisticsCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Transactions/Commands/UpdateLogisticsCommand.cs) para que, al transicionar la transacción de Match al estado `"Delivered"`, evalúe si la propiedad `IsPublic` de la transacción está habilitada.
+    - En caso afirmativo, carga los perfiles del solicitante y del dueño, extrae la información del libro, y genera de forma automática un registro `TimelineEvent` (tipo `Exchange` o `Donation`) con títulos descriptivos y detalles del traspaso, guardándose de forma atómica en el mismo commit de base de datos a través de `SaveChangesAsync()`.
+  - **Pruebas Unitarias del Backend:**
+    - Añadida la prueba unitaria `UpdateLogistics_ShouldGenerateTimelineEvent_WhenStatusBecomesDeliveredAndIsPublic` en [CheckoutTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CheckoutTests.cs). Valida que al confirmar la entrega, la transacción se guarde como Delivered y se inserte con éxito un registro relacionado en la tabla de TimelineEvents. La suite completa de pruebas se ejecutó satisfactoriamente (**48 aprobadas**).
+* **Archivos Clave:**
+  - [TimelineEvent.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Entities/TimelineEvent.cs)
+  - [MatchTransaction.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Entities/MatchTransaction.cs)
+  - [BookmachsDbContext.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Persistence/BookmachsDbContext.cs)
+  - [ITimelineEventRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Domain/Repositories/ITimelineEventRepository.cs)
+  - [TimelineEventRepository.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Repositories/TimelineEventRepository.cs)
+  - [UnitOfWork.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Infrastructure/Repositories/UnitOfWork.cs)
+  - [UpdateLogisticsCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Transactions/Commands/UpdateLogisticsCommand.cs)
+  - [CheckoutTests.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Tests/CheckoutTests.cs)
+
+
 
 
 

@@ -579,4 +579,67 @@ public class CheckoutTests
         Assert.False(result.Success);
         Assert.Contains("evidencia", result.Message);
     }
+
+    [Fact]
+    public async Task UpdateLogistics_ShouldGenerateTimelineEvent_WhenStatusBecomesDeliveredAndIsPublic()
+    {
+        // Arrange
+        using var context = GetInMemoryDbContext();
+        using var unitOfWork = new UnitOfWork(context);
+
+        var requester = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "requester@example.com",
+            Name = "Requester User"
+        };
+        await context.Users.AddAsync(requester);
+
+        var book = new Book
+        {
+            Id = Guid.NewGuid(),
+            Title = "El Quijote",
+            BaseValue = 5000.0m
+        };
+        await context.Books.AddAsync(book);
+
+        var transaction = new MatchTransaction
+        {
+            Id = Guid.NewGuid(),
+            RequesterUserId = requester.Id,
+            BookId = book.Id,
+            FeeAmount = 1500.0m,
+            PaymentStatus = "Hold",
+            LogisticsStatus = "Pending",
+            IsPublic = true
+        };
+        await context.MatchTransactions.AddAsync(transaction);
+        await context.SaveChangesAsync();
+
+        var command = new UpdateLogisticsCommand
+        {
+            MatchTransactionId = transaction.Id,
+            LogisticsMethod = "Donacion",
+            RequesterUserId = requester.Id,
+            EvidencePhotoBase64 = "base64encodedphoto..."
+        };
+        var handler = new UpdateLogisticsCommandHandler(unitOfWork);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal("Delivered", result.LogisticsStatus);
+
+        // Verificar que se haya creado el evento de timeline
+        var timelineEvents = await context.TimelineEvents.ToListAsync();
+        Assert.Single(timelineEvents);
+        Assert.Equal(transaction.Id, timelineEvents[0].MatchTransactionId);
+        Assert.Equal("Donation", timelineEvents[0].EventType);
+        Assert.Contains("Donación completada", timelineEvents[0].Title);
+        Assert.Contains("Requester User", timelineEvents[0].Description);
+        Assert.Contains("El Quijote", timelineEvents[0].Description);
+    }
 }

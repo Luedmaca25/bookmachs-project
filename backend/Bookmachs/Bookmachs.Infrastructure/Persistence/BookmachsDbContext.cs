@@ -16,6 +16,7 @@ public class BookmachsDbContext : DbContext
     public DbSet<UserPreference> UserPreferences { get; set; } = null!;
     public DbSet<GlobalSettings> GlobalSettings { get; set; } = null!;
     public DbSet<MasterPreferenceTag> MasterPreferenceTags { get; set; } = null!;
+    public DbSet<TimelineEvent> TimelineEvents { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -131,6 +132,20 @@ public class BookmachsDbContext : DbContext
             entity.HasKey(m => m.Id);
             entity.Property(m => m.Name).IsRequired().HasMaxLength(50);
             entity.HasIndex(m => m.Name).IsUnique();
+        });
+
+        // --- Configuración de TimelineEvent ---
+        modelBuilder.Entity<TimelineEvent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EventType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
+
+            entity.HasOne(e => e.MatchTransaction)
+                .WithMany()
+                .HasForeignKey(e => e.MatchTransactionId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
