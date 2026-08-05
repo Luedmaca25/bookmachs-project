@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
-import { HardGateModal } from '../authentication/components/HardGateModal';
 import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
 import { UpsellModal } from './components/UpsellModal';
 import { MatchModal } from '../transactions/components/MatchModal';
@@ -18,14 +18,47 @@ interface BookItem {
 
 export const SwipePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useAuthStore();
-  const [modalOpen, setModalOpen] = useState(false);
+  const { user, isAuthenticated, token, logout } = useAuthStore();
   
-  // Lista de libros recomendados
-  const [books, setBooks] = useState<BookItem[]>([]);
+  // Control de Onboarding
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+
+  const needsOnboarding = isAuthenticated && (
+    !user?.pais || 
+    !user?.documentoIdentidad || 
+    !localStorage.getItem(`onboarding_completed_${user?.id}`)
+  );
+
+  const showWizard = needsOnboarding && !onboardingCompleted;
+
+  // Si se está restaurando la sesión (tenemos token pero aún no se carga el perfil del usuario),
+  // evitamos hacer consultas para no causar llamados duplicados de invitados.
+  const isRestoringSession = !!token && !user;
+
+  // React Query para cargar libros según estado de autenticación (deduplica y maneja caché)
+  const { data: queryBooks, isLoading: loading, error: queryError } = useQuery<BookItem[]>({
+    queryKey: ['books', isAuthenticated],
+    queryFn: async () => {
+      if (isAuthenticated) {
+        return apiClient.get<BookItem[]>('/books/recommendations?limit=20');
+      } else {
+        const response = await apiClient.get<BookItem>('/books/guest-random');
+        return [response];
+      }
+    },
+    enabled: !isRestoringSession && !showWizard,
+    staleTime: 5000, // Evitar refetches inmediatos en transiciones rápidas
+  });
+
+  const books = queryBooks || [];
+  const error = queryError ? 'Ocurrió un error al cargar las recomendaciones de libros.' : null;
   const [currentBookIndex, setCurrentBookIndex] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // Reiniciar el índice de libro actual cuando cambia la lista de libros cargados
+  useEffect(() => {
+    setCurrentBookIndex(0);
+    setLimitReached(false);
+  }, [queryBooks]);
 
   // Estados de animación
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -40,48 +73,6 @@ export const SwipePage: React.FC = () => {
   const [matchedBook, setMatchedBook] = useState<BookItem | null>(null);
   const [matchTransactionId, setMatchTransactionId] = useState<string | null>(null);
 
-  // Control de Onboarding
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
-
-  const needsOnboarding = isAuthenticated && (
-    !user?.pais || 
-    !user?.documentoIdentidad || 
-    !localStorage.getItem(`onboarding_completed_${user?.id}`)
-  );
-
-  const showWizard = needsOnboarding && !onboardingCompleted;
-
-  // Cargar libros según estado de autenticación
-  useEffect(() => {
-    if (showWizard) return;
-    
-    const loadBooks = async () => {
-      setLoading(true);
-      setError(null);
-      setLimitReached(false);
-      try {
-        if (isAuthenticated) {
-          // Usuario autenticado: cargar recomendaciones
-          const response = await apiClient.get<BookItem[]>('/books/recommendations?limit=20');
-          setBooks(response);
-          setCurrentBookIndex(0);
-        } else {
-          // Invitado: cargar libro señuelo aleatorio
-          const response = await apiClient.get<BookItem>('/books/guest-random');
-          setBooks([response]);
-          setCurrentBookIndex(0);
-        }
-      } catch (err: unknown) {
-        console.error('Error al cargar libros:', err);
-        setError('Ocurrió un error al cargar las recomendaciones de libros.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadBooks();
-  }, [isAuthenticated, showWizard]);
-
   const handleOnboardingComplete = () => {
     if (user) {
       localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
@@ -95,8 +86,8 @@ export const SwipePage: React.FC = () => {
     if (limitReached || !currentBook) return;
 
     if (!isAuthenticated) {
-      // Si es invitado, cualquier swipe abre el Hard Gate
-      setModalOpen(true);
+      // Si es invitado, al interactuar con el libro se le redirige a iniciar sesión
+      navigate('/auth');
       return;
     }
 
@@ -192,7 +183,7 @@ export const SwipePage: React.FC = () => {
         <div className="swipe-error-state">{error}</div>
       ) : !currentBook && !limitReached ? (
         <div className="swipe-empty-state">
-          <span className="empty-icon">📚</span>
+          <span className="empty-icon"><i className="fa-solid fa-book-open"></i></span>
           <h3>No hay más recomendaciones por ahora</h3>
           <p>Sube más libros a tu libreta o actualiza tus preferencias de lectura para refinar las recomendaciones de la IA.</p>
         </div>
@@ -208,7 +199,7 @@ export const SwipePage: React.FC = () => {
               {currentBook?.imageUrl ? (
                 <img src={currentBook.imageUrl} alt={currentBook.title} className="swipe-card-img" />
               ) : (
-                <span className="book-fallback-icon">📖</span>
+                <span className="book-fallback-icon"><i className="fa-solid fa-book"></i></span>
               )}
               
               {currentBook && (
@@ -232,7 +223,7 @@ export const SwipePage: React.FC = () => {
               disabled={limitReached}
               title="Descartar"
             >
-              ❌
+              <i className="fa-solid fa-xmark"></i>
             </button>
             <button 
               className="control-btn like-btn" 
@@ -240,27 +231,22 @@ export const SwipePage: React.FC = () => {
               disabled={limitReached}
               title="Me interesa"
             >
-              ❤️
+              <i className="fa-solid fa-heart"></i>
             </button>
           </div>
 
           {limitReached && (
             <div className="card-blur-overlay">
-              <span className="lock-icon">🔒</span>
+              <span className="lock-icon"><i className="fa-solid fa-lock"></i></span>
               <h3>Límite diario alcanzado</h3>
               <p>Regresa mañana para seguir descubriendo libros o pásate a un plan Premium hoy mismo.</p>
               <button className="upsell-trigger-btn font-heading" onClick={() => setUpsellOpen(true)}>
-                Ver Planes Premium ⚡
+                Ver Planes Premium <i className="fa-solid fa-bolt"></i>
               </button>
             </div>
           )}
         </div>
       )}
-
-      <HardGateModal 
-        isOpen={modalOpen} 
-        onSuccess={() => setModalOpen(false)} 
-      />
 
       <UpsellModal
         isOpen={upsellOpen}

@@ -97,7 +97,7 @@ export const PlansPage: React.FC = () => {
           const token = localStorage.getItem('token') || '';
           login(updatedProfile, token);
 
-          setSuccessMessage('¡Pago Procesado con Éxito! Tu cuenta ha sido actualizada a Plan Premium. 🎉');
+           setSuccessMessage('¡Pago Procesado con Éxito! Tu cuenta ha sido actualizada a Plan Premium. <i className="fa-solid fa-square-check"></i>');
         } else {
           setErrorMessage(response.message || 'Error al procesar la simulación de suscripción.');
         }
@@ -160,11 +160,11 @@ export const PlansPage: React.FC = () => {
 
               <div className="plan-limits">
                 <div className="limit-item">
-                  <span className="limit-icon">👉</span>
+                  <span className="limit-icon"><i className="fa-solid fa-hand-point-right"></i></span>
                   <span>{plan.swipes}</span>
                 </div>
                 <div className="limit-item">
-                  <span className="limit-icon">🤝</span>
+                  <span className="limit-icon"><i className="fa-solid fa-handshake"></i></span>
                   <span>{plan.matches}</span>
                 </div>
               </div>
@@ -172,7 +172,7 @@ export const PlansPage: React.FC = () => {
               <ul className="plan-features">
                 {plan.features.map((feature, idx) => (
                   <li key={idx}>
-                    <span className="feature-check">✓</span>
+                     <span className="feature-check"><i className="fa-solid fa-check"></i></span>
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -187,7 +187,7 @@ export const PlansPage: React.FC = () => {
                   {loadingPlanId === plan.id ? (
                     <span className="spinner">Procesando...</span>
                   ) : isUserCurrent ? (
-                    plan.id === 'free' ? 'Plan Activo ✓' : 'Cancelar Suscripción ❌'
+                    plan.id === 'free' ? <><>Plan Activo</> <i className="fa-solid fa-circle-check"></i></> : <><>Cancelar Suscripción</> <i className="fa-solid fa-circle-xmark"></i></>
                   ) : (
                     `Suscribirse al plan`
                   )}

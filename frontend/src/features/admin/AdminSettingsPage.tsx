@@ -145,13 +145,13 @@ export const AdminSettingsPage: React.FC = () => {
           className={`tab-btn ${activeTab === 'global' ? 'active' : ''}`}
           onClick={() => setActiveTab('global')}
         >
-          ⚙️ Ajustes Globales
+          <i className="fa-solid fa-gears"></i> Ajustes Globales
         </button>
         <button 
           className={`tab-btn ${activeTab === 'tags' ? 'active' : ''}`}
           onClick={() => setActiveTab('tags')}
         >
-          🏷️ Catálogo de Gustos
+          <i className="fa-solid fa-tags"></i> Catálogo de Gustos
         </button>
       </div>
 
@@ -293,7 +293,7 @@ export const AdminSettingsPage: React.FC = () => {
                 className="add-btn" 
                 disabled={createTagMutation.isPending}
               >
-                {createTagMutation.isPending ? 'Agregando...' : '➕ Agregar'}
+                {createTagMutation.isPending ? 'Agregando...' : <><i className="fa-solid fa-plus"></i> Agregar</>}
               </button>
             </form>
 
@@ -312,14 +312,14 @@ export const AdminSettingsPage: React.FC = () => {
                         className={`status-toggle-btn ${tag.isActive ? 'deactivate' : 'activate'}`}
                         title={tag.isActive ? 'Desactivar' : 'Activar'}
                       >
-                        {tag.isActive ? '🟢 Activo' : '🔴 Inactivo'}
+                        {tag.isActive ? <><i className="fa-solid fa-circle-check" style={{ color: '#4caf50' }}></i> Activo</> : <><i className="fa-solid fa-circle-xmark" style={{ color: '#f44336' }}></i> Inactivo</>}
                       </button>
                       <button 
                         onClick={() => handleDeleteTag(tag.id)} 
                         className="delete-tag-btn"
                         title="Eliminar permanentemente"
                       >
-                        🗑️
+                        <i className="fa-solid fa-trash-can"></i>
                       </button>
                     </div>
                   </div>

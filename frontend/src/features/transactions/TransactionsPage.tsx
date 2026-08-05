@@ -291,7 +291,7 @@ export const TransactionsPage: React.FC = () => {
           </div>
         ) : checkoutSuccess ? (
           <div className="checkout-success-screen">
-            <span className="success-badge-icon">🎉</span>
+             <span className="success-badge-icon"><i className="fa-solid fa-circle-check" style={{ color: '#4caf50' }}></i></span>
             <h3>¡Pre-autorización Completada!</h3>
             <p>Los fondos del Fee de intercambio <strong>(${selectedTx.feeAmount.toLocaleString()} CLP)</strong> han sido retenidos en tu cuenta.</p>
             <div className="checkout-summary-box">
@@ -301,7 +301,7 @@ export const TransactionsPage: React.FC = () => {
               </div>
               <div className="summary-row">
                 <span>Estado del Pago:</span>
-                <span className="badge-hold">PAGO RETENIDO (HOLD) 🔒</span>
+                 <span className="badge-hold">PAGO RETENIDO (HOLD) <i className="fa-solid fa-lock"></i></span>
               </div>
               <div className="summary-row">
                 <span>Código Transacción:</span>
@@ -321,7 +321,7 @@ export const TransactionsPage: React.FC = () => {
                   {selectedTx.bookImageUrl ? (
                     <img src={selectedTx.bookImageUrl} alt={selectedTx.bookTitle} />
                   ) : (
-                    <span>📖</span>
+                     <span><i className="fa-solid fa-book"></i></span>
                   )}
                 </div>
                 <div>
@@ -344,7 +344,7 @@ export const TransactionsPage: React.FC = () => {
 
               {selectedTx.isCrossBorder && (
                 <div className="checkout-alert-geo">
-                  <strong>⚠️ Envío Internacional Detectado</strong>
+                   <strong><i className="fa-solid fa-triangle-exclamation" style={{ color: '#ffb703' }}></i> Envío Internacional Detectado</strong>
                   <p>El propietario del libro reside en un país diferente. Los costos logísticos internacionales se coordinan por separado y son elevados.</p>
                   <div className="checkout-geo-accept-container">
                     <label className="checkout-geo-accept-label">
@@ -370,14 +370,14 @@ export const TransactionsPage: React.FC = () => {
                   className={`method-tab ${paymentMethod === 'card' ? 'active' : ''}`}
                   onClick={() => setPaymentMethod('card')}
                 >
-                  💳 Tarjeta de Crédito (Mercado Pago)
+                   <i className="fa-solid fa-credit-card"></i> Tarjeta de Crédito (Mercado Pago)
                 </button>
                 <button
                   type="button"
                   className={`method-tab ${paymentMethod === 'webpay' ? 'active' : ''}`}
                   onClick={() => setPaymentMethod('webpay')}
                 >
-                  🇨🇱 Webpay Plus (Transbank)
+                   <i className="fa-solid fa-credit-card"></i> Webpay Plus (Transbank)
                 </button>
               </div>
 
@@ -438,7 +438,7 @@ export const TransactionsPage: React.FC = () => {
                     className="confirm-checkout-btn font-heading" 
                     disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
                   >
-                    {checkoutLoading ? 'Procesando Hold...' : `Retener $${selectedTx.feeAmount.toLocaleString()} CLP 🔒`}
+                     {checkoutLoading ? 'Procesando Hold...' : `Retener $${selectedTx.feeAmount.toLocaleString()} CLP `}<i className="fa-solid fa-lock"></i>
                   </button>
                 </form>
               ) : (
@@ -450,7 +450,7 @@ export const TransactionsPage: React.FC = () => {
                     onClick={handleWebpayStart}
                     disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
                   >
-                    {checkoutLoading ? 'Iniciando Webpay...' : 'Pagar con Webpay Plus Diferido 🇨🇱'}
+                     {checkoutLoading ? 'Iniciando Webpay...' : <><>Pagar con Webpay Plus Diferido</> <i className="fa-solid fa-credit-card"></i></>}
                   </button>
                 </div>
               )}
@@ -469,7 +469,7 @@ export const TransactionsPage: React.FC = () => {
           <button className="back-to-matches-btn" onClick={() => { setLogisticsTx(null); setLogisticsError(null); }}>
             ← Volver a mis matches
           </button>
-          <h2>Selección de Logística de Entrega 📦</h2>
+           <h2>Selección de Logística de Entrega <i className="fa-solid fa-box-open"></i></h2>
           <p>Configura el método de envío o entrega para concretar el intercambio del libro.</p>
         </div>
 
@@ -481,7 +481,7 @@ export const TransactionsPage: React.FC = () => {
                 {logisticsTx.bookImageUrl ? (
                   <img src={logisticsTx.bookImageUrl} alt={logisticsTx.bookTitle} />
                 ) : (
-                  <span>📖</span>
+                   <span><i className="fa-solid fa-book"></i></span>
                 )}
               </div>
               <div>
@@ -492,7 +492,7 @@ export const TransactionsPage: React.FC = () => {
             </div>
             {logisticsTx.isCrossBorder && (
               <div className="checkout-alert-geo">
-                <strong>⚠️ Envío Internacional Requerido</strong>
+                 <strong><i className="fa-solid fa-triangle-exclamation" style={{ color: '#ffb703' }}></i> Envío Internacional Requerido</strong>
                 <p>Recuerda coordinar el despacho directo con el otro usuario. Los costos aduaneros y de transportistas son a convenir.</p>
               </div>
             )}
@@ -524,7 +524,7 @@ export const TransactionsPage: React.FC = () => {
 
               {selectedMethod === 'Presencial' && (
                 <div className="checkout-alert-geo" style={{ borderColor: 'rgba(78, 168, 222, 0.2)', background: 'rgba(78, 168, 222, 0.05)' }}>
-                  <strong style={{ color: 'var(--accent-secondary)' }}>🗓️ Coordinación en Tienda Física</strong>
+                   <strong style={{ color: 'var(--accent-secondary)' }}><i className="fa-solid fa-calendar-check"></i> Coordinación en Tienda Física</strong>
                   <p style={{ marginTop: '0.3rem' }}>El intercambio se coordinará en la tienda asociada de Bookmachs. No requiere costos adicionales de transportistas externos ni comprobantes de envío.</p>
                 </div>
               )}
@@ -532,7 +532,7 @@ export const TransactionsPage: React.FC = () => {
               {selectedMethod === 'Bodega' && (
                 <div className="method-fields-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginTop: '1rem' }}>
                   <div className="checkout-alert-geo" style={{ borderColor: 'rgba(78, 168, 222, 0.2)', background: 'rgba(78, 168, 222, 0.05)' }}>
-                    <strong style={{ color: 'var(--accent-secondary)' }}>📦 Despacho a Bodega de Bookmachs</strong>
+                     <strong style={{ color: 'var(--accent-secondary)' }}><i className="fa-solid fa-box"></i> Despacho a Bodega de Bookmachs</strong>
                     <p style={{ marginTop: '0.3rem' }}>Debes despachar tu libro a nuestra bodega principal. Bookmachs validará su estado y enviará el libro del match de vuelta. Ingresa abajo tu Tracking ID.</p>
                   </div>
                   <div className="form-field">
@@ -551,7 +551,7 @@ export const TransactionsPage: React.FC = () => {
               {selectedMethod === 'P2P' && (
                 <div className="method-fields-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginTop: '1rem' }}>
                   <div className="checkout-alert-geo" style={{ borderColor: 'rgba(78, 168, 222, 0.2)', background: 'rgba(78, 168, 222, 0.05)' }}>
-                    <strong style={{ color: 'var(--accent-secondary)' }}>🤝 Envío Directo (Peer-to-Peer)</strong>
+                     <strong style={{ color: 'var(--accent-secondary)' }}><i className="fa-solid fa-handshake"></i> Envío Directo (Peer-to-Peer)</strong>
                     <p style={{ marginTop: '0.3rem' }}>Despacha tu libro directamente al domicilio del otro lector. Recuerda que debes proveer el Tracking ID oficial del courier elegido.</p>
                   </div>
                   <div className="form-field">
@@ -570,7 +570,7 @@ export const TransactionsPage: React.FC = () => {
               {selectedMethod === 'Donacion' && (
                 <div className="method-fields-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginTop: '1rem' }}>
                   <div className="checkout-alert-geo" style={{ borderColor: 'rgba(78, 168, 222, 0.2)', background: 'rgba(78, 168, 222, 0.05)' }}>
-                    <strong style={{ color: 'var(--accent-secondary)' }}>🌳 Donación Comunitaria</strong>
+                     <strong style={{ color: 'var(--accent-secondary)' }}><i className="fa-solid fa-tree"></i> Donación Comunitaria</strong>
                     <p style={{ marginTop: '0.3rem' }}>Dona tu libro físico en un punto o contenedor de reciclaje cultural autorizado. Debes subir una fotografía del libro depositado como evidencia.</p>
                   </div>
                   <div className="form-field">
@@ -585,7 +585,7 @@ export const TransactionsPage: React.FC = () => {
                     {evidencePhoto && (
                       <div className="photo-preview-box" style={{ marginTop: '0.8rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <img src={evidencePhoto} alt="Evidencia" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
-                        <span style={{ color: 'var(--accent-success)', fontSize: '0.8rem', fontWeight: 'bold' }}>✓ Evidencia cargada</span>
+                         <span style={{ color: 'var(--accent-success)', fontSize: '0.8rem', fontWeight: 'bold' }}><i className="fa-solid fa-circle-check"></i> Evidencia cargada</span>
                       </div>
                     )}
                   </div>

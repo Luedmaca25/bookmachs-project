@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
-import { HardGateModal } from '../authentication/components/HardGateModal';
 
 interface UserImpactMetrics {
   userBooksExchanged: number;
@@ -28,11 +28,11 @@ interface GlobalExchangeHistoryItem {
 }
 
 export const SocialPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user, isAuthenticated, login } = useAuthStore();
   const [metrics, setMetrics] = useState<UserImpactMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Estados de Historial Global (Tarea 40)
   const [history, setHistory] = useState<GlobalExchangeHistoryItem[]>([]);
@@ -101,12 +101,6 @@ export const SocialPage: React.FC = () => {
       setMetrics(null);
     }
   }, [isAuthenticated]);
-
-  const handleLoginSuccess = () => {
-    setIsAuthModalOpen(false);
-    loadData();
-    loadHistory();
-  };
 
   const handleOpenReviewModal = (eventId: string, bookTitle: string) => {
     setSelectedEventId(eventId);
@@ -192,7 +186,7 @@ export const SocialPage: React.FC = () => {
           )}
         </div>
         <p className="forest-congrats-text">
-          🌳 Has cultivado <strong>{treesCount}</strong> {treesCount === 1 ? 'árbol' : 'árboles'} en tu bosque Bookmachs. ¡Sigue así!
+          <i className="fa-solid fa-tree"></i> Has cultivado <strong>{treesCount}</strong> {treesCount === 1 ? 'árbol' : 'árboles'} en tu bosque Bookmachs. ¡Sigue así!
         </p>
       </div>
     );
@@ -202,7 +196,7 @@ export const SocialPage: React.FC = () => {
   const renderHistorySection = () => {
     return (
       <div className="global-history-section">
-        <h2>Historial de Intercambios Recientes 🕒</h2>
+        <h2>Historial de Intercambios Recientes <i className="fa-solid fa-clock"></i></h2>
         <p className="history-subtitle">Conoce los últimos libros que han encontrado un nuevo hogar en nuestra red.</p>
         
         {loadingHistory ? (
@@ -212,12 +206,12 @@ export const SocialPage: React.FC = () => {
           </div>
         ) : historyError ? (
           <div className="history-error">
-            <p>⚠️ {historyError}</p>
+             <p><i className="fa-solid fa-triangle-exclamation" style={{ color: '#ffb703' }}></i> {historyError}</p>
             <button onClick={loadHistory} className="history-retry-btn">Reintentar</button>
           </div>
         ) : history.length === 0 ? (
           <div className="history-empty">
-            <span className="history-empty-icon">📖</span>
+             <span className="history-empty-icon"><i className="fa-solid fa-book"></i></span>
             <p>Aún no se registran transacciones de intercambio completadas.</p>
             <small>¡Sé el primero en iniciar un intercambio de libros!</small>
           </div>
@@ -225,19 +219,19 @@ export const SocialPage: React.FC = () => {
           <div className="history-timeline-list">
             {history.map((item) => {
               // Obtener emoji o icono de método de logística
-              let methodEmoji = '📦';
+              let methodIcon = <i className="fa-solid fa-box"></i>;
               let methodLabel = item.logisticsMethod;
               if (item.logisticsMethod.toLowerCase() === 'presencial') {
-                methodEmoji = '🤝';
+                methodIcon = <i className="fa-solid fa-handshake"></i>;
                 methodLabel = 'Entrega Presencial';
               } else if (item.logisticsMethod.toLowerCase() === 'bodega') {
-                methodEmoji = '🏢';
+                methodIcon = <i className="fa-solid fa-building"></i>;
                 methodLabel = 'Envío a Bodega';
               } else if (item.logisticsMethod.toLowerCase() === 'p2p') {
-                methodEmoji = '📮';
+                methodIcon = <i className="fa-solid fa-envelope"></i>;
                 methodLabel = 'Envío Directo P2P';
               } else if (item.logisticsMethod.toLowerCase() === 'donacion') {
-                methodEmoji = '🎁';
+                methodIcon = <i className="fa-solid fa-gift"></i>;
                 methodLabel = 'Donación';
               }
 
@@ -264,7 +258,7 @@ export const SocialPage: React.FC = () => {
                         (e.target as HTMLImageElement).src = ''; // Ocultar para mostrar fallback
                       }} />
                     ) : (
-                      <div className="timeline-book-placeholder">📖</div>
+                       <div className="timeline-book-placeholder"><i className="fa-solid fa-book"></i></div>
                     )}
                   </div>
                   <div className="timeline-item-content">
@@ -282,7 +276,9 @@ export const SocialPage: React.FC = () => {
                     {item.reviewComment && (
                       <div className="timeline-item-review">
                         <div className="review-stars" title={`Calificación: ${item.reviewRating} estrellas`}>
-                          {'★'.repeat(item.reviewRating || 0)}{'☆'.repeat(5 - (item.reviewRating || 0))}
+                          {[...Array(5)].map((_, i) => (
+                            <i key={i} className={`fa-${i < (item.reviewRating || 0) ? 'solid' : 'regular'} fa-star`}></i>
+                          ))}
                         </div>
                         <p className="review-comment">"{item.reviewComment}"</p>
                       </div>
@@ -291,7 +287,7 @@ export const SocialPage: React.FC = () => {
                     <div className="timeline-item-footer">
                       <div className="footer-left-badges">
                         <span className="timeline-logistics-badge">
-                          {methodEmoji} {methodLabel}
+                           {methodIcon} {methodLabel}
                         </span>
                         
                         {/* Botón para añadir reseña si es participante y no se ha calificado (Tarea 42) */}
@@ -300,12 +296,12 @@ export const SocialPage: React.FC = () => {
                             className="timeline-review-action-btn"
                             onClick={() => handleOpenReviewModal(item.id, item.bookTitle)}
                           >
-                            ✍️ Calificar Entrega
+                             <i className="fa-solid fa-pen-to-square"></i> Calificar Entrega
                           </button>
                         )}
                       </div>
                       
-                      <span className="timeline-date">⏱️ {formattedDate}</span>
+                       <span className="timeline-date"><i className="fa-solid fa-clock"></i> {formattedDate}</span>
                     </div>
                   </div>
                 </div>
@@ -322,14 +318,14 @@ export const SocialPage: React.FC = () => {
     return (
       <div className="social-guest-container">
         <div className="guest-hero-card">
-          <div className="guest-badge-env">🍃 RED CULTURAL ECO-AMIGABLE</div>
+           <div className="guest-badge-env"><i className="fa-solid fa-leaf"></i> RED CULTURAL ECO-AMIGABLE</div>
           <h1>Únete al Impacto Colectivo</h1>
           <p className="guest-description">
             En Bookmachs cada libro intercambiado o donado disminuye la huella de carbono, evita la tala de árboles
             y fomenta la economía circular de la lectura. Registra tu cuenta para ver tu aporte personal.
           </p>
-          <button className="guest-action-btn" onClick={() => setIsAuthModalOpen(true)}>
-            Crear mi Cuenta de Impacto 🚀
+          <button className="guest-action-btn" onClick={() => navigate('/auth')}>
+             Crear mi Cuenta de Impacto <i className="fa-solid fa-rocket"></i>
           </button>
         </div>
 
@@ -340,17 +336,17 @@ export const SocialPage: React.FC = () => {
           
           <div className="info-grid">
             <div className="info-card">
-              <span className="info-icon">📚</span>
+               <span className="info-icon"><i className="fa-solid fa-book"></i></span>
               <h3>Peso del Libro</h3>
               <p>Consideramos un peso estándar promedio de <strong>400 gramos</strong> por cada libro físico rescatado.</p>
             </div>
             <div className="info-card">
-              <span className="info-icon">🍃</span>
+               <span className="info-icon"><i className="fa-solid fa-leaf"></i></span>
               <h3>Emisiones CO₂</h3>
               <p>Reutilizar papel evita emitir <strong>2.71 kg de CO₂</strong> por cada kilogramo de papel que no debe ser producido de cero.</p>
             </div>
             <div className="info-card">
-              <span className="info-icon">🌲</span>
+               <span className="info-icon"><i className="fa-solid fa-tree"></i></span>
               <h3>Absorción de Árboles</h3>
               <p>Un árbol maduro saludable absorbe aproximadamente <strong>22 kg de CO₂</strong> al año de la atmósfera.</p>
             </div>
@@ -359,8 +355,6 @@ export const SocialPage: React.FC = () => {
 
         {/* Historial de Intercambios Global sin restricciones (Tarea 40) */}
         {renderHistorySection()}
-
-        <HardGateModal isOpen={isAuthModalOpen} onSuccess={handleLoginSuccess} />
       </div>
     );
   }
@@ -380,7 +374,7 @@ export const SocialPage: React.FC = () => {
     return (
       <div className="social-error-container">
         <div className="error-card">
-          <h2>⚠️ Error de Carga</h2>
+           <h2><i className="fa-solid fa-triangle-exclamation" style={{ color: '#ffb703' }}></i> Error de Carga</h2>
           <p>{error}</p>
           <button className="retry-btn" onClick={loadData}>Reintentar</button>
         </div>
@@ -408,9 +402,9 @@ export const SocialPage: React.FC = () => {
                 {user.isPremium ? '🏆 Premium' : '⭐ Plan Básico'}
               </span>
             </div>
-            <p className="profile-email">✉️ {user.email}</p>
+             <p className="profile-email"><i className="fa-solid fa-envelope"></i> {user.email}</p>
             <p className="profile-meta">
-              📍 {user.pais} &bull; 🪪 {user.documentoIdentidad || 'Sin documento de identidad'}
+              <i className="fa-solid fa-location-dot"></i> {user.pais} &bull; <i className="fa-solid fa-id-card"></i> {user.documentoIdentidad || 'Sin documento de identidad'}
             </p>
           </div>
         </div>
@@ -420,7 +414,7 @@ export const SocialPage: React.FC = () => {
       {metrics && (
         <>
           <div className="metrics-section-title">
-            <h2>Mi Huella Ecológica Colectiva 🍃</h2>
+             <h2>Mi Huella Ecológica Colectiva <i className="fa-solid fa-leaf"></i></h2>
             <p>Monitoreo en tiempo real de tu aporte ambiental al dar segundas oportunidades a los libros.</p>
           </div>
 
@@ -428,37 +422,37 @@ export const SocialPage: React.FC = () => {
             {/* Tarjeta 1: Libros Salvados */}
             <div className="metric-impact-card">
               <div className="card-glow" style={{ background: 'rgba(255, 209, 102, 0.15)' }}></div>
-              <span className="card-emoji">📚</span>
+               <span className="card-emoji"><i className="fa-solid fa-book-bookmark"></i></span>
               <span className="card-metric-value">{metrics.userTotalBooks}</span>
               <h3 className="card-metric-title">Libros Rescatados</h3>
               <p className="card-metric-desc">Suma total de libros físicos que salvaste.</p>
               <div className="metric-breakdown">
-                <span>🔄 Excl. Intercambios: <strong>{metrics.userBooksExchanged}</strong></span>
-                <span>🎁 Donados: <strong>{metrics.userBooksDonated}</strong></span>
+                <span><i className="fa-solid fa-rotate"></i> Excl. Intercambios: <strong>{metrics.userBooksExchanged}</strong></span>
+                <span><i className="fa-solid fa-gift"></i> Donados: <strong>{metrics.userBooksDonated}</strong></span>
               </div>
             </div>
 
             {/* Tarjeta 2: CO2 Evitado */}
             <div className="metric-impact-card">
               <div className="card-glow" style={{ background: 'rgba(6, 214, 160, 0.15)' }}></div>
-              <span className="card-emoji">🍃</span>
+               <span className="card-emoji"><i className="fa-solid fa-leaf"></i></span>
               <span className="card-metric-value">{metrics.userCo2AvoidedKg} <small>kg</small></span>
               <h3 className="card-metric-title">Huella de CO₂ Evitada</h3>
               <p className="card-metric-desc">Emisiones que no ingresaron a la atmósfera.</p>
               <div className="metric-extra">
-                <span>⚡ Equivalente a salvar {Math.round(metrics.userTotalBooks * 0.4 * 10) / 10} kg de papel</span>
+                <span><i className="fa-solid fa-bolt"></i> Equivalente a salvar {Math.round(metrics.userTotalBooks * 0.4 * 10) / 10} kg de papel</span>
               </div>
             </div>
 
             {/* Tarjeta 3: Árboles Equivalentes */}
             <div className="metric-impact-card">
               <div className="card-glow" style={{ background: 'rgba(27, 154, 170, 0.15)' }}></div>
-              <span className="card-emoji">🌲</span>
+               <span className="card-emoji"><i className="fa-solid fa-tree"></i></span>
               <span className="card-metric-value">{metrics.userEquivalentTrees}</span>
               <h3 className="card-metric-title">Bosque Personal</h3>
               <p className="card-metric-desc">Árboles maduros salvados en base anual.</p>
               <div className="metric-extra">
-                <span>🌱 {metrics.userEquivalentTrees >= 1 ? '¡Tu bosque está floreciendo!' : 'Sembrando el mañana.'}</span>
+                <span><i className="fa-solid fa-seedling"></i> {metrics.userEquivalentTrees >= 1 ? '¡Tu bosque está floreciendo!' : 'Sembrando el mañana.'}</span>
               </div>
             </div>
           </div>
@@ -553,22 +547,22 @@ export const SocialPage: React.FC = () => {
           <div className="community-global-impact-card">
             <div className="community-glow"></div>
             <div className="community-impact-header">
-              <h2>🌎 El Aporte Global de Bookmachs</h2>
+               <h2><i className="fa-solid fa-earth-americas"></i> El Aporte Global de Bookmachs</h2>
               <p>Métricas consolidadas de la comunidad total de lectores ecológicos en la plataforma.</p>
             </div>
             <div className="community-stats-row">
               <div className="comm-stat-box">
-                <span className="comm-stat-icon">📚</span>
+                <span className="comm-stat-icon"><i className="fa-solid fa-book-bookmark"></i></span>
                 <span className="comm-stat-number">{metrics.communityTotalBooks}</span>
                 <span className="comm-stat-title">Libros Circulados</span>
               </div>
               <div className="comm-stat-box">
-                <span className="comm-stat-icon">🍃</span>
+                <span className="comm-stat-icon"><i className="fa-solid fa-leaf"></i></span>
                 <span className="comm-stat-number">{metrics.communityCo2AvoidedKg} <small>kg</small></span>
                 <span className="comm-stat-title">Emisiones CO₂ Salvadas</span>
               </div>
               <div className="comm-stat-box">
-                <span className="comm-stat-icon">🌲</span>
+                <span className="comm-stat-icon"><i className="fa-solid fa-tree"></i></span>
                 <span className="comm-stat-number">{metrics.communityEquivalentTrees}</span>
                 <span className="comm-stat-title">Bosque Comunitario (Árboles)</span>
               </div>
@@ -585,7 +579,7 @@ export const SocialPage: React.FC = () => {
         <div className="modal-overlay">
           <div className="modal-card">
             <div className="modal-header">
-              <h2>✍️ Escribir Reseña / Nota</h2>
+              <h2><i className="fa-solid fa-pen-to-square"></i> Escribir Reseña / Nota</h2>
               <p>Valora tu experiencia con el libro <strong>"{selectedBookTitle}"</strong></p>
             </div>
             

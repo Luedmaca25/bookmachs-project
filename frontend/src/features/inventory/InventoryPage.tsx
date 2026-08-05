@@ -123,7 +123,7 @@ export const InventoryPage: React.FC = () => {
 
       {showForm ? (
         <div className="inventory-form-card">
-          <h2>📖 Detalles del Libro</h2>
+          <h2><i className="fa-solid fa-book-open"></i> Detalles del Libro</h2>
           <p>Completa la ficha técnica para que otros usuarios puedan descubrir tu libro.</p>
 
           <form onSubmit={handleSubmit} className="inventory-form">
@@ -190,7 +190,7 @@ export const InventoryPage: React.FC = () => {
                         <img src={imagePreview} alt="Vista previa de portada" className="cover-preview-img" />
                       ) : (
                         <div className="file-upload-placeholder">
-                          <span className="placeholder-icon">📸</span>
+                          <span className="placeholder-icon"><i className="fa-solid fa-camera" style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--neon)' }}></i></span>
                           <p>Seleccionar portada del libro</p>
                         </div>
                       )}
@@ -213,7 +213,7 @@ export const InventoryPage: React.FC = () => {
             <div className="inventory-loading">Cargando tus libros...</div>
           ) : books.length === 0 ? (
             <div className="inventory-empty-state">
-              <div className="empty-state-icon">📚</div>
+              <div className="empty-state-icon"><i className="fa-solid fa-book-bookmark"></i></div>
               <h3>Tu libreta está vacía</h3>
               <p>Comienza subiendo tus libros para poder participar en la comunidad de intercambios de Bookmachs.</p>
               <button className="add-book-trigger-btn font-heading" onClick={() => setShowForm(true)}>
@@ -228,7 +228,7 @@ export const InventoryPage: React.FC = () => {
                     {book.imageUrl ? (
                       <img src={book.imageUrl} alt={book.title} />
                     ) : (
-                      <div className="no-cover-placeholder">📖</div>
+                      <div className="no-cover-placeholder"><i className="fa-solid fa-book"></i></div>
                     )}
                     <span className={`condition-badge ${book.condition.toLowerCase()}`}>
                       {book.condition}

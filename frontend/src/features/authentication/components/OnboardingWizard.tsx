@@ -137,7 +137,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
 
       {step === 1 && (
         <div className="wizard-step-card">
-          <h2>📝 Completa tu perfil</h2>
+          <h2><i className="fa-solid fa-user-pen"></i> Completa tu perfil</h2>
           <p>Para habilitar los intercambios seguros, necesitamos confirmar tu identidad.</p>
           
           <form onSubmit={handleStep1Submit} className="wizard-form">
@@ -164,7 +164,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
             </div>
 
             <button type="submit" className="wizard-btn-primary" disabled={loading}>
-              {loading ? 'Guardando...' : 'Siguiente Paso ➡️'}
+              {loading ? 'Guardando...' : <><>Siguiente Paso</> <i className="fa-solid fa-arrow-right-long"></i></>}
             </button>
           </form>
         </div>
@@ -172,7 +172,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
 
       {step === 2 && (
         <div className="wizard-step-card">
-          <h2>📚 ¿Cuáles son tus intereses de lectura?</h2>
+          <h2><i className="fa-solid fa-book-open-reader"></i> ¿Cuáles son tus intereses de lectura?</h2>
           <p>Selecciona las categorías que más te gusten. Esto afinará el algoritmo de IA en vivo.</p>
 
           {loadingTags ? (
@@ -189,7 +189,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                       className={`wizard-tag-item ${isSelected ? 'selected' : ''}`}
                       onClick={() => handleTagToggle(tag.name)}
                     >
-                      <span className="tag-icon">{isSelected ? '✓' : '📖'}</span>
+                      <span className="tag-icon">{isSelected ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-book"></i>}</span>
                       <span className="tag-label">{tag.name}</span>
                     </button>
                   );
@@ -203,7 +203,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   className="wizard-btn-primary"
                   disabled={loading || selectedTags.length === 0}
                 >
-                  {loading ? 'Guardando...' : 'Finalizar y Empezar a Swipear 🎉'}
+                  {loading ? 'Guardando...' : <><>Finalizar y Empezar a Swipear</> <i className="fa-solid fa-rocket"></i></>}
                 </button>
               </div>
             </>

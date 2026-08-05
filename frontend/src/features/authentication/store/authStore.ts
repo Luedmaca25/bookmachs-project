@@ -8,6 +8,8 @@ interface User {
   pais: string;
   role: string;
   isPremium: boolean;
+  subscriptionPlan?: string;
+  preferences?: string[];
 }
 
 interface AuthState {

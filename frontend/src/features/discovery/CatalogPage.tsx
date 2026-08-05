@@ -165,12 +165,12 @@ export const CatalogPage: React.FC = () => {
     return (
       <div className="catalog-page-container">
         <div className="catalog-header">
-          <h1>Catálogo Avanzado 💎</h1>
+           <h1>Catálogo Avanzado <i className="fa-solid fa-gem"></i></h1>
           <p>Explora y reserva libros directamente de forma personalizada.</p>
         </div>
 
         <div className="catalog-paywall">
-          <span className="paywall-icon">⭐</span>
+           <span className="paywall-icon"><i className="fa-solid fa-star" style={{ color: '#ffb703' }}></i></span>
           <h2>Acceso Exclusivo Premium</h2>
           <p>
             El catálogo avanzado en grilla y la búsqueda directa con filtros de categorías, condiciones y fecha de ingreso son beneficios exclusivos de la membresía Premium.
@@ -178,29 +178,29 @@ export const CatalogPage: React.FC = () => {
 
           <ul className="paywall-benefits-list">
             <li>
-              <span className="benefit-bullet">✓</span>
+              <span className="benefit-bullet"><i className="fa-solid fa-check"></i></span>
               <span>Búsqueda directa por título, autor o palabras clave.</span>
             </li>
             <li>
-              <span className="benefit-bullet">✓</span>
+              <span className="benefit-bullet"><i className="fa-solid fa-check"></i></span>
               <span>Grilla interactiva con múltiples libros al mismo tiempo.</span>
             </li>
             <li>
-              <span className="benefit-bullet">✓</span>
+              <span className="benefit-bullet"><i className="fa-solid fa-check"></i></span>
               <span>Filtro de géneros y estado de conservación.</span>
             </li>
             <li>
-              <span className="benefit-bullet">✓</span>
+              <span className="benefit-bullet"><i className="fa-solid fa-check"></i></span>
               <span>Visualización y alertas de libros recién llegados.</span>
             </li>
             <li>
-              <span className="benefit-bullet">✓</span>
+              <span className="benefit-bullet"><i className="fa-solid fa-check"></i></span>
               <span>Reserva de stock en un clic por hasta 48 horas.</span>
             </li>
           </ul>
 
           <button className="paywall-cta-btn font-heading" onClick={() => navigate('/planes')}>
-            Ver Planes y Membresías ⚡
+             Ver Planes y Membresías <i className="fa-solid fa-bolt"></i>
           </button>
         </div>
       </div>
@@ -210,7 +210,7 @@ export const CatalogPage: React.FC = () => {
   return (
     <div className="catalog-page-container">
       <div className="catalog-header">
-        <h1>Catálogo Avanzado 💎</h1>
+         <h1>Catálogo Avanzado <i className="fa-solid fa-gem"></i></h1>
         <p>Busca y reserva directamente entre todos los libros listados en la plataforma.</p>
       </div>
 
@@ -265,9 +265,9 @@ export const CatalogPage: React.FC = () => {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="createdAt">Recién Llegados 🆕</option>
-            <option value="title">Título (A-Z) 🔤</option>
-            <option value="baseValue">Valor Base (Menor a Mayor) 💰</option>
+             <option value="createdAt">Recién Llegados <i className="fa-solid fa-clock"></i></option>
+            <option value="title">Título (A-Z) <i className="fa-solid fa-arrow-down-a-z"></i></option>
+            <option value="baseValue">Valor Base (Menor a Mayor) <i className="fa-solid fa-coins"></i></option>
           </select>
         </div>
 
@@ -279,7 +279,7 @@ export const CatalogPage: React.FC = () => {
             onClick={() => setViewMode('grid')}
             title="Vista de Grilla"
           >
-            🎴 Grilla
+             <i className="fa-solid fa-table-cells"></i> Grilla
           </button>
           <button
             type="button"
@@ -287,7 +287,7 @@ export const CatalogPage: React.FC = () => {
             onClick={() => setViewMode('list')}
             title="Vista de Lista"
           >
-            📝 Lista
+             <i className="fa-solid fa-list"></i> Lista
           </button>
         </div>
       </div>
@@ -299,7 +299,7 @@ export const CatalogPage: React.FC = () => {
         <div className="swipe-error-state">{error}</div>
       ) : books.length === 0 ? (
         <div className="swipe-empty-state">
-          <span className="empty-icon">🔍</span>
+           <span className="empty-icon"><i className="fa-solid fa-magnifying-glass"></i></span>
           <h3>No se encontraron libros coincidentes</h3>
           <p>Intenta cambiar los términos de búsqueda o limpiar los filtros seleccionados.</p>
         </div>
@@ -309,13 +309,13 @@ export const CatalogPage: React.FC = () => {
           {books.map((book) => (
             <div key={book.id} className="catalog-card">
               {isNewlyArrived(book.createdAt) && (
-                <span className="new-arrival-badge">✨ Recién Llegado</span>
+                <span className="new-arrival-badge"><i className="fa-solid fa-star" style={{ color: '#ffb703' }}></i> Recién Llegado</span>
               )}
               <div className="catalog-card-cover">
                 {book.imageUrl ? (
                   <img src={book.imageUrl} alt={book.title} />
                 ) : (
-                  <span className="no-cover-placeholder">📖</span>
+                  <span className="no-cover-placeholder"><i className="fa-solid fa-book"></i></span>
                 )}
                 <span className={`condition-badge ${book.condition.toLowerCase()}`}>
                   {book.condition}
@@ -334,7 +334,7 @@ export const CatalogPage: React.FC = () => {
                     className="catalog-reserve-btn"
                     onClick={() => handleReserveBook(book.id, book.title)}
                   >
-                    Reservar 🔒
+                    Reservar <i className="fa-solid fa-lock"></i>
                   </button>
                 </div>
               </div>
@@ -348,12 +348,12 @@ export const CatalogPage: React.FC = () => {
             <div key={book.id} className="catalog-list-item">
               <div className="catalog-list-item-cover">
                 {isNewlyArrived(book.createdAt) && (
-                  <span className="new-arrival-badge">✨ Recién Llegado</span>
+                  <span className="new-arrival-badge"><i className="fa-solid fa-star" style={{ color: '#ffb703' }}></i> Recién Llegado</span>
                 )}
                 {book.imageUrl ? (
                   <img src={book.imageUrl} alt={book.title} />
                 ) : (
-                  <span className="no-cover-placeholder">📖</span>
+                  <span className="no-cover-placeholder"><i className="fa-solid fa-book"></i></span>
                 )}
               </div>
               <div className="catalog-list-item-info">
@@ -374,7 +374,7 @@ export const CatalogPage: React.FC = () => {
                     className="catalog-reserve-btn"
                     onClick={() => handleReserveBook(book.id, book.title)}
                   >
-                    Reservar 🔒
+                    Reservar <i className="fa-solid fa-lock"></i>
                   </button>
                 </div>
               </div>
@@ -391,7 +391,7 @@ export const CatalogPage: React.FC = () => {
             disabled={pageNumber === 1}
             onClick={() => setPageNumber((prev) => Math.max(prev - 1, 1))}
           >
-            ◀ Anterior
+             <i className="fa-solid fa-caret-left"></i> Anterior
           </button>
           <span className="pagination-info">
             Página {pageNumber} de {totalPages} ({totalCount} libros)
@@ -401,7 +401,7 @@ export const CatalogPage: React.FC = () => {
             disabled={pageNumber === totalPages}
             onClick={() => setPageNumber((prev) => Math.min(prev + 1, totalPages))}
           >
-            Siguiente ▶
+             Siguiente <i className="fa-solid fa-caret-right"></i>
           </button>
         </div>
       )}

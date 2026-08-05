@@ -27,7 +27,7 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
       const gWindow = window as any;
       if (gWindow.google) {
         gWindow.google.accounts.id.initialize({
-          client_id: '1234567890-googleclientidplaceholder.apps.googleusercontent.com',
+          client_id: '417947069163-edg96tr3fgveliu5q7qq23g1kdlc98j9.apps.googleusercontent.com',
           callback: async (response: any) => {
             setLoading(true);
             setError(null);
