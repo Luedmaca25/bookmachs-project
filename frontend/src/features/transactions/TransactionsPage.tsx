@@ -33,11 +33,6 @@ export const TransactionsPage: React.FC = () => {
 
   // Estado para el Checkout
   const [selectedTx, setSelectedTx] = useState<MatchTransaction | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'webpay'>('card');
-  const [cardName, setCardName] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -120,54 +115,6 @@ export const TransactionsPage: React.FC = () => {
       confirmWebpay();
     }
   }, [webpayTokenWs]);
-
-  // Procesar pago con tarjeta (Mercado Pago)
-  const handleCardSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTx) return;
-
-    // Validación básica de campos
-    if (!cardName || cardNumber.length < 15 || cardExpiry.length < 4 || cardCvv.length < 3) {
-      setCheckoutError('Por favor ingresa todos los campos de tarjeta válidos.');
-      return;
-    }
-
-    if (selectedTx.isCrossBorder && !acceptCrossBorder) {
-      setCheckoutError('Debe aceptar expresamente la confirmación por el costo de envío internacional.');
-      return;
-    }
-
-    setCheckoutLoading(true);
-    setCheckoutError(null);
-
-    try {
-      const payload = {
-        matchTransactionId: selectedTx.id,
-        cardToken: `tok_card_mock_${paymentMethod}_${cardCvv}`,
-        acceptCrossBorder: acceptCrossBorder
-      };
-
-      const response = await apiClient.post<any>('/transactions/checkout-card', payload);
-      
-      if (response.success) {
-        setCheckoutSuccess(true);
-        loadMatches();
-      } else {
-        setCheckoutError(response.message || 'No se pudo autorizar la retención en tu tarjeta.');
-      }
-    } catch (err: any) {
-      console.error('Error in card checkout:', err);
-      // Intentar extraer el mensaje de error del backend
-      let msg = 'Error de red al procesar el pago.';
-      try {
-        const parsed = JSON.parse(err.message);
-        if (parsed && parsed.message) msg = parsed.message;
-      } catch {}
-      setCheckoutError(msg);
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
 
   // Procesar inicio de Webpay
   const handleWebpayStart = async () => {
@@ -362,98 +309,33 @@ export const TransactionsPage: React.FC = () => {
             </div>
 
             <div className="checkout-payment-card">
-              <h3>Elige tu Método de Pago</h3>
+              <h3>Método de Pago</h3>
               
-              <div className="payment-methods-tabs">
+              <div className="checkout-webpay-box" style={{ marginTop: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', justifyContent: 'center'}}>
+                  <img 
+                    src="https://www.ecolectura.cl/Content/Images/webpay/1.Webpay_FN_300px.png" 
+                    alt="Webpay Plus Transbank" 
+                    style={{ height: '50px', objectFit: 'contain' }}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                  {/* <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Webpay Plus (Transbank Chile)</span> */}
+                </div>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                  Serás redirigido de forma segura al portal oficial de Transbank para realizar el pago de la tarifa de intercambio.
+                </p>
+
+                {checkoutError && <div className="checkout-error-banner" style={{ marginBottom: '1rem' }}>{checkoutError}</div>}
+
                 <button
                   type="button"
-                  className={`method-tab ${paymentMethod === 'card' ? 'active' : ''}`}
-                  onClick={() => setPaymentMethod('card')}
+                  className="confirm-checkout-btn webpay-btn font-heading"
+                  onClick={handleWebpayStart}
+                  disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
                 >
-                   <i className="fa-solid fa-credit-card"></i> Tarjeta de Crédito (Mercado Pago)
-                </button>
-                <button
-                  type="button"
-                  className={`method-tab ${paymentMethod === 'webpay' ? 'active' : ''}`}
-                  onClick={() => setPaymentMethod('webpay')}
-                >
-                   <i className="fa-solid fa-credit-card"></i> Webpay Plus (Transbank)
+                  {checkoutLoading ? 'Conectando con Webpay...' : <><>Pagar con Webpay Plus</> <i className="fa-solid fa-lock" style={{ marginLeft: '0.5rem' }}></i></>}
                 </button>
               </div>
-
-              {checkoutError && <div className="checkout-error-banner">{checkoutError}</div>}
-
-              {paymentMethod === 'card' ? (
-                <form onSubmit={handleCardSubmit} className="checkout-card-form">
-                  <div className="form-field">
-                    <label>Nombre del Titular</label>
-                    <input
-                      type="text"
-                      placeholder="Ej. Luis Pérez"
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-field">
-                    <label>Número de Tarjeta</label>
-                    <input
-                      type="text"
-                      placeholder="XXXX XXXX XXXX XXXX"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      maxLength={16}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-field">
-                      <label>Vencimiento (MM/AA)</label>
-                      <input
-                        type="text"
-                        placeholder="MM/AA"
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        maxLength={5}
-                        required
-                      />
-                    </div>
-                    <div className="form-field">
-                      <label>CVV / CVC</label>
-                      <input
-                        type="password"
-                        placeholder="123"
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value)}
-                        maxLength={4}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <button 
-                    type="submit" 
-                    className="confirm-checkout-btn font-heading" 
-                    disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
-                  >
-                     {checkoutLoading ? 'Procesando Hold...' : `Retener $${selectedTx.feeAmount.toLocaleString()} CLP `}<i className="fa-solid fa-lock"></i>
-                  </button>
-                </form>
-              ) : (
-                <div className="checkout-webpay-box">
-                  <p>Serás redirigido de forma segura a Transbank Webpay Plus para autorizar la retención.</p>
-                  <button
-                    type="button"
-                    className="confirm-checkout-btn webpay-btn font-heading"
-                    onClick={handleWebpayStart}
-                    disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
-                  >
-                     {checkoutLoading ? 'Iniciando Webpay...' : <><>Pagar con Webpay Plus Diferido</> <i className="fa-solid fa-credit-card"></i></>}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         )}

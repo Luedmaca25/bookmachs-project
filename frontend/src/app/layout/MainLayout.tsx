@@ -32,7 +32,7 @@ export const MainLayout: React.FC = () => {
           {isAuthenticated && user && (
             <>
               <Link to="/catalogo" className="nav-link">Catálogo <i className="fa-solid fa-gem" style={{ fontSize: '0.85em' }}></i></Link>
-              <Link to="/libreta" className="nav-link">Tu Libreta</Link>
+              <Link to="/libreta" className="nav-link">Tus libros</Link>
               <Link to="/transacciones" className="nav-link">Matches</Link>
             </>
           )}

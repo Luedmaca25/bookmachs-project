@@ -26,19 +26,30 @@ export const AuthenticationPage: React.FC = () => {
   const [prefSuccess, setPrefSuccess] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
 
+  const resetFormFields = () => {
+    setEmail('');
+    setPassword('');
+    setName('');
+    setDocumento('');
+    setPais('Chile');
+    setError(null);
+  };
+
+  const handleLogout = () => {
+    resetFormFields();
+    logout();
+  };
+
   // Determine if onboarding is required
   const needsOnboarding = isAuthenticated && (
     !user?.pais || 
     !user?.documentoIdentidad || 
-    !localStorage.getItem(`onboarding_completed_${user?.id}`)
+    (!user?.preferences || user.preferences.length === 0)
   );
   
   const showWizard = needsOnboarding && !onboardingCompleted;
 
   const handleOnboardingComplete = () => {
-    if (user) {
-      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
-    }
     setOnboardingCompleted(true);
   };
 
@@ -66,7 +77,11 @@ export const AuthenticationPage: React.FC = () => {
                 token: string 
               }>('/auth/google', { idToken: response.credential });
               
-              loginAction(apiResponse, apiResponse.token);
+              const profile = await apiClient.get<any>('/auth/me', {
+                headers: { Authorization: `Bearer ${apiResponse.token}` }
+              });
+              loginAction(profile, apiResponse.token);
+              resetFormFields();
             } catch (err: unknown) {
               if (err instanceof Error) {
                 setError(err.message || 'Error al iniciar sesión con Google.');
@@ -149,7 +164,11 @@ export const AuthenticationPage: React.FC = () => {
           token: string 
         }>('/auth/login', { email, password });
         
-        loginAction(response, response.token);
+        const profile = await apiClient.get<any>('/auth/me', {
+          headers: { Authorization: `Bearer ${response.token}` }
+        });
+        loginAction(profile, response.token);
+        resetFormFields();
       } else {
         const response = await apiClient.post<{ 
           id: string; 
@@ -168,7 +187,11 @@ export const AuthenticationPage: React.FC = () => {
           pais
         });
         
-        loginAction(response, response.token);
+        const profile = await apiClient.get<any>('/auth/me', {
+          headers: { Authorization: `Bearer ${response.token}` }
+        });
+        loginAction(profile, response.token);
+        resetFormFields();
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -240,7 +263,7 @@ export const AuthenticationPage: React.FC = () => {
       }}>
         <div className="profile-header" style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <h1 className="neon-text" style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--neon)' }}>
-            <i className="fa-solid fa-circle-user"></i> Tu Perfil en Bookmachs
+            Perfil de usuario
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>Gestiona tu cuenta y personaliza tu recomendación de lectura por IA</p>
         </div>
@@ -335,7 +358,7 @@ export const AuthenticationPage: React.FC = () => {
             </div>
 
             <button 
-              onClick={logout} 
+              onClick={handleLogout} 
               className="modal-submit-btn" 
               style={{
                 marginTop: '1.5rem',
@@ -351,7 +374,7 @@ export const AuthenticationPage: React.FC = () => {
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Cerrar Sesión (Salir)
+              Cerrar Sesión
             </button>
           </div>
 

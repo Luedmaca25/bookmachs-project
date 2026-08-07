@@ -77,6 +77,7 @@ public class BooksController : ControllerBase
                 request.Author,
                 request.Description ?? string.Empty,
                 request.Condition,
+                request.BaseValue,
                 fileStream,
                 request.CoverImage.FileName
             );
@@ -264,6 +265,7 @@ public class UploadBookRequest
     public string Author { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Condition { get; set; } = "Excelente";
+    public decimal BaseValue { get; set; } = 0.00m;
     public IFormFile CoverImage { get; set; } = null!;
 }
 

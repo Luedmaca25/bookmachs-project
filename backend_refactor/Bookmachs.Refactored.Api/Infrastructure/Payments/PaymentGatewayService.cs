@@ -29,20 +29,26 @@ public class PaymentGatewayService : IPaymentGatewayService
         else
         {
             _useMock = false;
-            // Configurar SDK de Mercado Pago
             MercadoPagoConfig.AccessToken = mpToken;
         }
 
-        // Configuración para Transbank Webpay Plus
-        var tbCommerceCode = _configuration["Payments:TransbankCommerceCode"] ?? "597038127347"; // Código diferido de prueba
-        var tbApiKey = _configuration["Payments:TransbankApiKey"] ?? "579B532A7440BB0C9079DED94D31EA1615B1C2B178715761D58694E2EF444B75"; // API Key de prueba
+        // Credenciales Oficiales de Prueba/Integración de Transbank Webpay Plus
+        var tbCommerceCode = _configuration["Payments:TransbankCommerceCode"];
+        var tbApiKey = _configuration["Payments:TransbankApiKey"];
         var tbEnv = _configuration["Payments:TransbankEnvironment"] ?? "Integration";
 
-        var integrationType = tbEnv.Equals("Production", StringComparison.OrdinalIgnoreCase) 
-            ? WebpayIntegrationType.Live 
-            : WebpayIntegrationType.Test;
+        if (tbEnv.Equals("Production", StringComparison.OrdinalIgnoreCase))
+        {
+            _tbOptions = new Options(tbCommerceCode, tbApiKey, WebpayIntegrationType.Live);
+        }
+        else
+        {
+            // Código de comercio e ApiKey oficiales de prueba de Webpay Plus (Transbank SDK .NET)
+            var integrationCommerceCode = string.IsNullOrEmpty(tbCommerceCode) ? "597055555532" : tbCommerceCode;
+            var integrationApiKey = string.IsNullOrEmpty(tbApiKey) ? "579B532A7440BB0C9079DED94D31EA1615B1C2B178715761D58694E2EF444B75" : tbApiKey;
 
-        _tbOptions = new Options(tbCommerceCode, tbApiKey, integrationType);
+            _tbOptions = new Options(integrationCommerceCode, integrationApiKey, WebpayIntegrationType.Test);
+        }
     }
 
     // ==========================================================================
@@ -218,23 +224,9 @@ public class PaymentGatewayService : IPaymentGatewayService
 
     public Task<TransbankCreateResult> CreateTransbankHoldAsync(decimal amount, string buyOrder, string sessionId, string returnUrl)
     {
-        if (_useMock)
-        {
-            var fakeToken = $"tb_token_{Guid.NewGuid().ToString("N")[..12]}";
-            return Task.FromResult(new TransbankCreateResult
-            {
-                Success = true,
-                Token = fakeToken,
-                RedirectUrl = $"https://webpay.mock.cl/redirection?token_ws={fakeToken}",
-                ErrorMessage = null
-            });
-        }
-
         try
         {
             var tx = new Transbank.Webpay.WebpayPlus.Transaction(_tbOptions);
-            // La llamada a Create en un código de comercio diferido automáticamente inicia una transacción diferida (Hold)
-            // Transbank SDK acepta decimal para amount.
             var response = tx.Create(buyOrder, sessionId, amount, returnUrl);
 
             return Task.FromResult(new TransbankCreateResult
@@ -250,33 +242,13 @@ public class PaymentGatewayService : IPaymentGatewayService
             return Task.FromResult(new TransbankCreateResult
             {
                 Success = false,
-                ErrorMessage = $"Error al iniciar transacción diferida en Webpay Plus: {ex.Message}"
+                ErrorMessage = $"Error al iniciar transacción en Webpay Plus: {ex.Message}"
             });
         }
     }
 
     public Task<TransbankCommitResult> CommitTransbankHoldAsync(string token)
     {
-        if (_useMock || token.StartsWith("tb_token_"))
-        {
-            string buyOrder = $"bo_{Guid.NewGuid().ToString("N")[..8]}";
-            var parts = token.Split('_');
-            if (parts.Length > 0 && Guid.TryParse(parts[^1], out var parsedGuid))
-            {
-                buyOrder = parsedGuid.ToString();
-            }
-
-            return Task.FromResult(new TransbankCommitResult
-            {
-                Success = true,
-                AuthorizationCode = "123456",
-                BuyOrder = buyOrder,
-                Amount = 1500.0m,
-                Status = "AUTHORIZED",
-                ErrorMessage = null
-            });
-        }
-
         try
         {
             var tx = new Transbank.Webpay.WebpayPlus.Transaction(_tbOptions);
@@ -307,7 +279,7 @@ public class PaymentGatewayService : IPaymentGatewayService
             return Task.FromResult(new TransbankCommitResult
             {
                 Success = false,
-                ErrorMessage = $"Error al confirmar transacción diferida en Webpay Plus: {ex.Message}"
+                ErrorMessage = $"Error al confirmar transacción en Webpay Plus: {ex.Message}"
             });
         }
     }

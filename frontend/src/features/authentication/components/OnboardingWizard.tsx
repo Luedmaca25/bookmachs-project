@@ -110,6 +110,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
     setLoading(true);
     try {
       await apiClient.post<boolean>('/auth/preferences', selectedTags);
+      
+      // Actualizar el perfil completo del usuario en la tienda global con las preferencias de la BD
+      const token = localStorage.getItem('token');
+      if (token) {
+        const updatedProfile = await apiClient.get<any>('/auth/me');
+        login(updatedProfile, token);
+      }
+
       onComplete();
     } catch (err: unknown) {
       if (err instanceof Error) {

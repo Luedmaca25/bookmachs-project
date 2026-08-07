@@ -97,7 +97,7 @@ export const PlansPage: React.FC = () => {
           const token = localStorage.getItem('token') || '';
           login(updatedProfile, token);
 
-           setSuccessMessage('¡Pago Procesado con Éxito! Tu cuenta ha sido actualizada a Plan Premium. <i className="fa-solid fa-square-check"></i>');
+           setSuccessMessage('¡Pago Procesado con Éxito! Tu cuenta ha sido actualizada a Plan Premium.');
         } else {
           setErrorMessage(response.message || 'Error al procesar la simulación de suscripción.');
         }

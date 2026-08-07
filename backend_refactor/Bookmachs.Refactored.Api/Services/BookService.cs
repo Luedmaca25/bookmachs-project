@@ -16,7 +16,7 @@ public interface IBookService
 {
     Task<BookDto> GetGuestRandomAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetMyInventoryAsync(Guid userId, CancellationToken cancellationToken = default);
-    Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, decimal baseValue, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetRecommendationsAsync(Guid userId, int limit, CancellationToken cancellationToken = default);
     Task<SwipeResultDto> SwipeBookAsync(Guid bookId, Guid userId, string action, CancellationToken cancellationToken = default);
     Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, CancellationToken cancellationToken = default);
@@ -82,7 +82,7 @@ public class BookService : IBookService
         return books.Select(MapToBookDto);
     }
 
-    public async Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
+    public async Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, decimal baseValue, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(author))
         {
@@ -103,7 +103,7 @@ public class BookService : IBookService
             Description = description,
             Condition = condition,
             ImageUrl = imageUrl,
-            BaseValue = 0.00m,
+            BaseValue = baseValue,
             IsInternalStock = false,
             IsAvailable = true,
             OwnerId = userId,
@@ -132,11 +132,17 @@ public class BookService : IBookService
             .Where(t => !string.IsNullOrEmpty(t))
             .ToList();
 
-        // 1. Limitar el universo de candidatos en SQL Server a máximo (limit * 5) candidatos recientes o coincidentes
-        // Esto evita traer 50,000 productos por la red.
+        // Obtener los IDs de libros que el usuario ya deslizó (like o dislike) para no recomendarlos de nuevo
+        var swipedBookIds = await _dbContext.UserBookInteractions
+            .AsNoTracking()
+            .Where(i => i.UserId == userId)
+            .Select(i => i.BookId)
+            .ToListAsync(cancellationToken);
+
+        // 1. Limitar el universo de candidatos excluyendo interactuados
         IQueryable<EcolecturaProducto> baseQuery = _ecolecturaDbContext.Productos
             .AsNoTracking()
-            .Where(p => p.Activo && p.Stock > 0);
+            .Where(p => p.Activo && p.Stock > 0 && !swipedBookIds.Contains(p.IdProducto));
 
         // Si el usuario tiene preferencias, filtramos en SQL por los que coincidan con alguna etiqueta
         if (userPreferenceTags.Any())
@@ -164,12 +170,12 @@ public class BookService : IBookService
             })
             .ToListAsync(cancellationToken);
 
-        // Si por filtros estrictos vinieron muy pocos, obtenemos un fallback rápido sin filtro de etiqueta
+        // Si por filtros estrictos vinieron muy pocos, obtenemos un fallback rápido sin filtro de etiqueta (respetando exclusión)
         if (candidateProducts.Count < limit)
         {
             var fallbackProducts = await _ecolecturaDbContext.Productos
                 .AsNoTracking()
-                .Where(p => p.Activo && p.Stock > 0)
+                .Where(p => p.Activo && p.Stock > 0 && !swipedBookIds.Contains(p.IdProducto))
                 .OrderByDescending(p => p.FechaRegistro)
                 .Take(limit * 5)
                 .Select(p => new
@@ -364,6 +370,23 @@ public class BookService : IBookService
             }
         }
 
+        // Registrar la interacción (swipe like/dislike) para excluir este libro en futuras recomendaciones
+        string bookIdStr = bookId.ToString();
+        var existingInteraction = await _dbContext.UserBookInteractions
+            .FirstOrDefaultAsync(i => i.UserId == user.Id && i.BookId == bookIdStr, cancellationToken);
+
+        if (existingInteraction == null)
+        {
+            await _dbContext.UserBookInteractions.AddAsync(new UserBookInteraction
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                BookId = bookIdStr,
+                Action = action.ToLower(),
+                CreatedAt = DateTime.UtcNow
+            }, cancellationToken);
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return new SwipeResultDto
@@ -539,7 +562,7 @@ public class BookService : IBookService
             Author = b.Author,
             Description = b.Description,
             Condition = b.Condition,
-            ImageUrl = b.ImageUrl,
+            ImageUrl = FormatImageUrl(b.ImageUrl),
             BaseValue = b.BaseValue,
             IsInternalStock = b.IsInternalStock,
             IsAvailable = b.IsAvailable,
@@ -626,7 +649,15 @@ public class BookService : IBookService
             return rutaImagen;
         }
 
-        // Si es una ruta relativa, anteponer el dominio www.ecolectura.cl quitando virgulilla (~) y slash (/) iniciales
+        // Si es un archivo subido por un usuario en el backend local (ej: /uploads/xxx.jpg)
+        if (rutaImagen.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase) ||
+            rutaImagen.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
+        {
+            var cleanUploadPath = rutaImagen.TrimStart('/');
+            return $"http://localhost:5185/{cleanUploadPath}"; // URL de archivos estáticos del backend local
+        }
+
+        // Si es una ruta relativa de Ecolectura, anteponer el dominio www.ecolectura.cl
         var cleanPath = rutaImagen.TrimStart('~').TrimStart('/');
         return $"https://www.ecolectura.cl/{cleanPath}";
     }

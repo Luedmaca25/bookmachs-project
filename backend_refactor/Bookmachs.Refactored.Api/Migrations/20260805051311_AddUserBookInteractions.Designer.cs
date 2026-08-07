@@ -4,6 +4,7 @@ using Bookmachs.Refactored.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bookmachs.Refactored.Api.Migrations
 {
     [DbContext(typeof(BookmachsDbContext))]
-    partial class BookmachsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260805051311_AddUserBookInteractions")]
+    partial class AddUserBookInteractions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -161,10 +164,6 @@ namespace Bookmachs.Refactored.Api.Migrations
                     b.Property<Guid>("BookId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("BuyOrder")
-                        .HasMaxLength(26)
-                        .HasColumnType("nvarchar(26)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -208,10 +207,6 @@ namespace Bookmachs.Refactored.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BookId");
-
-                    b.HasIndex("BuyOrder")
-                        .IsUnique()
-                        .HasFilter("[BuyOrder] IS NOT NULL");
 
                     b.HasIndex("OwnerUserId");
 

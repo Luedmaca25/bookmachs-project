@@ -26,7 +26,7 @@ export const SwipePage: React.FC = () => {
   const needsOnboarding = isAuthenticated && (
     !user?.pais || 
     !user?.documentoIdentidad || 
-    !localStorage.getItem(`onboarding_completed_${user?.id}`)
+    (!user?.preferences || user.preferences.length === 0)
   );
 
   const showWizard = needsOnboarding && !onboardingCompleted;
@@ -74,9 +74,6 @@ export const SwipePage: React.FC = () => {
   const [matchTransactionId, setMatchTransactionId] = useState<string | null>(null);
 
   const handleOnboardingComplete = () => {
-    if (user) {
-      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
-    }
     setOnboardingCompleted(true);
   };
 
@@ -166,11 +163,14 @@ export const SwipePage: React.FC = () => {
   return (
     <div className="swipe-page-container">
       <div className="swipe-header">
-        <h1>Explorar Libros</h1>
+        <h1>Explorar libros</h1>
         {isAuthenticated ? (
           <div className="user-auth-badge">
-            <span>Hola, <strong>{user?.name}</strong> ({user?.pais})</span>
-            <button onClick={logout} className="logout-btn">Cerrar Sesión</button>
+            <span>
+              Hola, <strong>{user?.name}</strong> 
+              {/* ({user?.pais}) */}
+            </span>
+            {/* <button onClick={logout} className="logout-btn">Cerrar Sesión</button> */}
           </div>
         ) : (
           <p>Mira este libro destacado. Regístrate para ver más recomendaciones afines a tus gustos.</p>
@@ -197,7 +197,10 @@ export const SwipePage: React.FC = () => {
           >
             <div className="book-card-image-placeholder">
               {currentBook?.imageUrl ? (
-                <img src={currentBook.imageUrl} alt={currentBook.title} className="swipe-card-img" />
+                <div className="book-3d-wrapper">
+                  <div className="book-spine"></div>
+                  <img src={currentBook.imageUrl} alt={currentBook.title} className="swipe-card-img" />
+                </div>
               ) : (
                 <span className="book-fallback-icon"><i className="fa-solid fa-book"></i></span>
               )}

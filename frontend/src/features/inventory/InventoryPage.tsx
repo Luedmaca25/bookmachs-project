@@ -7,6 +7,7 @@ interface BookItem {
   author: string;
   condition: string;
   description: string;
+  baseValue: number;
   imageUrl: string;
 }
 
@@ -18,6 +19,7 @@ export const InventoryPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
+  const [baseValue, setBaseValue] = useState<string>('');
   const [description, setDescription] = useState('');
   const [condition, setCondition] = useState('Excelente');
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -61,8 +63,13 @@ export const InventoryPage: React.FC = () => {
 
     try {
       // Validar campos
-      if (!title.trim() || !author.trim() || !description.trim() || !coverImage) {
-        throw new Error('Por favor completa todos los campos del formulario, incluyendo la imagen de portada.');
+      if (!title.trim() || !author.trim() || !description.trim() || !coverImage || !baseValue) {
+        throw new Error('Por favor completa todos los campos del formulario, incluyendo el precio de referencia y la imagen.');
+      }
+
+      const parsedValue = parseFloat(baseValue);
+      if (isNaN(parsedValue) || parsedValue < 0) {
+        throw new Error('Ingresa un precio o valor de referencia válido.');
       }
 
       // Preparar FormData para subida de archivo y campos de texto
@@ -71,6 +78,7 @@ export const InventoryPage: React.FC = () => {
       formData.append('author', author.trim());
       formData.append('description', description.trim());
       formData.append('condition', condition);
+      formData.append('baseValue', parsedValue.toString());
       formData.append('coverImage', coverImage);
 
       await apiClient.post<BookItem>('/books/upload', formData);
@@ -80,6 +88,7 @@ export const InventoryPage: React.FC = () => {
       // Limpiar formulario
       setTitle('');
       setAuthor('');
+      setBaseValue('');
       setDescription('');
       setCondition('Excelente');
       setCoverImage(null);
@@ -103,7 +112,7 @@ export const InventoryPage: React.FC = () => {
     <div className="inventory-container">
       <div className="inventory-header">
         <div>
-          <h1>Tu Libreta de Libros</h1>
+          <h1>Tus libros</h1>
           <p>Administra y añade los libros físicos que deseas ofrecer para el intercambio.</p>
         </div>
         <button 
@@ -147,6 +156,19 @@ export const InventoryPage: React.FC = () => {
                     placeholder="Ej. Gabriel García Márquez"
                     value={author}
                     onChange={(e) => setAuthor(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="inventory-field">
+                  <label>Precio / Valor del Libro ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="Ej. 12500"
+                    value={baseValue}
+                    onChange={(e) => setBaseValue(e.target.value)}
                     required
                   />
                 </div>
@@ -226,7 +248,10 @@ export const InventoryPage: React.FC = () => {
                 <div key={book.id} className="inventory-card">
                   <div className="inventory-card-cover">
                     {book.imageUrl ? (
-                      <img src={book.imageUrl} alt={book.title} />
+                      <div className="book-3d-wrapper">
+                        <div className="book-spine"></div>
+                        <img src={book.imageUrl} alt={book.title} className="inventory-card-img" />
+                      </div>
                     ) : (
                       <div className="no-cover-placeholder"><i className="fa-solid fa-book"></i></div>
                     )}
@@ -235,7 +260,14 @@ export const InventoryPage: React.FC = () => {
                     </span>
                   </div>
                   <div className="inventory-card-body">
-                    <h3>{book.title}</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3>{book.title}</h3>
+                      {book.baseValue > 0 && (
+                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--neon)' }}>
+                          ${book.baseValue.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
                     <span className="author-label">{book.author}</span>
                     <p className="desc-label">{book.description}</p>
                   </div>

@@ -248,8 +248,17 @@ public class TransactionService : ITransactionService
             };
         }
 
-        var buyOrder = transaction.Id.ToString();
-        var sessionId = $"session_{requesterUserId.ToString()[..8]}";
+        // Transbank Webpay Plus exige que buyOrder tenga un largo máximo de 26 caracteres alfanuméricos
+        var buyOrder = transaction.BuyOrder;
+        if (string.IsNullOrEmpty(buyOrder))
+        {
+            buyOrder = transaction.Id.ToString("N")[..26];
+            transaction.BuyOrder = buyOrder;
+            _dbContext.MatchTransactions.Update(transaction);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var sessionId = $"sess_{requesterUserId.ToString("N")[..8]}";
 
         var tbResult = await _paymentService.CreateTransbankHoldAsync(
             transaction.FeeAmount,
@@ -287,29 +296,29 @@ public class TransactionService : ITransactionService
 
         if (tbResult.Success && !string.IsNullOrEmpty(tbResult.BuyOrder))
         {
-            if (Guid.TryParse(tbResult.BuyOrder, out var transactionId))
+            // Búsqueda directa por igualdad exacta del BuyOrder indexado en la Base de Datos
+            var transaction = await _dbContext.MatchTransactions
+                .FirstOrDefaultAsync(t => t.BuyOrder == tbResult.BuyOrder, cancellationToken);
+
+            if (transaction != null)
             {
-                var transaction = await _dbContext.MatchTransactions.FirstOrDefaultAsync(t => t.Id == transactionId, cancellationToken);
-                if (transaction != null)
+                transaction.PaymentHoldId = token;
+                transaction.PaymentStatus = "Hold";
+                transaction.StatusUpdatedAt = DateTime.UtcNow;
+
+                _dbContext.MatchTransactions.Update(transaction);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                // Descontar stock y registrar el ajuste en Ecolectura
+                await DeductStockAndLogAdjustmentAsync(transaction.BookId, transaction.Id, transaction.RequesterUserId, cancellationToken);
+
+                return new WebpayConfirmResultDto
                 {
-                    transaction.PaymentHoldId = token;
-                    transaction.PaymentStatus = "Hold";
-                    transaction.StatusUpdatedAt = DateTime.UtcNow;
-
-                    _dbContext.MatchTransactions.Update(transaction);
-                    await _dbContext.SaveChangesAsync(cancellationToken);
-
-                    // Descontar stock y registrar el ajuste en Ecolectura
-                    await DeductStockAndLogAdjustmentAsync(transaction.BookId, transaction.Id, transaction.RequesterUserId, cancellationToken);
-
-                    return new WebpayConfirmResultDto
-                    {
-                        Success = true,
-                        MatchTransactionId = transaction.Id.ToString(),
-                        PaymentStatus = "Hold",
-                        Message = "Transacción Webpay Plus diferida confirmada y retenida con éxito."
-                    };
-                }
+                    Success = true,
+                    MatchTransactionId = transaction.Id.ToString(),
+                    PaymentStatus = "Hold",
+                    Message = "Transacción Webpay Plus confirmada y retenida con éxito."
+                };
             }
 
             return new WebpayConfirmResultDto
@@ -319,9 +328,11 @@ public class TransactionService : ITransactionService
             };
         }
 
-        if (!string.IsNullOrEmpty(tbResult.BuyOrder) && Guid.TryParse(tbResult.BuyOrder, out var failedTxId))
+        if (!string.IsNullOrEmpty(tbResult.BuyOrder))
         {
-            var transaction = await _dbContext.MatchTransactions.FirstOrDefaultAsync(t => t.Id == failedTxId, cancellationToken);
+            var transaction = await _dbContext.MatchTransactions
+                .FirstOrDefaultAsync(t => t.BuyOrder == tbResult.BuyOrder, cancellationToken);
+
             if (transaction != null)
             {
                 transaction.PaymentStatus = "Failed";

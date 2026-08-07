@@ -33,6 +33,9 @@ public class MatchTransaction
     public bool IsCrossBorder { get; set; } = false;
     public bool IsPublic { get; set; } = true;
 
+    // Identificador único de orden de compra compatible con pasarelas como Transbank (máx 26 car)
+    public string? BuyOrder { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime StatusUpdatedAt { get; set; } = DateTime.UtcNow;
 }

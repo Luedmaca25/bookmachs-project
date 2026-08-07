@@ -14,6 +14,7 @@ public class BookmachsDbContext : DbContext
     public DbSet<MatchTransaction> MatchTransactions { get; set; } = null!;
     public DbSet<Subscription> Subscriptions { get; set; } = null!;
     public DbSet<UserPreference> UserPreferences { get; set; } = null!;
+    public DbSet<UserBookInteraction> UserBookInteractions { get; set; } = null!;
     public DbSet<GlobalSettings> GlobalSettings { get; set; } = null!;
     public DbSet<MasterPreferenceTag> MasterPreferenceTags { get; set; } = null!;
     public DbSet<TimelineEvent> TimelineEvents { get; set; } = null!;
@@ -67,6 +68,8 @@ public class BookmachsDbContext : DbContext
             entity.Property(t => t.LogisticsStatus).IsRequired().HasMaxLength(20);
             entity.Property(t => t.LogisticsMethod).HasMaxLength(50);
             entity.Property(t => t.PaymentHoldId).HasMaxLength(100);
+            entity.Property(t => t.BuyOrder).HasMaxLength(26);
+            entity.HasIndex(t => t.BuyOrder).IsUnique().HasFilter("[BuyOrder] IS NOT NULL");
 
             // Relación de Match con el Solicitante (Requester)
             entity.HasOne(t => t.RequesterUser)
@@ -146,6 +149,20 @@ public class BookmachsDbContext : DbContext
             entity.HasOne(e => e.MatchTransaction)
                 .WithMany()
                 .HasForeignKey(e => e.MatchTransactionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // --- Configuración de UserBookInteraction ---
+        modelBuilder.Entity<UserBookInteraction>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.BookId).IsRequired().HasMaxLength(128);
+            entity.Property(i => i.Action).IsRequired().HasMaxLength(20);
+            entity.HasIndex(i => new { i.UserId, i.BookId }).IsUnique();
+
+            entity.HasOne(i => i.User)
+                .WithMany()
+                .HasForeignKey(i => i.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

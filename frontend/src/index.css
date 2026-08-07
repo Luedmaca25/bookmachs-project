@@ -940,7 +940,7 @@ p {
 .toggle-auth-btn {
   background: transparent;
   border: none;
-  color: var(--accent-secondary);
+  color: var(--text-muted);
   font-family: var(--font-sans);
   font-size: 0.85rem;
   font-weight: 500;
@@ -1519,23 +1519,34 @@ p {
 .inventory-card-cover {
   position: relative;
   aspect-ratio: 3/4;
-  background-color: rgba(0, 0, 0, 0.15);
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border-bottom: 1px solid var(--border-color);
+  padding: 1rem;
 }
 
-.inventory-card-cover img {
+.inventory-card-cover .book-3d-wrapper {
+  height: 90%;
+  max-width: 85%;
+  aspect-ratio: 2 / 3;
+}
+
+.inventory-card:hover .inventory-card-cover .book-3d-wrapper {
+  transform: translateY(-4px) rotateY(-5deg) scale(1.04);
+}
+
+.inventory-card-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform var(--transition-slow);
-}
-
-.inventory-card:hover .inventory-card-cover img {
-  transform: scale(1.05);
+  object-fit: contain;
+  border-radius: 2px 8px 8px 2px;
+  box-shadow: 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.15),
+    4px 0 10px rgba(0, 0, 0, 0.35);
+  transition: filter var(--transition-normal);
 }
 
 .no-cover-placeholder {
@@ -1621,15 +1632,60 @@ p {
 /* ==========================================================================
    Swipe Page Extras (Discovery Animations & Empty States)
    ========================================================================== */
-.swipe-card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.book-card-image-placeholder {
+  height: 58%;
+  background: #000;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 1.25rem;
+}
+
+/* Contenedor 3D del Libro */
+.book-3d-wrapper {
+  position: relative;
+  height: 92%;
+  aspect-ratio: 2 / 3;
+  max-width: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.65)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
   transition: transform var(--transition-slow);
 }
 
-.book-swipe-card:hover .swipe-card-img {
-  transform: scale(1.03);
+.book-swipe-card:hover .book-3d-wrapper {
+  transform: translateY(-4px) rotateY(-4deg) scale(1.03);
+}
+
+/* Lomo físico del libro (Spine 3D) */
+.book-spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.1) 40%, rgba(0, 0, 0, 0.4) 100%);
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+  z-index: 3;
+  pointer-events: none;
+  box-shadow: inset 2px 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.swipe-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 2px 8px 8px 2px;
+  box-shadow: 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.15),
+    4px 0 10px rgba(0, 0, 0, 0.35);
+  transition: filter var(--transition-normal);
 }
 
 .book-fallback-icon {
@@ -2585,7 +2641,7 @@ p {
 }
 
 .checkout-book-img {
-  width: 65px;
+  min-width: 65px;
   height: 90px;
   border-radius: var(--radius-sm);
   overflow: hidden;
