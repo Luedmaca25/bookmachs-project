@@ -165,7 +165,7 @@ export const CatalogPage: React.FC = () => {
     return (
       <div className="catalog-page-container">
         <div className="catalog-header">
-           <h1>Catálogo Avanzado <i className="fa-solid fa-gem"></i></h1>
+           <h1>Catálogo Avanzado</h1>
           <p>Explora y reserva libros directamente de forma personalizada.</p>
         </div>
 
@@ -210,7 +210,7 @@ export const CatalogPage: React.FC = () => {
   return (
     <div className="catalog-page-container">
       <div className="catalog-header">
-         <h1>Catálogo Avanzado <i className="fa-solid fa-gem"></i></h1>
+         <h1>Catálogo Avanzado</h1>
         <p>Busca y reserva directamente entre todos los libros listados en la plataforma.</p>
       </div>
 

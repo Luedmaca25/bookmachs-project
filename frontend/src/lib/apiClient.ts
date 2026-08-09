@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7047/api';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const apiClient = {
   async get<T>(endpoint: string, options?: RequestInit): Promise<T> {

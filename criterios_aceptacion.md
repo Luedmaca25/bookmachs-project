@@ -63,153 +63,71 @@
 
 ## EP-02: Descubrimiento y Matching (Swipe)
 
-### US-04: Motor de Swipe Gratuito/Premium
+### US-04: Motor de Swipe Gratuito/Premium (Pantalla 3)
 **Como** usuario  
-**Quiero** deslizar tarjetas de libros hacia la derecha o izquierda  
-**Para** seleccionar mis intereses diarios dentro de mis límites establecidos.
+**Quiero** dar "like" o "dislike" a las tarjetas de libros  
+**Para** guardar de forma transparente mis intereses en mi libreta sin interrupciones de compra.
 
-#### Escenario 1: Swipe dentro del límite diario gratuito
-* **Dado** que soy un usuario gratuito con visualizaciones disponibles hoy
-* **Cuando** deslizo la tarjeta de un libro hacia la derecha
-* **Entonces** el libro se agrega a mi lista de "Me interesan"
-* **Y** mi contador de visualizaciones diarias disminuye en 1
-
-#### Escenario 2: Límite de swipe alcanzado
-* **Dado** que soy un usuario gratuito
-* **Y** he consumido todas mis visualizaciones diarias
-* **Cuando** intento ver el siguiente libro
-* **Entonces** la tarjeta del libro debe mostrarse borrosa
-* **Y** el sistema debe mostrarme un aviso para hacer Upgrade a Premium
+#### Escenario 1: Guardado automático de Like en Tu Libreta
+* **Dado** que soy un usuario autenticado en la Pantalla 3
+* **Cuando** presiono el botón "Me interesa" (corazón) o deslizo la tarjeta hacia la derecha
+* **Entonces** el libro debe agregarse automáticamente a mi lista "Me interesan" en Tu Libreta
+* **Y** debo poder continuar navegando de forma lúdica sin aperturas forzadas de modals de compra
 
 ---
 
-### US-05: Match y Propuesta IA
+### US-05: Propuesta de Intercambio IA (Pantalla 5)
 **Como** usuario  
-**Quiero** recibir una alerta de "Match" cuando mis gustos coincidan con los libros disponibles  
-**Para** proceder a iniciar un intercambio.
+**Quiero** consultar la propuesta de intercambio de un libro desde mi libreta  
+**Para** revisar el costo de intercambio calculado por la IA y la compatibilidad con los libros que tengo para ofrecer.
 
-#### Escenario 1: Generación exitosa de Match
-* **Dado** que he deslizado un libro a "Me interesa"
-* **Y** existe coincidencia cruzada con mi inventario ofrecido
-* **Cuando** el sistema valida la disponibilidad de ambas partes
-* **Entonces** debe aparecer un modal de celebración de Match
-* **Y** el modal debe mostrar el costo del Fee de intercambio calculado por la IA
-
----
-
-## EP-03: Gestión de Inventario (Tu Libreta)
-
-### US-06: Subida de libros manual
-**Como** usuario gratuito  
-**Quiero** subir las portadas e información de mis libros manuales  
-**Para** ofrecerlos a la red.
-
-#### Escenario 1: Creación manual de stock externo
-* **Dado** que estoy en Tu Libreta
-* **Cuando** subo una foto válida de la portada de mi libro
-* **Y** completo manualmente los campos obligatorios
-* **Y** hago clic en Guardar libro
-* **Entonces** el sistema debe guardar la información
-* **Y** el libro debe etiquetarse como Stock externo en la base de datos
+#### Escenario 1: Resumen de Match e Imposibilidad de Compra Directa
+* **Dado** que selecciono un libro de mi lista "Me interesan" en Tu Libreta
+* **Cuando** presiono "Ver propuestas de intercambio"
+* **Entonces** se despliega el resumen de Match IA mostrando la compatibilidad con los libros que tengo cargados
+* **Y** se muestra el costo estimado de intercambio (Fee) calculado por las reglas del negocio
+* **Y** no se permite la compra monetaria directa del libro, exigiendo dar un libro a cambio
 
 ---
 
-### US-07: Subida de libros Autocompletada por IA (Premium)
-**Como** usuario Premium  
-**Quiero** que la plataforma lea la portada de mi libro  
-**Para** autocompletar la información instantáneamente.
+## EP-03: Gestión de Inventario (Tu Libreta - Pantalla 4)
 
-#### Escenario 1: Autocompletado exitoso vía OCR/IA
-* **Dado** que soy un usuario Premium en Tu Libreta
-* **Cuando** selecciono la opción Escanear Portada IA
-* **Y** subo una foto legible de la portada
-* **Entonces** el sistema debe procesar la imagen
-* **Y** los campos de Título, Autor y Sinopsis deben llenarse automáticamente
-
----
-
-## EP-04: Suscripciones y Paywall
-
-### US-08: Gestión de Planes
+### US-06: Carga de Libros para Intercambiar (Sin precio asignado por usuario)
 **Como** usuario  
-**Quiero** visualizar los diferentes planes de membresía  
-**Para** hacer un Upgrade y mejorar mis beneficios.
+**Quiero** subir los libros que tengo disponibles para ofrecer  
+**Para** que la plataforma los considere en los cruces de intercambio.
 
-#### Escenario 1: Upgrade exitoso a Premium
-* **Dado** que estoy en la pantalla de Planes y Membresías
-* **Cuando** selecciono el Plan Premium
-* **Y** completo el pago exitosamente
-* **Entonces** mi cuenta debe actualizarse inmediatamente con el flag Premium
-* **Y** se deben desbloquear todas mis funciones avanzadas
-
----
-
-### US-09: Catálogo de libros y Recién Llegados (Premium)
-**Como** usuario Premium  
-**Quiero** ver listas avanzadas de libros y recién llegados  
-**Para** explorar más allá de la mecánica de Swipe.
-
-#### Escenario 1: Acceso al catálogo avanzado
-* **Dado** que soy un usuario Premium autenticado
-* **Cuando** navego a la sección Catálogo web
-* **Entonces** debo ver una grilla con múltiples libros al mismo tiempo
-* **Y** debo poder filtrar los resultados por categorías
-
-#### Escenario 2: Acceso denegado a catálogo avanzado
-* **Dado** que soy un usuario gratuito autenticado
-* **Cuando** intento acceder al catálogo web
-* **Entonces** el sistema debe mostrar un modal de Upsell invitándome a ser Premium
+#### Escenario 1: Carga de libro propio sin precio monetario
+* **Dado** que estoy en Tu Libreta en la pestaña "Tengo para intercambiar"
+* **Cuando** agrego un nuevo libro completando Título, Autor, Estado Físico, Sinopsis y Portada
+* **Entonces** el sistema debe registrar el libro sin solicitar ningún valor monetario al usuario
+* **Y** el precio/costo de intercambio de ese libro será determinado de forma exclusiva por las reglas de Bookmachs
 
 ---
 
-### US-10: Reserva de Libros
-**Como** usuario Premium  
-**Quiero** reservar un libro por 48 horas  
-**Para** asegurar su disponibilidad antes de procesar el pago.
+## EP-05: Logística y Cumplimiento de Intercambio (Pantalla 11)
 
-#### Escenario 1: Reserva exitosa de un libro
-* **Dado** que soy un usuario Premium
-* **Y** el libro tiene stock disponible
-* **Cuando** hago clic en el botón Reservar
-* **Entonces** el stock de ese libro debe bloquearse temporalmente
-* **Y** debe iniciar un temporizador de 48 horas
-
-#### Escenario 2: Liberación automática tras expiración
-* **Dado** que he reservado un libro
-* **Y** han transcurrido 48 horas sin concretar el intercambio
-* **Cuando** el proceso en background revisa el estado
-* **Entonces** la reserva debe cancelarse automáticamente
-* **Y** el stock del libro debe volver a estar disponible
-
----
-
-## EP-05: Logística y Transacciones (Checkout)
-
-### US-11: Pago del Fee de Intercambio (Hold)
+### US-12: Métodos Logísticos para Entrega del Libro Ofrecido
 **Como** usuario  
-**Quiero** pagar el Fee del intercambio calculado por IA  
-**Para** concretar la operación con seguridad.
+**Quiero** seleccionar uno de los 3 métodos autorizados para entregar el libro que ofrecí a cambio  
+**Para** cumplir con mi parte del intercambio.
 
-#### Escenario 1: Retención exitosa en el checkout
-* **Dado** que he aceptado una propuesta de Match
-* **Y** estoy en la pantalla de Checkout
-* **Cuando** ingreso los datos de mi tarjeta y confirmo el pago del Fee
-* **Entonces** la pasarela debe generar una pre-autorización (Hold) en mi tarjeta
-* **Y** el estado del intercambio debe actualizarse a Pago Retenido
+#### Escenario 1: Entrega por Donación con Validación Previa
+* **Dado** que selecciono el método "Donar el libro"
+* **Cuando** subo la fotografía de evidencia del lugar donde doné el libro (colegio o espacio comunitario)
+* **Entonces** la orden entra en estado "Pendiente de Validación Previa"
+* **Y** el equipo de Bookmachs debe validar la foto antes de dar por completado el proceso
 
----
+#### Escenario 2: Entrega Presencial en Local Físico
+* **Dado** que selecciono "Entrega Presencial"
+* **Cuando** confirmo mi selección
+* **Entonces** el sistema indica las instrucciones y dirección del local físico en Santiago, Chile
 
-### US-12: Selección de Métodos Logísticos
-**Como** usuario  
-**Quiero** seleccionar cómo enviaré y recibiré mi libro  
-**Para** avanzar en la logística.
-
-#### Escenario 1: Selección de intercambio P2P Internacional
-* **Dado** que tengo un Match con un usuario en un país diferente al mío
-* **Cuando** ingreso a la selección de métodos logísticos
-* **Y** el sistema detecta que el intercambio es transfronterizo
-* **Entonces** se debe mostrar una alerta explícita informando sobre los altos costos de envío internacional
-* **Y** debo confirmar que asumo los costos antes de avanzar
+#### Escenario 3: Envío por Encomienda con Comprobante
+* **Dado** que selecciono "Envío por Encomienda"
+* **Cuando** realizo el despacho a la dirección del local en Santiago, Chile y asumo el costo de envío
+* **Y** subo el comprobante de envío (voucher/boleta) al sistema
+* **Entonces** la plataforma actualiza el estado del envío para su verificación
 
 ---
 

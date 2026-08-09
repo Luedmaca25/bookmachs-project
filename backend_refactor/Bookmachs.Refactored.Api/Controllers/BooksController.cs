@@ -12,7 +12,7 @@ namespace Bookmachs.Refactored.Api.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;

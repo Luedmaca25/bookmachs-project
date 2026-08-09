@@ -12,14 +12,31 @@ namespace Bookmachs.Refactored.Api.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class TransactionsController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
+    private readonly Jobs.IExchangeFulfillmentJob _fulfillmentJob;
 
-    public TransactionsController(ITransactionService transactionService)
+    public TransactionsController(ITransactionService transactionService, Jobs.IExchangeFulfillmentJob fulfillmentJob)
     {
         _transactionService = transactionService;
+        _fulfillmentJob = fulfillmentJob;
+    }
+
+    [AllowAnonymous]
+    [HttpPost("run-daily-fulfillment-job")]
+    public async Task<IActionResult> RunDailyFulfillmentJob()
+    {
+        try
+        {
+            await _fulfillmentJob.ProcessDailyFulfillmentRemindersAsync();
+            return Ok(new { message = "Tarea diaria de recordatorios de entrega y anulación de expirados ejecutada exitosamente." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = $"Error al ejecutar tarea diaria: {ex.Message}" });
+        }
     }
 
     [HttpGet("my-matches")]

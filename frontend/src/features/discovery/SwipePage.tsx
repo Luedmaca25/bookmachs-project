@@ -105,10 +105,13 @@ export const SwipePage: React.FC = () => {
       // Llamada al endpoint de swipe en el backend
       const response = await apiClient.post<SwipeResponse>(`/books/${currentBook.id}/swipe`, { action });
 
-      if (action === 'like' && response.isMatch) {
-        setMatchedBook(currentBook);
-        setMatchTransactionId(response.matchTransactionId || null);
-        setMatchOpen(true);
+      if (action === 'like') {
+        // En la Pantalla 3, al dar "like" los libros se guardan automáticamente en la Libreta ("Me interesan")
+        // Mostramos una notificación discreta en lugar de interrumpir el swipe con un modal modal forzado.
+        if (response.isMatch && response.matchTransactionId) {
+          setMatchedBook(currentBook);
+          setMatchTransactionId(response.matchTransactionId);
+        }
       }
 
       // Esperar a que termine la animación (300ms) antes de cambiar de libro
@@ -224,7 +227,7 @@ export const SwipePage: React.FC = () => {
               className="control-btn dislike-btn" 
               onClick={() => triggerSwipe('left')}
               disabled={limitReached}
-              title="Descartar"
+              title="No me interesa"
             >
               <i className="fa-solid fa-xmark"></i>
             </button>
@@ -236,6 +239,31 @@ export const SwipePage: React.FC = () => {
             >
               <i className="fa-solid fa-heart"></i>
             </button>
+          </div>
+
+          <div 
+            onClick={() => navigate('/libreta')}
+            style={{
+              margin: '1.25rem auto 0 auto',
+              maxWidth: '360px',
+              padding: '0.8rem 1rem',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.75rem',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <span style={{ fontSize: '1.3rem' }}><i className="fa-solid fa-book-bookmark" style={{ color: 'var(--neon)' }}></i></span>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Intercambiálos en tu libreta</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Tus likes se guardan automáticamente</div>
+            </div>
           </div>
 
           {limitReached && (

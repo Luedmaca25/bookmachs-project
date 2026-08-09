@@ -265,7 +265,7 @@ export const AuthenticationPage: React.FC = () => {
           <h1 className="neon-text" style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--neon)' }}>
             Perfil de usuario
           </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Gestiona tu cuenta y personaliza tu recomendación de lectura por IA</p>
+          <p style={{ color: 'var(--text-secondary)', marginLeft: "auto", marginRight: "auto" }}>Gestiona tu cuenta y personaliza tu recomendación de lectura por IA</p>
         </div>
 
         <div className="profile-grid" style={{

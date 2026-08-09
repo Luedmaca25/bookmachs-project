@@ -11,6 +11,7 @@ using Bookmachs.Refactored.Api.Domain.Services;
 using Bookmachs.Refactored.Api.Infrastructure.Payments;
 using Bookmachs.Refactored.Api.Services;
 using Bookmachs.Refactored.Api.Security;
+using Bookmachs.Refactored.Api.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,8 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddScoped<ISendGridEmailService, SendGridEmailService>();
+builder.Services.AddScoped<IExchangeFulfillmentJob, ExchangeFulfillmentJob>();
 
 // Configure JwtBearer Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -140,11 +143,11 @@ var app = builder.Build();
 // Exception handling middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+app.UseSwagger();
+app.UseSwaggerUI();
+//}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -181,5 +184,11 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapControllers();
+
+app.MapGet("/", () => Results.Ok(new
+{
+    status = "ok",
+    application = "Bookmachs API"
+}));
 
 app.Run();

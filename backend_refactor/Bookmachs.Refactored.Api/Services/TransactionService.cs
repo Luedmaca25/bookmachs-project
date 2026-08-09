@@ -131,90 +131,14 @@ public class TransactionService : ITransactionService
         };
     }
 
-    public async Task<CheckoutResultDto> CheckoutCardAsync(Guid matchTransactionId, string cardToken, Guid requesterUserId, bool acceptCrossBorder, CancellationToken cancellationToken = default)
+    public Task<CheckoutResultDto> CheckoutCardAsync(Guid matchTransactionId, string cardToken, Guid requesterUserId, bool acceptCrossBorder, CancellationToken cancellationToken = default)
     {
-        var transaction = await _dbContext.MatchTransactions.FirstOrDefaultAsync(t => t.Id == matchTransactionId, cancellationToken);
-        if (transaction == null)
-        {
-            throw new KeyNotFoundException($"La transacción de Match con ID {matchTransactionId} no existe.");
-        }
-
-        if (transaction.RequesterUserId != requesterUserId)
-        {
-            throw new UnauthorizedAccessException("No tienes permisos para pagar esta transacción.");
-        }
-
-        if (transaction.IsCrossBorder && !acceptCrossBorder)
-        {
-            return new CheckoutResultDto
-            {
-                Success = false,
-                Message = "Debe confirmar explícitamente que acepta los costos de envío internacional."
-            };
-        }
-
-        if (transaction.PaymentStatus == "Hold" || transaction.PaymentStatus == "Captured")
-        {
-            return new CheckoutResultDto
-            {
-                Success = true,
-                PaymentHoldId = transaction.PaymentHoldId,
-                PaymentStatus = transaction.PaymentStatus,
-                Message = "La transacción ya cuenta con una retención o cobro procesado."
-            };
-        }
-
-        var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == transaction.BookId, cancellationToken);
-        if (book == null)
-        {
-            throw new KeyNotFoundException("El libro asociado a la transacción no existe.");
-        }
-
-        var requester = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == transaction.RequesterUserId, cancellationToken);
-        if (requester == null)
-        {
-            throw new KeyNotFoundException("El usuario solicitante no existe.");
-        }
-
-        var holdResult = await _paymentService.CreateHoldAsync(
-            transaction.FeeAmount, 
-            book.Title, 
-            cardToken, 
-            requester.Email
-        );
-
-        if (holdResult.Success)
-        {
-            transaction.PaymentHoldId = holdResult.PaymentHoldId;
-            transaction.PaymentStatus = "Hold";
-            transaction.StatusUpdatedAt = DateTime.UtcNow;
-
-            _dbContext.MatchTransactions.Update(transaction);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-
-            // Descontar stock y registrar el ajuste en Ecolectura
-            await DeductStockAndLogAdjustmentAsync(transaction.BookId, transaction.Id, transaction.RequesterUserId, cancellationToken);
-
-            return new CheckoutResultDto
-            {
-                Success = true,
-                PaymentHoldId = transaction.PaymentHoldId,
-                PaymentStatus = transaction.PaymentStatus,
-                Message = "Retención de fondos (Hold) pre-autorizada con éxito."
-            };
-        }
-
-        transaction.PaymentStatus = "Failed";
-        transaction.StatusUpdatedAt = DateTime.UtcNow;
-        _dbContext.MatchTransactions.Update(transaction);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return new CheckoutResultDto
+        return Task.FromResult(new CheckoutResultDto
         {
             Success = false,
-            PaymentStatus = "Failed",
-            Message = $"Error al procesar el hold: {holdResult.ErrorMessage}"
-        };
+            PaymentStatus = "Pending",
+            Message = "La pasarela directa por tarjeta de Mercado Pago ha sido desactivada. Bookmachs utiliza exclusivamente Transbank Webpay Plus."
+        });
     }
 
     public async Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, CancellationToken cancellationToken = default)
@@ -228,6 +152,17 @@ public class TransactionService : ITransactionService
         if (transaction.RequesterUserId != requesterUserId)
         {
             throw new UnauthorizedAccessException("No tienes permisos para pagar esta transacción.");
+        }
+
+        // Validar que el usuario tenga al menos un libro cargado en su libreta para ofrecer a cambio
+        var userInventory = await _dbContext.Books.Where(b => b.OwnerId == requesterUserId).ToListAsync(cancellationToken);
+        if (userInventory == null || !userInventory.Any())
+        {
+            return new WebpayStartResultDto
+            {
+                Success = false,
+                Message = "No tienes ningún libro cargado en 'Tu Libreta' (Tengo para intercambiar). Debes subir al menos un libro para ofrecer a cambio antes de procesar el pago del fee."
+            };
         }
 
         if (transaction.IsCrossBorder && !acceptCrossBorder)
@@ -454,99 +389,13 @@ public class TransactionService : ITransactionService
         };
     }
 
-    public async Task<WebhookProcessResultDto> ProcessMercadoPagoWebhookAsync(string type, string action, string dataId, CancellationToken cancellationToken = default)
+    public Task<WebhookProcessResultDto> ProcessMercadoPagoWebhookAsync(string type, string action, string dataId, CancellationToken cancellationToken = default)
     {
-        if (type != "preapproval" && type != "subscription")
-        {
-            return new WebhookProcessResultDto
-            {
-                Success = false,
-                Message = $"Tipo de evento '{type}' ignorado. Solo se procesan eventos de tipo 'preapproval' o 'subscription'."
-            };
-        }
-
-        var details = await _paymentService.GetSubscriptionDetailsAsync(dataId);
-        if (!details.Success || string.IsNullOrEmpty(details.PayerEmail))
-        {
-            return new WebhookProcessResultDto
-            {
-                Success = false,
-                Message = $"No se pudieron recuperar los detalles de la suscripción con ID '{dataId}': {details.ErrorMessage}"
-            };
-        }
-
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == details.PayerEmail, cancellationToken);
-        if (user == null)
-        {
-            return new WebhookProcessResultDto
-            {
-                Success = false,
-                Message = $"Usuario con email '{details.PayerEmail}' no encontrado en la plataforma."
-            };
-        }
-
-        var status = details.Status?.ToLowerInvariant();
-        if (status == "authorized" || status == "active" || status == "approved")
-        {
-            user.IsPremium = true;
-            user.SubscriptionPlan = "Premium";
-            user.SubscriptionEndDate = DateTime.UtcNow.AddMonths(1);
-            _dbContext.Users.Update(user);
-
-            var subscription = new Subscription
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                PlanName = "Premium",
-                Price = details.Price > 0 ? details.Price : 9990m,
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddMonths(1),
-                IsActive = true,
-                ExternalSubscriptionId = details.SubscriptionId,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _dbContext.Subscriptions.AddAsync(subscription, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-
-            return new WebhookProcessResultDto
-            {
-                Success = true,
-                Message = $"Suscripción Premium activada exitosamente para el usuario '{user.Name}' ({user.Email}).",
-                UserId = user.Id.ToString(),
-                SubscriptionPlan = user.SubscriptionPlan
-            };
-        }
-        else if (status == "cancelled" || status == "cancelled_by_payer" || status == "suspended")
-        {
-            user.IsPremium = false;
-            user.SubscriptionPlan = "Free";
-            _dbContext.Users.Update(user);
-
-            var activeSub = await _dbContext.Subscriptions
-                .FirstOrDefaultAsync(s => s.UserId == user.Id && s.IsActive, cancellationToken);
-            if (activeSub != null)
-            {
-                activeSub.IsActive = false;
-                _dbContext.Subscriptions.Update(activeSub);
-            }
-
-            await _dbContext.SaveChangesAsync(cancellationToken);
-
-            return new WebhookProcessResultDto
-            {
-                Success = true,
-                Message = $"Suscripción cancelada para el usuario '{user.Name}' ({user.Email}).",
-                UserId = user.Id.ToString(),
-                SubscriptionPlan = user.SubscriptionPlan
-            };
-        }
-
-        return new WebhookProcessResultDto
+        return Task.FromResult(new WebhookProcessResultDto
         {
             Success = false,
-            Message = $"Estado de suscripción '{details.Status}' no requiere cambios en el sistema."
-        };
+            Message = "Los webhooks de Mercado Pago están desactivados. Bookmachs utiliza exclusivamente Transbank Webpay Plus."
+        });
     }
 
     private async Task DeductStockAndLogAdjustmentAsync(Guid bookId, Guid matchTransactionId, Guid requesterUserId, CancellationToken cancellationToken)

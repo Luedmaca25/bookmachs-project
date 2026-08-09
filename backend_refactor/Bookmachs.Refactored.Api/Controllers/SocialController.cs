@@ -12,7 +12,7 @@ namespace Bookmachs.Refactored.Api.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class SocialController : ControllerBase
 {
     private readonly ISocialService _socialService;

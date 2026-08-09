@@ -594,11 +594,328 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - **Validación y Pruebas:**
     - Compilación exitosa del frontend (`npm run build`), confirmando la correcta tipificación de TypeScript y generación de recursos finales de Vite.
     - Ejecución satisfactoria de todas las pruebas unitarias e integrales en el Backend mediante `dotnet test` (50 pruebas aprobadas exitosamente).
-* **Archivos Clave:**
-  - [SocialPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/social/SocialPage.tsx)
-  - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
-  - [SocialController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Api/Controllers/SocialController.cs)
-  - [AddTimelineReviewCommand.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend/Bookmachs/Bookmachs.Application/Social/Commands/AddTimelineReviewCommand.cs)
+
+
+---
+
+## Entrada de Bitácora: Alineación y Corrección de Pantallas 3, 4, 5 y Métodos Logísticos de Cumplimiento
+
+* **Fecha:** 7 de Agosto, 2026
+* **Objetivo:** Analizar en detalle la maqueta visual [pantallas-cliente.jpeg](file:///C:/Users/luis_/Proyectos/bookmachs/assets/pantallas-cliente.jpeg) y corregir la implementación de las Pantallas 3, 4, 5 y el flujo de cumplimiento de intercambio según las reglas explícitas del cliente:
+  1. **Pantalla 3 (Descubre / Swipe):** Es exclusivamente para dar "like" (corazón / swipe derecha) o "dislike" (X / swipe izquierda) a los libros recomendados. Dar "like" guarda automáticamente el libro en la pestaña "Me interesan" de Tu Libreta sin aperturas forzadas de modals de pago/compra.
+  2. **Pantalla 4 (Tu Libreta / Tus Matches y Tus Libros):** Organizada en 2 pestañas principales: **"Me interesan"** (libros con like, mostrando compatibilidad de match y el costo de intercambio calculado por las reglas del negocio) y **"Tengo para intercambiar"** (libros propios ofrecidos). **Corrección:** Se eliminó la solicitud de precio monetario al usuario al cargar libros, ya que Bookmachs calcula la tarifa de servicio de intercambio.
+  3. **Pantalla 5 (Propuesta de Intercambio / Resumen Match IA):** Resumen desplegado desde "Ver propuestas de intercambio" en la libreta. Presenta el resumen del match ("¡Matchs! Bookmachs quiere intercambiar contigo"), la validación de compatibilidad con los libros disponibles del usuario, el costo estimado de intercambio ($3.200 CLP/COP con desglose desplegable) y la prohibición de compraventa directa (se intercambia un libro por otro).
+  4. **Métodos Logísticos para Entrega del Libro Ofrecido (Pantalla 11):** Estructuradas las 3 únicas opciones de cumplimiento:
+     - **Opción 1: Donación Comunitaria:** Donar el libro ofrecido en un colegio o espacio comunitario. El usuario sube la foto de evidencia y entra en **proceso de validación previa** por Bookmachs.
+     - **Opción 2: Entrega presencial en local físico:** Llevar el libro ofrecido a la ubicación física del local en Santiago, Chile.
+     - **Opción 3: Envío por encomienda a local físico:** Enviar el libro a la dirección física del local en Santiago, Chile, asumiendo el usuario el costo del envío y subiendo el comprobante/voucher de envío al sistema.
+
+
+---
+
+## Entrada de Bitácora: Confirmación del Libro Entregado a Cambio y Selección Logística (Pantalla 11) en Checkout
+
+* **Fecha:** 7 de Agosto, 2026
+* **Objetivo:** Garantizar que en la sección `/transacciones` y en la vista de Checkout se confirme explícitamente el libro que el usuario entregará a cambio y se le permita seleccionar la opción de cumplimiento logístico (Pantalla 11):
+  1. **Confirmación del Libro a Entregar:** Se desplegó en el Checkout un selector interactivo donde el usuario elige cuál de sus libros cargados en *"Tengo para intercambiar"* entregará por el libro solicitado, mostrando portadas y datos frente a frente (*Libro que recibes <---> Libro que tú entregas*).
+  2. **Selección de la Opción de Entrega (Pantalla 11):** Integrado directamente en la vista de Checkout el selector de los 3 métodos de cumplimiento autorizado:
+     - Donación Comunitaria (cargando foto de evidencia para proceso de validación previa).
+     - Entrega presencial en local físico en Santiago, Chile.
+     - Envío por encomienda a local físico en Santiago, Chile (pagando el envío y subiendo comprobante).
+  3. **Verificación y Seguridad:** Si el usuario posee 0 libros en *"Tengo para intercambiar"*, el Checkout deshabilita el botón de pago y lo redirige a cargar un libro antes de procesar el fee.
+
+---
+
+## Entrada de Bitácora: Rediseño UX / UI Senior - Flujo de Match, Intercambio y Logística (Pantallas 4, 5 y 11)
+
+* **Fecha:** 7 de Agosto, 2026
+* **Objetivo:** Elevar la experiencia de usuario del Checkout y Transacciones al estándar *UX/UI Expert* de alto rendimiento y bajo nivel de fricción:
+  1. **Stepper Wizard de 3 Pasos:** Implementado un indicador de progreso superior interactivo que guía al usuario claramente a través de:
+     - **Paso 1:** Confirmar Libros (Libro A ⇄ Libro B).
+     - **Paso 2:** Opción de Entrega (Donación / Presencial / Envío).
+     - **Paso 3:** Pago de Fee (Hold Webpay Plus).
+  2. **Duet Swap Deck (Trading Cards 3D):** Presentación lado a lado del libro solicitado (*borde neón, insignia IA*) contra el libro propio ofrecido (*selector dinámico con vista previa de portada en tiempo real*).
+  3. **Radio Cards de Selección Logística (Pantalla 11):** Tarjetas interactivas con glassmorphic hover, íconos Neón e insignias de estado para las 3 opciones (Donación Comunitaria con Dropzone para foto y validación previa, Entrega Presencial Santiago Chile, y Envío Encomienda con N° de voucher).
+  4. **Modal Inline de Carga Rápida (30s):** Si el usuario tiene 0 libros en su libreta, puede agregar un ejemplar sin salir de la pantalla de checkout en un modal rápido con backdrop esmerilado.
+
+---
+
+## Entrada de Bitácora: Rediseño de Modal de Propuesta Match (Pantalla 5 - MatchModal.tsx)
+
+* **Fecha:** 7 de Agosto, 2026
+* **Objetivo:** Aplicar el estándar *UX/UI Expert* al modal de propuesta que se abre al hacer clic en *"Ver propuesta"* desde la libreta o tras un swipe:
+  1. **Duet Swap Deck frente a frente:** Incorporadas las tarjetas visuales del **Libro que recibes** (*borde neón, insignia IA*) contra el **Libro que tú entregas** de tu libreta (*selector dinámico si tienes varios ejemplares, con portada y autor*).
+  2. **Transparencia en el Intercambio:** Muestra de forma inmediata al usuario qué libro físico entregará y cuál recibirá antes de avanzar al pago del fee.
+  3. **Control de Inventario Obligatorio:** Si el usuario no tiene libros cargados, la propuesta bloquea el botón principal y ofrece la acción directa: **[＋ Cargar un libro a mi libreta primero]**.
+
+---
+
+## Entrada de Bitácora: Sincronización y Configuración de Transbank en Backend Refactorizado (`backend_refactor`)
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Asegurar que todas las configuraciones de pagos y reglas de negocio del Checkout residan en la base de código correcta del backend: **`backend_refactor/Bookmachs.Refactored.Api`**.
+  1. **Configuración de Transbank Webpay Plus:** Actualizado [appsettings.json](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/appsettings.json) con la sección `"Payments"` para utilizar el código de comercio e ApiKey oficiales de integración diferida de Transbank.
+  2. **Servicio de Pagos Independiente:** En [PaymentGatewayService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Infrastructure/Payments/PaymentGatewayService.cs), se configuraron las opciones oficiales de Transbank SDK .NET.
+  3. **Validación de Inventario Ofrecido:** En [TransactionService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/TransactionService.cs), se incorporó la regla de negocio para rechazar `CheckoutCardAsync` y `WebpayStartAsync` si el usuario no cuenta con libros en su inventario para ofrecer a cambio.
+
+---
+
+## Entrada de Bitácora: Reversión de `backend` previo y Eliminación de Mercado Pago en `backend_refactor`
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** 
+  1. **Reversión del backend anterior:** Se ejecutó la restauración limpia del directorio `backend/` para mantenerlo intacto sin cambios desalineados.
+  2. **Eliminación de Mercado Pago en `backend_refactor`:**
+     - Eliminada la dependencia del SDK `mercadopago-sdk` en [Bookmachs.Refactored.Api.csproj](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Bookmachs.Refactored.Api.csproj).
+     - Limpiadas las interfaces y métodos de tarjeta directa y suscripciones de Mercado Pago en [IPaymentGatewayService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Domain/Services/IPaymentGatewayService.cs) y [PaymentGatewayService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Infrastructure/Payments/PaymentGatewayService.cs).
+     - Concentrada toda la arquitectura de pagos exclusivamente en **Transbank Webpay Plus** (Redirección por POST, Hold y Captura Diferida).
+
+---
+
+## Entrada de Bitácora: Integración de SendGrid (Dynamic Templates) y Job Diario de Expiración de Entregas (5 Días)
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Implementar la lógica automatizada de envío diario de correos mediante **SendGrid Dynamic Templates** e imponer la regla de vencimiento de 5 días para la captura/retención en Transbank Webpay Plus.
+  1. **Integración con SendGrid:**
+     - Agregado el paquete oficial `SendGrid` en [Bookmachs.Refactored.Api.csproj](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Bookmachs.Refactored.Api.csproj).
+     - Creado el servicio [SendGridEmailService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/SendGridEmailService.cs) con el modelo fuertemente tipado `ExchangeReminderEmailData` para abastecer las plantillas dinámicas de SendGrid.
+     - Agregada la sección `"SendGrid"` en [appsettings.json](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/appsettings.json).
+  2. **Job Diario de Revisión y Expiración (`ExchangeFulfillmentJob.cs`):**
+     - Creado [ExchangeFulfillmentJob.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Jobs/ExchangeFulfillmentJob.cs) que procesa transacciones con pago retenido (`PaymentStatus = Hold`):
+       - **Días 1 a 4:** Envía correo diario con todo el detalle de los libros a intercambiar/recibir, días restantes e instrucciones según el método de entrega seleccionado.
+       - **Día 5 (Vencimiento):** Ejecuta automáticamente `RefundTransbankHoldAsync`, cancela la transacción y registra un evento en la línea de tiempo.
+  3. **Endpoint de Ejecución:**
+     - Expuesto el endpoint `POST api/transactions/run-daily-fulfillment-job` en [TransactionsController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Controllers/TransactionsController.cs) para la activación manual o vía Cron Task.
+
+---
+
+## Entrada de Bitácora: Implementación de la Thank You Page Post-Pago y Modal de Detalle de Intercambio / Evidencia Logística
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Diseñar y desplegar la experiencia visual posterior al pago de Webpay Plus y el panel de detalle de transacciones activas.
+  1. **Thank You Page Post-Pago (`MatchDetailModal.tsx`):**
+     - Al confirmar exitosamente la sesión de Webpay Plus, se despliega automáticamente una **Thank You Page** en formato de tarjeta de confirmación neón.
+     - Muestra el **Duet Swap Deck** con el libro que el usuario recibirá y el libro que entregará de su libreta.
+     - Muestra la **Fecha y Hora exacta de la transacción/pago**, el monto retenido en Webpay Plus y el **contador límite de 5 días**.
+  2. **Subida Interactiva de Evidencias Logísticas (`/transacciones`):**
+     - Desde la vista general de `/transacciones`, al presionar **"🔍 Ver detalle e instrucciones"** o **"📋 Ver propuesta de libros y fecha límite"**:
+       - Si la opción es **Donación Comunitaria**, despliega el Dropzone para cargar la **fotografía del colegio o espacio comunitario** (validación previa).
+       - Si la opción es **Envío Encomienda**, permite ingresar el **N° de seguimiento** y adjuntar la captura del voucher de envío.
+       - Si la opción es **Entrega Presencial**, muestra los datos del punto de encuentro en Santiago.
+
+---
+
+## Entrada de Bitácora: Actualización de Dirección Oficial de Entrega Presencial
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Actualizar la dirección física del local de recepción y entrega presencial en todo el sistema.
+  - **Nueva Dirección Oficial:** **`Patronato 447, Recoleta, Santiago, Chile`**.
+  - Actualizados los textos informativos en:
+    - [TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx) (Paso 2: Selección Logística de Entrega Presencial y Envío).
+    - [MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx) (Tarjeta de Instrucciones Presenciales e Instrucciones Logísticas).
+    - [ExchangeFulfillmentJob.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Jobs/ExchangeFulfillmentJob.cs) (Instrucciones enviadas en plantillas de correos).
+
+---
+
+## Entrada de Bitácora: Rediseño UX/UI Master del Modal de Detalle y Corrección de Portadas
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Rediseñar por completo la interfaz visual del modal de detalle de intercambio y Thank You Page ([MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx)) aplicando estándares de **UX/UI Master**.
+  1. **Solución a la Visualización de Portadas:**
+     - Incorporados fallbacks garantizados de portadas HD y manejadores de error `onError` para que ambos libros (*Recibido* y *Entregado*) se rendericen enmarcados en 3D sin importar que la URL sea vacía o inaccesible.
+     - Integrada la carga automática del inventario propio del usuario en el modal para permitir cambiar o previsualizar el ejemplar a entregar.
+  2. **Estética Visual UX/UI Master:**
+     - **3D Duet Swap Showcase:** Tarjetas elevadas con auras de neón (*Esmeralda para el recibido* y *Ámbar para el entregado*) unidas por un nodo central animado de compatibilidad IA (`🤖 Match 100% IA`).
+     - **Cronómetro & Dashboard de 5 Días:** Medidor visual de progreso en tiempo real con barra de color reactivo y tarjetas de métricas (*Fecha de Pago*, *Hold Webpay*, *Límite de Expiración*).
+     - **Hub de Cumplimiento Logístico:** Dropzone interactivo para arrastrar fotografías de donación o vouchers de envío, y tarjeta de dirección presencial (**Patronato 447, Recoleta, Santiago, Chile**) con botón de un clic para copiar al portapapeles.
+
+---
+
+## Entrada de Bitácora: Formateo de Fechas en Zona Horaria del País del Usuario y Corrección del Cronómetro de 5 Días
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Resolver la discrepancia en el cronómetro de vencimiento y adaptar la visualización de fechas y horas a la zona horaria local del país de registro del usuario.
+  1. **Solución a la Discrepancia del Cronómetro (Bugfix):**
+     - **Causa Raíz:** Las cadenas ISO de fecha devueltas por el servidor .NET eran interpretadas por el constructor `new Date()` del navegador en la zona horaria local sin indicar `Z` (UTC). Esto ocasionaba desfases de horas que hacían que `Math.ceil()` calculara `6 días` cuando en realidad el plazo era de 5 días (Día 1 de 5).
+     - **Solución:** Creado la librería de utilidades [dateUtils.ts](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/lib/dateUtils.ts) con las funciones `parseUtcDate` y `calculateFulfillmentTiming`, las cuales fuerzan la lectura estricta en UTC y calculan de forma matemáticamente exacta las horas y días restantes sin discrepancias (*ej: Día 1 de 5 ➔ Quedan 4 días y 22 horas*).
+  2. **Formateo en la Zona Horaria del País del Usuario:**
+     - Implementado el helper `formatDateInUserTimezone` que detecta la zona horaria IANA del país de registro (Chile ➔ `America/Santiago`, México ➔ `America/Mexico_City`, Colombia ➔ `America/Bogota`, etc.).
+     - Integrado en [MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx) y en el listado de tarjetas en [TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx).
+
+---
+
+## Entrada de Bitácora: Rediseño Mobile-First Master UX/UI del Modal de Detalle de Intercambio
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Refactorizar la arquitectura visual y técnica del modal ([MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx)) bajo la filosofía **Mobile-First**.
+  1. **Patrón Bottom Sheet Ultra-Ergonómico en Móviles:**
+     - El contenedor pasa a comportarse como un *Bottom Sheet* deslizable con bordes superiores redondeados (`border-radius: 28px 28px 0 0`), handle bar superior visual de arrastre y fijación al fondo de pantalla (`align-items: flex-end`) en pantallas móviles y pequeñas.
+     - Botón de cierre en la esquina superior adaptado para interacción táctil (zonas de toque de 38px).
+  2. **Disposición Vertical Adaptativa (Duet Swap Deck):**
+     - Distribución en stack vertical fluido (`flex-direction: column`) para las tarjetas de los libros a recibir y entregar, manteniendo marcos de portada 3D resplandecientes con portadas garantizadas visiblemente.
+     - Centralización del nodo de compatibilidad IA (`🤖 Match 100% IA`).
+  3. **Métricas Logísticas y Formularios Adaptados a Pulgar:**
+     - Reestructuración de la cuadrícula de métricas (*Fecha de Pago*, *Fee Retenido*, *Fecha Límite*) a un stack horizontal limpio por filas de alto contraste.
+     - Formulario de carga de donaciones/vouchers con zona de toque optimizada para galerías móviles y botón neón flotante.
+
+---
+
+## Entrada de Bitácora: Implementación de Overlay Estilo Bootstrap 5 y Adaptación Híbrida Desktop / Mobile (Media Queries)
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Adaptar el modal [MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx) al comportamiento de superposición **Bootstrap 5** y separar la presentación visual mediante **Media Queries** (Desktop 3 columnas vs Mobile Bottom Sheet).
+  1. **Comportamiento Overlay Estilo Bootstrap 5:**
+     - Se asignó `z-index: 10000` a la clase `.modal-overlay` en [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css), garantizando que el modal se posicione por encima de absolutamente todos los elementos de la interfaz (incluyendo Navbar sticky y Footer).
+     - Se habilitó `overflow-y: auto` en la capa del overlay con scrollbar nativo independiente y centrado vertical automático (`margin: auto 0`).
+  2. **Presentación Responsiva Dual con Media Queries:**
+     - **Escritorio / Pantallas Anchas (`> 768px`):** Restablecido el diseño amplio de **3 columnas elegantes** para el *Duet Swap Deck* (Libro a recibir, Puente IA central `🤖 Match 100% IA`, y Libro a entregar) y la cuadrícula horizontal de 3 métricas (*Fecha de Pago*, *Fee Retenido*, *Límite de Expiración*).
+     - **Dispositivos Móviles (`<= 768px`):** Adaptado mediante media queries a formato *Bottom Sheet* deslizable fijado al borde inferior con *Drag Handle Bar* visual superior y distribución en stack vertical.
+
+---
+
+## Entrada de Bitácora: Corrección de Jerarquía de Apilamiento (Stacking Context) y Centrado Exacto del Modal Bootstrap 5
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Resolver el problema donde el modal se mostraba por debajo de la barra de navegación (`.app-header`) y ajustar la alineación horizontal/vertical.
+  1. **Diagnóstico y Solución de Jerarquía de Apilamiento (Stacking Context):**
+     - **Causa Raíz:** El contenedor principal `.app-main > div` tenía asignada la animación `fadeIn` con la propiedad `transform: translateY(...)`. En CSS, cualquier elemento con la propiedad `transform` distinta de `none` crea un **nuevo Stacking Context local**, lo que atrapaba al modal dentro del flujo hijo de la página y hacía que su `z-index: 10000` se calculara relativo al contenedor interno y quedara tapado por el `.app-header` (sticky con `z-index: 100`).
+     - **Solución:** Se reemplazó la animación en `.app-main > div` por `fadeInNoTransform` (animando únicamente `opacity`), liberando al modal para posicionarse por encima de toda la viewport incluyendo Navbar y Footer.
+  2. **Centrado Perfecto y Ajuste de Dimensiones (`margin: auto`):**
+     - Se reemplazó la dimensión `100vw/100vh` con barras de desplazamiento laterales por la declaración limpia `top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%;` en el overlay.
+     - Se aplicó `margin: auto` a la tarjeta `.detail-modal-card-master`, logrando un centrado horizontal y vertical exacto en pantalla.
+
+---
+
+## Entrada de Bitácora: Implementación de Navegación Offcanvas Móvil y Eliminación de Transparencias Distorsionadoras en Modales
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Implementar la navegación lateral responsiva tipo **Offcanvas (Estilo Bootstrap 5)** para dispositivos móviles y eliminar los efectos de desenfoque/transparencia que distorsionaban el contenido de fondo detrás de los modales.
+  1. **Navegación Móvil Lateral Offcanvas (`MainLayout.tsx`):**
+     - En pantallas móviles (`<= 768px`), el menú horizontal superior se oculta automáticamente y da paso a un **botón de hamburguesa (`<i className="fa-solid fa-bars"></i>`)**.
+     - Al hacer clic, se despliega desde la derecha un **panel lateral deslizable Offcanvas (320px)** de alto contraste con todas las opciones de navegación (*Descubrir, Catálogo, Tu Libreta, Matches, Planes, Impacto y Perfil/Salir*).
+     - El menú se cierra automáticamente al seleccionar cualquier ruta o al presionar el botón de cierre/backdrop.
+  2. **Eliminación de Transparencia y Blur Distorsionador en Modales (`MatchDetailModal.tsx` & `index.css`):**
+     - Se removió la propiedad `backdrop-filter: blur(...)` y la opacidad translúcida que provocaba distorsión visual con los elementos de la página principal.
+     - Se aplicó un **fondo oscuro sólido y elegante (`#070b14` / `rgba(5, 8, 16, 0.98)`)** con centrado geométrico perfecto, garantizando una lectura nítida del texto y portadas 3D sin ruido de fondo.
+
+---
+
+## Entrada de Bitácora: Corrección de Desbordamientos Responsivos en Móviles (Offcanvas & Match Card)
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Analizar la captura [evidencia1.png](file:///C:/Users/luis_/Proyectos/bookmachs/evidencias/evidencia1.png) y corregir los problemas de desbordamiento horizontal (`overflow-x`), títulos cortados y alineación del panel Offcanvas.
+  1. **Solución a la Alineación del Panel Offcanvas (`MainLayout.tsx` & `index.css`):**
+     - Se ajustó el header móvil (`.app-header`) a `flex-direction: row; justify-content: space-between;` para evitar que el logo se superpusiera con el panel lateral.
+     - Se fijó la posición del panel deslizable a la derecha con un ancho responsivo adaptable (`width: 82%; max-width: 320px;`).
+  2. **Solución a los Desbordamientos de la Tarjeta Match (`TransactionsPage.tsx` & `index.css`):**
+     - Se añadieron las reglas `word-break: break-word;` y `min-width: 0;` a los títulos y detalles de las tarjetas de intercambio (`.match-card-details`), evitando que títulos largos (como *Tus Matches y Transacciones* o *Cuentatrapos*) empujen la pantalla lateralmente.
+     - Se reestructuró la sección de botones de acción en móviles (`.match-card-actions`) a una columna vertical fluida de alto contraste con ancho al 100%.
+
+---
+
+## Entrada de Bitácora: Solución al Posicionamiento y Stacking Context del Menú Offcanvas Móvil
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Resolver el problema donde el menú Offcanvas únicamente se renderizaba dentro del espacio del `<header>` sticky y no cubría el 100% de la pantalla.
+  1. **Causa Raíz de Stacking Context:**
+     - El componente `<div className="offcanvas-backdrop">` estaba siendo renderizado como hijo directo del elemento `<header className="app-header">`.
+     - Dado que `<header>` posee su propio contexto de apilamiento (`position: sticky; z-index: 100`), cualquier hijo con `position: fixed; inset: 0;` quedaba limitado espacialmente al área visual delimitada por el header.
+  2. **Solución Aplicada (`MainLayout.tsx`):**
+     - Se extrajo el bloque `{mobileMenuOpen && <div className="offcanvas-backdrop">...</div>}` fuera del tag `<header>` y se ubicó como hermano directo dentro de `<div className="app-container">`.
+     - De este modo, la capa con `position: fixed; inset: 0; z-index: 10500` cubre la totalidad de la ventana gráfica (*viewport 100vw x 100vh*), oscureciendo el fondo completo y desplegando el panel lateral desde la derecha estilo **Bootstrap 5 Offcanvas**.
+
+---
+
+## Entrada de Bitácora: Bloqueo de Scroll Global (`html` y `body`) para Menú Offcanvas y Modales
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Garantizar que cuando el menú lateral Offcanvas o un Modal de detalle se encuentre activo, se inhabilite el scroll del fondo (`html` y `body`), permitiendo únicamente el desplazamiento interno dentro del panel/modal.
+  1. **Bloqueo en Menú Offcanvas (`MainLayout.tsx`):**
+     - Se añadió un efecto `useEffect` que monitorea el estado `mobileMenuOpen`. Al activarse, aplica `document.documentElement.style.overflow = 'hidden'` y `document.body.style.overflow = 'hidden'`.
+     - Al cerrarse o desmontarse el componente, restablece automáticamente el scroll normal.
+  2. **Bloqueo en Modal de Detalle (`MatchDetailModal.tsx`):**
+     - Se aplicó el mismo patrón de bloqueo en el `useEffect` dependiente de `isOpen`, previniendo que el usuario pueda desplazar la página de fondo mientras interactúa con el modal.
+
+---
+
+## Entrada de Bitácora: Solución Técnica al Bug de Cobertura del Header Mediante React Portal (`createPortal`)
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Resolver definitivamente el bug donde, al encontrarse el scroll del usuario en la parte superior de la página, la barra de navegación sticky (`.app-header`) alcanzaba a tapar parcialmente la parte superior del modal al abrirlo.
+  1. **Causa Raíz:**
+     - El componente modal se renderizaba como hijo dentro de la jerarquía DOM de `TransactionsPage`, compartiendo los contextos de apilamiento (*Stacking Contexts*) de los contenedores intermedios del layout (`.app-container`, `.app-main`).
+     - Cuando el scroll estaba hasta arriba, la posición sticky de la barra de navegación interactuaba en el mismo nivel visual del árbol DOM local.
+  2. **Solución Definitiva (`createPortal`):**
+     - Se implementó `createPortal` de `react-dom` en [MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx).
+     - El modal ahora se teletransporta y renderiza **directamente como hijo de `document.body`**, completamente fuera del flujo y la jerarquía de la página.
+     - Con `z-index: 99999` y renderizado en la raíz del documento, el modal queda por encima de absolutamente todos los elementos del sitio web (Header sticky, Footer y contenedores) independientemente de la posición del scroll.
+
+---
+
+## Entrada de Bitácora: Actualización de la Paleta de Colores a la Identidad Oficial Emerald Forest (`pantallas-cliente.jpeg`)
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Transformar la paleta de colores de toda la interfaz de usuario en [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css) para que coincida de forma exacta con la identidad visual oficial de las maquetas de cliente ([pantallas-cliente.jpeg](file:///C:/Users/luis_/Proyectos/bookmachs/assets/pantallas-cliente.jpeg)).
+  1. **Paleta Botánica y Limpia (Emerald Forest):**
+     - **Verde Principal (`--neon`):** `#0F9D58` (*Verde Esmeralda Botánico Orgánico* de los botones y elementos de acción principales).
+     - **Fondo de Pantalla (`--bg-primary`):** `#F7F9F8` (*Gris Botánico Limpio de Alta Frescura Visual*).
+     - **Tarjetas y Paneles (`--bg-card` / `--bg-secondary`):** `#FFFFFF` (*Blanco Puro con sombras suaves `#0F9D58`*).
+     - **Tipografía y Textos (`--text-primary` / `--text-secondary`):** `#1A2621` (*Verde Bosque Oscuro* para máxima legibilidad e impacto ambiental).
+  2. **Consistencia Visual Global:**
+     - Aplicado automáticamente a todos los botones, tarjetas de matches, modales, barras de progreso, menús y formularios de la aplicación.
+
+---
+
+## Entrada de Bitácora: Auditoría y Corrección de Contrastes para el Tema Botánico Claro (`pantallas-cliente.jpeg`)
+
+* **Fecha:** 8 de Agosto, 2026
+* **Objetivo:** Auditar y corregir inconsistencias visuales de texto blanco sobre fondos claros o cajas oscuras aisladas reportadas en la interfaz de usuario tras el cambio de tema.
+  1. **Ajustes en Tarjetas de Matches (`index.css`):**
+     - Se actualizaron los titulares de las tarjetas de intercambio (`.match-card-details h3`) y la visualización de montos (`.fee-amount-display strong`) de `#fff` a `var(--text-primary)` (`#1A2621`), logrando un contraste perfecto e inmediato.
+     - Se ajustaron todas las insignias de estado (*Pending, Hold, Captured, Failed, Logistics*) a fondos semitransparentes suaves con bordes claros y texto de alto contraste.
+  2. **Ajustes en Modal de Detalle e Instrucciones ([MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx)):**
+     - Se transformó el contenedor principal del modal a blanco puro (`#FFFFFF`) con bordes botánicos suaves (`#E1E8E4`) y sombras esmeralda.
+     - Se actualizaron las tarjetas de libros a recibir y entregar, el cronómetro de 5 días, la caja de dirección presencial y el formulario de carga de vouchers a tonos botánicos claros con tipografía `#1A2621` de legibilidad máxima.
+
+---
+
+## Entrada de Bitácora: Creación de Archivos de Variables de Entorno por Ambiente (`.env.development` & `.env.production`)
+
+* **Fecha:** 9 de Agosto, 2026
+* **Objetivo:** Configurar el aislamiento de endpoints de la API para los entornos de desarrollo y producción en el cliente de React (Vite).
+  1. **Configuración de Desarrollo (`.env.development`):**
+     - Ubicación: [frontend/.env.development](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/.env.development)
+     - Variable: `VITE_API_URL=https://localhost:7047/api`
+  2. **Configuración de Producción (`.env.production`):**
+     - Ubicación: [frontend/.env.production](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/.env.production)
+     - Variable: `VITE_API_URL=/api`
+
+* **Archivos Clave Modificados:**
+  - [.env.development](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/.env.development)
+  - [.env.production](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/.env.production)
+  - [bitacora_desarrollo.md](file:///C:/Users/luis_/Proyectos/bookmachs/bitacora_desarrollo.md)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

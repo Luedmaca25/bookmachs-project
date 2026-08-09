@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Bookmachs.Refactored.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class MasterPreferenceTagsController : ControllerBase
 {
     private readonly ISettingsService _settingsService;
