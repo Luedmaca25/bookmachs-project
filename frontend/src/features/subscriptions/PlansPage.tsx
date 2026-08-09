@@ -48,7 +48,8 @@ export const PlansPage: React.FC = () => {
         'Soporte premium 24/7'
       ],
       recommended: true
-    },
+    }
+    /*
     {
       id: 'infantil',
       name: 'Plan Lector Infantil',
@@ -62,6 +63,7 @@ export const PlansPage: React.FC = () => {
         'Insignias ecológicas coleccionables'
       ]
     }
+    */
   ];
 
   const handleSelectPlan = async (plan: Plan) => {
