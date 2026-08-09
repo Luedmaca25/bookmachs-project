@@ -890,10 +890,20 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
      - Ubicación: [frontend/.env.production](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/.env.production)
      - Variable: `VITE_API_URL=/api`
 
+---
+
+## Entrada de Bitácora: Ocultación del "Plan Lector Infantil" en la Vista de Planes
+
+* **Fecha:** 9 de Agosto, 2026
+* **Objetivo:** Ocultar temporalmente el **Plan Lector Infantil** de la vista pública de membresías y suscripciones ([PlansPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/subscriptions/PlansPage.tsx)).
+  1. **Ajuste en la Estructura de Planes (`PlansPage.tsx`):**
+     - Se comentó la entrada del objeto `Plan Lector Infantil` del array `plans`.
+     - Ahora únicamente se muestran las membresías principales (*Plan Gratuito / Básico* y *Plan Premium*), manteniendo el diseño de cuadrícula centrado y ordenado.
+
 * **Archivos Clave Modificados:**
-  - [.env.development](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/.env.development)
-  - [.env.production](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/.env.production)
+  - [PlansPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/subscriptions/PlansPage.tsx)
   - [bitacora_desarrollo.md](file:///C:/Users/luis_/Proyectos/bookmachs/bitacora_desarrollo.md)
+
 
 
 
