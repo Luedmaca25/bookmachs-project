@@ -289,7 +289,6 @@ export const InventoryPage: React.FC = () => {
                       setMatchModalOpen(true);
                     }
                   }}
-                  style={{ background: 'var(--green-bright)', fontWeight: 800, padding: '0.9rem 1.5rem' }}
                 >
                   ★ Ver propuestas de intercambio
                 </button>

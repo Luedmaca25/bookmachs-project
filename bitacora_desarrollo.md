@@ -900,9 +900,61 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
      - Se comentó la entrada del objeto `Plan Lector Infantil` del array `plans`.
      - Ahora únicamente se muestran las membresías principales (*Plan Gratuito / Básico* y *Plan Premium*), manteniendo el diseño de cuadrícula centrado y ordenado.
 
+---
+
+## Entrada de Bitácora: Homologación Tipográfica Global por Rutas (Tema Botánico de `pantallas-cliente.jpeg`)
+
+* **Fecha:** 9 de Agosto, 2026
+* **Objetivo:** Homologar los colores de la tipografía y de todos los contenidos a lo largo de las rutas de la aplicación (`/`, `/catalogo`, `/libreta`, `/transacciones`, `/planes`, `/social`, `/auth`, etc.), resolviendo problemas de textos que continuaban en blanco sobre fondo claro.
+  1. **Reglas Globales Homologadas en CSS (`index.css`):**
+     - **Títulos Principales (`h1`):** `color: var(--accent-primary)` (**Verde Esmeralda Botánico `#0F9D58`** de las maquetas oficiales).
+     - **Subtítulos y Titulares Secundarios (`h2, h3, h4, h5, h6`):** `color: var(--text-primary)` (**Verde Bosque Oscuro / Negro Legible `#1A2621`**).
+     - **Párrafos y Textos (`p, span, body`):** `color: var(--text-secondary)` (**`#4A5D55`**) / `var(--text-primary)` (**`#1A2621`**).
+  2. **Coherencia en Todas las Vistas:**
+     - Eliminación de declaraciones residulas `#fff` en tarjetas y encabezados de catálogo, libreta, transacciones, login y membresías.
+
+---
+
+## Entrada de Bitácora: Homologación Explicita de Clases de Encabezados (`.plans-header h1`, `.transactions-header h1`, etc.)
+
+* **Fecha:** 9 de Agosto, 2026
+* **Objetivo:** Resolver el problema donde clases específicas de encabezados por ruta (ej. `.plans-header h1`, `.transactions-header h1`, `.swipe-header h1`, `.inventory-header h1`, `.catalog-header h1`, `.profile-name-row h1`, `.guest-hero-card h1`) continuaban sobreescribiendo la regla base de `h1`.
+  1. **Homologación de Clases Especificas en CSS (`index.css`):**
+     - Todas las clases de título de página (`.plans-header h1`, `.transactions-header h1`, `.swipe-header h1`, `.inventory-header h1`, `.catalog-header h1`, `.profile-name-row h1`, `.guest-hero-card h1`) se actualizaron explícitamente a `color: var(--accent-primary)` (**Verde Esmeralda Botánico `#0F9D58`**).
+     - Todas las clases de subtítulo (`.checkout-header h2`, etc.) se asignaron a `color: var(--text-primary)` (**Verde Bosque Oscuro `#1A2621`**).
+  2. **Garantía Visual:** Se erradicaron los gradientes blancos (`background: #fff` / `linear-gradient`) en titulares a lo largo de todo el sitio web.
+
+---
+
+## Entrada de Bitácora: Unificación del Flujo de Carga de Libros (`/transacciones` -> `/libreta`)
+
+* **Fecha:** 9 de Agosto, 2026
+* **Objetivo:** Eliminar el modal de carga rápida redundante de libros en la vista de transacciones ([TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx)) y unificar todo el flujo de carga dirigiéndolo a la ruta unificada `/libreta`.
+  1. **Redirección Única a `/libreta`:**
+     - Se reemplazaron todos los botones y avisos de *"Cargar libro primero"* o *"Cargar en 30s"* dentro del stepper de checkout y la vista general de transacciones por redirecciones estándar utilizando `navigate('/libreta')`.
+  2. **Refactorización Limpia:**
+     - Se eliminaron los componentes modales duplicados (`quickUploadOpen`), formularios secundarios e invocaciones `handleQuickUpload`, manteniendo un único punto de verdad para la creación y gestión del inventario de libros en la aplicación.
+
+---
+
+## Entrada de Bitácora: Ajuste de Lógica de Estados de Intercambio y Likes Guardados (`/transacciones`)
+
+* **Fecha:** 9 de Agosto, 2026
+* **Objetivo:** Refinar el comportamiento de las tarjetas en `/transacciones` cuando un usuario no tiene libros cargados en su libreta para ofrecer a cambio.
+  1. **Estado "Interés Guardado" (`!hasOfferedBooks`):**
+     - Si el usuario dio *Like* a un libro en exploración pero aún no ha registrado libros propios en `/libreta`, la tarjeta no muestra badges confusas de *"Pago Pendiente"* ni *"Logística: Pending"*.
+     - En su lugar, la tarjeta exhibe la insignia **`Interés Guardado 💚`**.
+     - Se ocultan los botones de propuesta y modal de detalle hasta que exista un libro propio disponible, ofreciendo un único botón directo: **`＋ Cargar mi libro en Tu Libreta`**.
+  2. **Ciclo del Hold de Fee:**
+     - Se clarificó la nomenclatura de los badges a **`Hold de Fee Pendiente ⏳`** y **`Pago Retenido (Hold) 🔒`**, respetando el modelo transaccional donde el cobro real se ejecuta únicamente tras completar el intercambio.
+
 * **Archivos Clave Modificados:**
-  - [PlansPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/subscriptions/PlansPage.tsx)
+  - [TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx)
   - [bitacora_desarrollo.md](file:///C:/Users/luis_/Proyectos/bookmachs/bitacora_desarrollo.md)
+
+
+
+
 
 
 

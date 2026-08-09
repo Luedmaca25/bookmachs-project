@@ -194,18 +194,23 @@ a {
   margin: 0 auto;
 }
 
-/* Tipografía de las páginas */
+/* Tipografía Global Homologada (Tema Botánico de pantallas-cliente.jpeg) */
 h1 {
   font-size: 2.6rem;
   margin-bottom: 0.8rem;
-  color: var(--text-primary);
+  color: var(--accent-primary); /* Verde Esmeralda Botánico */
   font-weight: 800;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
+h2, h3, h4, h5, h6 {
+  color: var(--text-primary); /* Negro/Oscuro Botánico #1A2621 */
+  font-weight: 700;
+}
+
 p {
-  color: var(--text-secondary);
+  color: var(--text-secondary); /* Negro/Secundario Botánico #4A5D55 */
   font-size: 1.05rem;
   max-width: 600px;
   margin-bottom: 2rem;
@@ -596,9 +601,7 @@ p {
 .swipe-header h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
-  background: var(--gradient-accent);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--accent-primary);
 }
 
 .swipe-header p {
@@ -777,7 +780,6 @@ p {
   background: var(--gradient-accent);
   color: #fff;
   border: none;
-  box-shadow: 0 4px 15px rgba(182, 255, 0, 0.3);
 }
 
 .like-btn:hover {
@@ -810,7 +812,7 @@ p {
   width: 100vw;
   height: 100vh;
   /* Fondo completamente sólido de alta opacidad sin transparencia distorsionadora */
-  background-color: rgba(5, 8, 16, 0.98);
+  background-color: rgba(5, 8, 16, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1130,7 +1132,6 @@ p {
   padding: 1rem;
   border-radius: var(--radius-full);
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(182, 255, 0, 0.3);
   transition: all var(--transition-fast);
   margin-top: 1rem;
 }
@@ -1246,9 +1247,7 @@ p {
 
 .inventory-header h1 {
   font-size: 2.4rem;
-  background: #cbd5e1;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--accent-primary);
   margin-bottom: 0.2rem;
 }
 
@@ -1266,7 +1265,6 @@ p {
   padding: 0.75rem 1.6rem;
   border-radius: var(--radius-full);
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(182, 255, 0, 0.3);
   transition: all var(--transition-fast);
   white-space: nowrap;
 }
@@ -1617,7 +1615,7 @@ p {
 
 .inventory-card-body h3 {
   font-size: 1.1rem;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -2049,6 +2047,9 @@ p {
    Match Modal Styles ("¡Match Logrado!")
    ========================================================================== */
 .match-modal-card {
+  position: relative;
+  top: 200px;
+  margin-bottom: 200px;
   max-width: 520px !important;
   padding: 3rem 2.5rem !important;
   text-align: center;
@@ -2327,9 +2328,15 @@ p {
   margin-bottom: 2.5rem;
 }
 
-.transactions-header h1, .checkout-header h2 {
+.transactions-header h1 {
   font-size: 2.2rem;
-  color: #fff;
+  color: var(--accent-primary);
+  margin-bottom: 0.5rem;
+}
+
+.checkout-header h2 {
+  font-size: 2.2rem;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
@@ -2559,7 +2566,6 @@ p {
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(182, 255, 0, 0.3);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -3075,7 +3081,7 @@ p {
   font-family: var(--font-heading);
   font-size: 2.8rem;
   font-weight: 800;
-  color: var(--text-secondary);
+  color: var(--accent-primary);
   margin-bottom: 1rem;
 }
 
@@ -3270,7 +3276,6 @@ p {
   background: var(--gradient-accent);
   border: none;
   color: #fff;
-  box-shadow: 0 4px 15px rgba(182, 255, 0, 0.3);
 }
 
 .btn-premium:hover:not(:disabled) {
@@ -3326,7 +3331,7 @@ p {
 .plans-legal-footer h3 {
   font-family: var(--font-heading);
   font-size: 1.15rem;
-  color: #fff;
+  color: var(--text-primary);
   margin-bottom: 1.2rem;
 }
 
@@ -3357,7 +3362,7 @@ p {
 
 .catalog-header h1 {
   font-size: 2.5rem;
-  color: var(--text-primary);
+  color: var(--accent-primary);
   margin-bottom: 0.5rem;
   font-family: var(--font-heading);
 }
@@ -3922,9 +3927,7 @@ p {
 .guest-hero-card h1 {
   font-size: 2.8rem;
   font-family: var(--font-heading);
-  background: linear-gradient(135deg, #fff 30%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--accent-primary);
   margin: 0 0 1rem 0;
   z-index: 1;
   position: relative;
@@ -4124,6 +4127,7 @@ p {
 .profile-name-row h1 {
   font-size: 2rem;
   font-family: var(--font-heading);
+  color: var(--accent-primary);
   margin: 0;
 }
 
@@ -4229,6 +4233,7 @@ p {
   margin-bottom: 1rem;
   display: block;
   z-index: 1;
+  color: var(--accent-primary);
 }
 
 .card-metric-value {
@@ -4238,6 +4243,7 @@ p {
   line-height: 1.1;
   margin-bottom: 0.4rem;
   z-index: 1;
+  color: var(--text-primary);
 }
 
 .card-metric-value small {
@@ -4503,7 +4509,7 @@ p {
 .percent-number {
   font-size: 1.8rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .percent-text {
@@ -4627,13 +4633,14 @@ p {
 .comm-stat-icon {
   font-size: 2.2rem;
   margin-bottom: 0.6rem;
+  color: var(--accent-primary);
 }
 
 .comm-stat-number {
   font-size: 2.6rem;
   font-weight: 800;
   font-family: var(--font-heading);
-  color: #fff;
+  color: var(--text-primary);
   line-height: 1.1;
   margin-bottom: 0.3rem;
 }

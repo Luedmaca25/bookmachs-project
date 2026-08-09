@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { MatchDetailModal } from './components/MatchDetailModal';
 import { formatDateInUserTimezone } from '../../lib/dateUtils';
@@ -33,6 +33,7 @@ interface MyOfferedBook {
 }
 
 export const TransactionsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const checkoutId = searchParams.get('checkout');
   const webpayTokenWs = searchParams.get('token_ws');
@@ -49,17 +50,6 @@ export const TransactionsPage: React.FC = () => {
 
   // Stepper del Checkout (Pasos 1, 2, 3)
   const [activeStep, setActiveStep] = useState<number>(1);
-
-  // Modal de Carga Rápida de Libro Inline
-  const [quickUploadOpen, setQuickUploadOpen] = useState(false);
-  const [qTitle, setQTitle] = useState('');
-  const [qAuthor, setQAuthor] = useState('');
-  const [qCondition, setQCondition] = useState('Excelente');
-  const [qDescription, setQDescription] = useState('');
-  const [qCoverFile, setQCoverFile] = useState<File | null>(null);
-  const [qPreviewUrl, setQPreviewUrl] = useState<string | null>(null);
-  const [qSubmitting, setQSubmitting] = useState(false);
-  const [qError, setQError] = useState<string | null>(null);
 
   // Estado del Checkout Seleccionado
   const [selectedTx, setSelectedTx] = useState<MatchTransaction | null>(null);
@@ -225,47 +215,6 @@ export const TransactionsPage: React.FC = () => {
     }
   };
 
-  // Carga rápida de libro Inline
-  const handleQuickUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!qTitle.trim() || !qAuthor.trim() || !qDescription.trim() || !qCoverFile) {
-      setQError('Por favor completa todos los campos requeridos y sube la foto de portada.');
-      return;
-    }
-
-    setQSubmitting(true);
-    setQError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('title', qTitle.trim());
-      formData.append('author', qAuthor.trim());
-      formData.append('description', qDescription.trim());
-      formData.append('condition', qCondition);
-      formData.append('coverImage', qCoverFile);
-
-      const newBook = await apiClient.post<MyOfferedBook>('/books/upload', formData);
-
-      // Actualizar estado local instantáneamente
-      const updatedBooks = [newBook, ...myOfferedBooks];
-      setMyOfferedBooks(updatedBooks);
-      setHasOfferedBooks(true);
-      setSelectedOfferedBookId(newBook.id);
-      setQuickUploadOpen(false);
-
-      // Limpiar campos
-      setQTitle('');
-      setQAuthor('');
-      setQDescription('');
-      setQCoverFile(null);
-      setQPreviewUrl(null);
-    } catch (err: any) {
-      setQError(err.message || 'Error al guardar el libro.');
-    } finally {
-      setQSubmitting(false);
-    }
-  };
-
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -428,10 +377,10 @@ export const TransactionsPage: React.FC = () => {
                         </div>
                         <button
                           type="button"
-                          onClick={() => setQuickUploadOpen(true)}
-                          style={{ background: '#ffb703', color: '#000', border: 'none', padding: '0.75rem 1.25rem', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
+                          onClick={() => navigate('/libreta')}
+                          style={{ background: '#0F9D58', color: '#FFFFFF', border: 'none', padding: '0.75rem 1.25rem', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
                         >
-                          ＋ Cargar un libro en 30 segundos
+                          ＋ Cargar un libro en Tu Libreta
                         </button>
                       </div>
                     )}
@@ -684,74 +633,6 @@ export const TransactionsPage: React.FC = () => {
             )}
           </div>
         )}
-
-        {/* MODAL INLINE DE CARGA RÁPIDA DE LIBRO (SI EL USUARIO TIENE 0 LIBROS) */}
-        {quickUploadOpen && (
-          <div className="quick-upload-overlay">
-            <div className="quick-upload-card">
-              <button type="button" className="quick-upload-close" onClick={() => setQuickUploadOpen(false)}>✕</button>
-              
-              <h3 style={{ color: 'var(--neon)', marginBottom: '0.4rem', fontSize: '1.25rem' }}>
-                <i className="fa-solid fa-bolt"></i> Carga Rápida de Libro (30 Segundos)
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-                Agrega un libro de tu casa a tu libreta para habilitar la opción de intercambio.
-              </p>
-
-              {qError && <div style={{ color: '#ff4d4d', fontSize: '0.85rem', marginBottom: '1rem' }}>{qError}</div>}
-
-              <form onSubmit={handleQuickUpload} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Título del libro:</label>
-                  <input type="text" placeholder="Ej. Cien años de soledad" value={qTitle} onChange={(e) => setQTitle(e.target.value)} required style={{ width: '100%', padding: '0.6rem' }} />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Autor:</label>
-                  <input type="text" placeholder="Ej. Gabriel García Márquez" value={qAuthor} onChange={(e) => setQAuthor(e.target.value)} required style={{ width: '100%', padding: '0.6rem' }} />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Estado Físico:</label>
-                  <select value={qCondition} onChange={(e) => setQCondition(e.target.value)} style={{ width: '100%', padding: '0.6rem' }}>
-                    <option value="Excelente">Excelente (Como nuevo)</option>
-                    <option value="Bueno">Bueno (Leído)</option>
-                    <option value="Aceptable">Aceptable</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Sinopsis:</label>
-                  <textarea rows={2} placeholder="Breve descripción..." value={qDescription} onChange={(e) => setQDescription(e.target.value)} required style={{ width: '100%', padding: '0.6rem' }} />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Foto de Portada:</label>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    required 
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        setQCoverFile(e.target.files[0]);
-                        setQPreviewUrl(URL.createObjectURL(e.target.files[0]));
-                      }
-                    }} 
-                  />
-                  {qPreviewUrl && <img src={qPreviewUrl} alt="Preview" style={{ height: '60px', marginTop: '0.4rem', borderRadius: '4px' }} />}
-                </div>
-
-                <button 
-                  type="submit" 
-                  disabled={qSubmitting} 
-                  style={{ background: 'var(--neon)', color: '#000', border: 'none', padding: '0.85rem', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', marginTop: '0.5rem' }}
-                >
-                  {qSubmitting ? 'Guardando libro...' : '¡Guardar y Continuar Intercambio!'}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -765,21 +646,21 @@ export const TransactionsPage: React.FC = () => {
       </div>
 
       {!hasOfferedBooks && matches.length > 0 && (
-        <div style={{ background: 'rgba(255, 183, 3, 0.1)', border: '1px solid #ffb703', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+        <div style={{ background: 'rgba(15, 157, 88, 0.12)', border: '1px solid #0F9D58', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
           <div>
-            <strong style={{ color: '#ffb703', fontSize: '1.05rem', display: 'block', marginBottom: '0.25rem' }}>
+            <strong style={{ color: '#0F9D58', fontSize: '1.05rem', display: 'block', marginBottom: '0.25rem' }}>
               <i className="fa-solid fa-triangle-exclamation"></i> Tienes 0 libros cargados en tu libreta para ofrecer
             </strong>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: '0.85rem', color: '#4A5D55' }}>
               Para poder pagar la tarifa e intercambiar, primero debes agregar al menos un libro en 'Tu Libreta' (Tengo para intercambiar).
             </span>
           </div>
           <button
             type="button"
-            onClick={() => setQuickUploadOpen(true)}
-            style={{ background: '#ffb703', color: '#000', padding: '0.75rem 1.25rem', borderRadius: '50px', fontWeight: 800, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            onClick={() => navigate('/libreta')}
+            style={{ background: '#0F9D58', color: '#FFFFFF', padding: '0.75rem 1.25rem', borderRadius: '50px', fontWeight: 800, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
           >
-            ＋ Cargar libro en 30s
+            ＋ Ir a Tu Libreta
           </button>
         </div>
       )}
@@ -814,8 +695,12 @@ export const TransactionsPage: React.FC = () => {
                   <p className="owner-p">Dueño: <strong>{tx.ownerName}</strong></p>
                   
                   <div className="match-card-badges">
-                    {tx.paymentStatus === 'Pending' ? (
-                      <span className="badge-pending">Pago Pendiente ⏳</span>
+                    {!hasOfferedBooks ? (
+                      <span className="badge-pending" style={{ background: 'rgba(15, 157, 88, 0.12)', color: '#0F9D58', border: '1px solid rgba(15, 157, 88, 0.3)' }}>
+                        Interés Guardado 💚
+                      </span>
+                    ) : tx.paymentStatus === 'Pending' ? (
+                      <span className="badge-pending">Hold de Fee Pendiente ⏳</span>
                     ) : tx.paymentStatus === 'Hold' ? (
                       <span className="badge-hold">Pago Retenido (Hold) 🔒</span>
                     ) : tx.paymentStatus === 'Captured' ? (
@@ -824,9 +709,11 @@ export const TransactionsPage: React.FC = () => {
                       <span className="badge-failed">Pago Fallido ❌</span>
                     )}
 
-                    <span className={`badge-logistics ${tx.logisticsStatus.toLowerCase()}`}>
-                      Logística: {tx.logisticsStatus}
-                    </span>
+                    {hasOfferedBooks && (
+                      <span className={`badge-logistics ${tx.logisticsStatus.toLowerCase()}`}>
+                        Logística: {tx.logisticsStatus}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -837,23 +724,22 @@ export const TransactionsPage: React.FC = () => {
                   <strong>${tx.feeAmount.toLocaleString()} CLP</strong>
                 </div>
 
-                {tx.paymentStatus === 'Pending' ? (
-                  hasOfferedBooks ? (
-                    <button
-                      className="pay-fee-btn font-heading"
-                      onClick={() => setSearchParams({ checkout: tx.id })}
-                    >
-                      Pagar Fee & Intercambiar 💳
-                    </button>
-                  ) : (
-                    <button
-                      className="pay-fee-btn font-heading"
-                      onClick={() => setQuickUploadOpen(true)}
-                      style={{ background: '#ffb703', color: '#000' }}
-                    >
-                      Cargar mi libro primero
-                    </button>
-                  )
+                {!hasOfferedBooks ? (
+                  <span></span>
+                  // <button
+                  //   className="pay-fee-btn font-heading"
+                  //   onClick={() => navigate('/libreta')}
+                  //   style={{ background: '#0F9D58', color: '#FFFFFF', fontWeight: 800 }}
+                  // >
+                  //   ＋ Cargar mi libro en Tu Libreta
+                  // </button>
+                ) : tx.paymentStatus === 'Pending' || tx.paymentStatus === 'Hold' ? (
+                  <button
+                    className="pay-fee-btn font-heading"
+                    onClick={() => setSearchParams({ checkout: tx.id })}
+                  >
+                    {tx.paymentStatus === 'Hold' ? '💳 Ver Hold & Intercambio' : 'Pagar Fee & Intercambiar 💳'}
+                  </button>
                 ) : (
                   <button
                     className="pay-fee-btn font-heading"
@@ -862,33 +748,35 @@ export const TransactionsPage: React.FC = () => {
                       setIsThankYouMode(false);
                       setDetailModalOpen(true);
                     }}
-                    style={{ background: 'var(--neon)', color: '#000', fontWeight: 800 }}
+                    style={{ background: '#0F9D58', color: '#FFFFFF', fontWeight: 800 }}
                   >
                     🔍 Ver detalle e instrucciones
                   </button>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedDetailTx(tx);
-                    setIsThankYouMode(false);
-                    setDetailModalOpen(true);
-                  }}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-secondary)',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '50px',
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    marginTop: '0.5rem',
-                    width: '100%'
-                  }}
-                >
-                  📋 Ver propuesta de libros y fecha límite
-                </button>
+                {hasOfferedBooks && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDetailTx(tx);
+                      setIsThankYouMode(false);
+                      setDetailModalOpen(true);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-secondary)',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '50px',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      marginTop: '0.5rem',
+                      width: '100%'
+                    }}
+                  >
+                    📋 Ver propuesta de libros y fecha límite
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -909,74 +797,6 @@ export const TransactionsPage: React.FC = () => {
         isThankYouPage={isThankYouMode}
         onLogisticsUpdated={loadMatches}
       />
-
-      {/* Modal de Carga Rápida Inline */}
-      {quickUploadOpen && (
-        <div className="quick-upload-overlay">
-          <div className="quick-upload-card">
-            <button type="button" className="quick-upload-close" onClick={() => setQuickUploadOpen(false)}>✕</button>
-            
-            <h3 style={{ color: 'var(--neon)', marginBottom: '0.4rem', fontSize: '1.25rem' }}>
-              <i className="fa-solid fa-bolt"></i> Carga Rápida de Libro (30 Segundos)
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-              Agrega un libro de tu casa a tu libreta para habilitar la opción de intercambio.
-            </p>
-
-            {qError && <div style={{ color: '#ff4d4d', fontSize: '0.85rem', marginBottom: '1rem' }}>{qError}</div>}
-
-            <form onSubmit={handleQuickUpload} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Título del libro:</label>
-                <input type="text" placeholder="Ej. Cien años de soledad" value={qTitle} onChange={(e) => setQTitle(e.target.value)} required style={{ width: '100%', padding: '0.6rem' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Autor:</label>
-                <input type="text" placeholder="Ej. Gabriel García Márquez" value={qAuthor} onChange={(e) => setQAuthor(e.target.value)} required style={{ width: '100%', padding: '0.6rem' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Estado Físico:</label>
-                <select value={qCondition} onChange={(e) => setQCondition(e.target.value)} style={{ width: '100%', padding: '0.6rem' }}>
-                  <option value="Excelente">Excelente (Como nuevo)</option>
-                  <option value="Bueno">Bueno (Leído)</option>
-                  <option value="Aceptable">Aceptable</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Sinopsis:</label>
-                <textarea rows={2} placeholder="Breve descripción..." value={qDescription} onChange={(e) => setQDescription(e.target.value)} required style={{ width: '100%', padding: '0.6rem' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Foto de Portada:</label>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  required 
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      setQCoverFile(e.target.files[0]);
-                      setQPreviewUrl(URL.createObjectURL(e.target.files[0]));
-                    }
-                  }} 
-                />
-                {qPreviewUrl && <img src={qPreviewUrl} alt="Preview" style={{ height: '60px', marginTop: '0.4rem', borderRadius: '4px' }} />}
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={qSubmitting} 
-                style={{ background: 'var(--neon)', color: '#000', border: 'none', padding: '0.85rem', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', marginTop: '0.5rem' }}
-              >
-                {qSubmitting ? 'Guardando libro...' : '¡Guardar y Continuar Intercambio!'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
