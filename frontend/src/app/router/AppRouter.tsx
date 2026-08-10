@@ -19,7 +19,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement; requireAdmin?: bo
   // Si hay token pero no se ha cargado el usuario, mostramos una carga rápida
   if (token && !user) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+      <div className="router-loading-container">
         <div className="wizard-loading">Cargando perfil...</div>
       </div>
     );

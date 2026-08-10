@@ -246,7 +246,7 @@ export const AuthenticationPage: React.FC = () => {
   // Render Onboarding
   if (showWizard) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
+      <div className="onboarding-page-wrapper">
         <OnboardingWizard onComplete={handleOnboardingComplete} />
       </div>
     );
@@ -255,103 +255,68 @@ export const AuthenticationPage: React.FC = () => {
   // Render Profile when authenticated and onboarding finished
   if (isAuthenticated && user) {
     return (
-      <div className="profile-container" style={{
-        width: '100%',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '1rem 0'
-      }}>
-        <div className="profile-header" style={{ marginBottom: '2rem', textAlign: 'center' }}>
-          <h1 className="neon-text" style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--neon)' }}>
+      <div className="profile-container">
+        <div className="profile-header">
+          <h1 className="neon-text">
             Perfil de usuario
           </h1>
-          <p style={{ color: 'var(--text-secondary)', marginLeft: "auto", marginRight: "auto" }}>Gestiona tu cuenta y personaliza tu recomendación de lectura por IA</p>
+          <p className="profile-subtitle">Gestiona tu cuenta y personaliza tu recomendación de lectura por IA</p>
         </div>
 
-        <div className="profile-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '2rem',
-          alignItems: 'start'
-        }}>
+        <div className="profile-grid">
           {/* Personal Info Card */}
-          <div className="profile-card" style={{
-            background: 'var(--gradient-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-card)',
-            padding: '2.5rem',
-            boxShadow: 'var(--shadow-lg)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem'
-          }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+          <div className="profile-card">
+            <h2>
               Datos Personales
             </h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="profile-details-list">
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Nombre</label>
-                <div style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.2rem' }}>{user.name}</div>
+                <label className="profile-label">Nombre</label>
+                <div className="profile-value">{user.name}</div>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Correo Electrónico</label>
-                <div style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.2rem' }}>{user.email}</div>
+                <label className="profile-label">Correo Electrónico</label>
+                <div className="profile-value">{user.email}</div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1.5rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>País</label>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.2rem' }}>{user.pais}</div>
+              <div className="profile-row-two-col">
+                <div className="col-flex-1">
+                  <label className="profile-label">País</label>
+                  <div className="profile-value">{user.pais}</div>
                 </div>
 
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <div className="col-flex-1">
+                  <label className="profile-label">
                     {user.pais === 'Chile' ? 'RUT' : 'Identificación'}
                   </label>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 500, marginTop: '0.2rem' }}>{user.documentoIdentidad}</div>
+                  <div className="profile-value">{user.documentoIdentidad}</div>
                 </div>
               </div>
             </div>
 
             {/* Upgrade Card / Premium Info */}
-            <div style={{
-              background: user.isPremium ? 'linear-gradient(135deg, rgba(182, 255, 0, 0.1) 0%, rgba(15, 91, 69, 0.2) 100%)' : 'rgba(255,255,255,0.02)',
-              border: user.isPremium ? '1px solid var(--neon)' : '1px dashed var(--border-color)',
-              borderRadius: 'var(--radius-input)',
-              padding: '1.25rem',
-              marginTop: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem'
-            }}>
+            <div className={`profile-plan-status ${user.isPremium ? 'premium' : 'free'}`}>
               {user.isPremium ? (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: 'var(--neon)' }}>
-                    <span><i className="fa-solid fa-crown" style={{ color: '#ffb703' }}></i> Suscripción Premium Activa</span>
+                  <div className="profile-plan-title-premium">
+                    <span><i className="fa-solid fa-crown icon-gold"></i> Suscripción Premium Activa</span>
                   </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  <p className="profile-plan-desc">
                     ¡Tienes swipes ilimitados y prioridad en matches de libros!
                   </p>
                 </>
               ) : (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                  <div className="profile-plan-title-free">
                     <span>Plan Gratuito (Free)</span>
                   </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  <p className="profile-plan-desc">
                     Tu plan actual está limitado a 100 swipes por día.
                   </p>
-                  <Link to="/planes" style={{
-                    color: 'var(--neon)',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                    marginTop: '0.5rem',
-                    display: 'inline-block'
-                  }}>
-                    Ver Planes y Convertirme en Premium <i className="fa-solid fa-arrow-right-long" style={{ fontSize: '0.85em', marginLeft: '0.2rem' }}></i>
+                  <Link to="/planes" className="profile-plan-upgrade-link">
+                    Ver Planes y Convertirme en Premium <i className="fa-solid fa-arrow-right-long icon-arrow-right"></i>
                   </Link>
                 </>
               )}
@@ -359,87 +324,46 @@ export const AuthenticationPage: React.FC = () => {
 
             <button 
               onClick={handleLogout} 
-              className="modal-submit-btn" 
-              style={{
-                marginTop: '1.5rem',
-                background: 'transparent',
-                border: '1px solid #FF6B6B',
-                color: '#FF6B6B',
-                boxShadow: 'none'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 107, 107, 0.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
+              className="modal-submit-btn profile-logout-btn"
             >
               Cerrar Sesión
             </button>
           </div>
 
           {/* Preferences / Tags Card */}
-          <div className="profile-card" style={{
-            background: 'var(--gradient-card)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-card)',
-            padding: '2.5rem',
-            boxShadow: 'var(--shadow-lg)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem'
-          }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+          <div className="profile-card">
+            <h2>
               Intereses y Preferencias
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+            <p className="profile-subtitle">
               Selecciona tus categorías literarias de preferencia. El algoritmo de IA priorizará los libros que coincidan con estos intereses.
             </p>
 
             {prefError && <div className="wizard-error">{prefError}</div>}
             {prefSuccess && (
-              <div style={{
-                backgroundColor: 'rgba(182, 255, 0, 0.1)',
-                border: '1px solid var(--neon)',
-                color: 'var(--neon)',
-                padding: '0.75rem 1.2rem',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.9rem',
-                fontWeight: 500
-              }}>
+              <div className="pref-success-alert">
                 <i className="fa-solid fa-circle-check"></i> ¡Preferencias de lectura actualizadas con éxito!
               </div>
             )}
 
             {loadingTags ? (
-              <div className="wizard-loading" style={{ padding: '2rem' }}>Cargando tus gustos de lectura...</div>
+              <div className="wizard-loading wizard-loading-padded">Cargando tus gustos de lectura...</div>
             ) : (
               <>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-                  gap: '0.75rem',
-                  maxHeight: '320px',
-                  overflowY: 'auto',
-                  paddingRight: '0.5rem'
-                }}>
+                <div className="profile-tags-grid">
                   {tags.map((tag) => {
                     const isSelected = selectedTags.includes(tag.name);
                     return (
                       <button
                         key={tag.id}
                         type="button"
-                        className={`wizard-tag-item ${isSelected ? 'selected' : ''}`}
+                        className={`wizard-tag-item profile-tag-item ${isSelected ? 'selected' : ''}`}
                         onClick={() => handleTagToggle(tag.name)}
-                        style={{
-                          padding: '0.6rem 0.8rem',
-                          fontSize: '0.85rem'
-                        }}
                       >
-                        <span className="tag-icon" style={{ width: '20px', height: '20px', fontSize: '0.7rem' }}>
+                        <span className="tag-icon">
                           {isSelected ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-book-open"></i>}
                         </span>
-                        <span className="tag-label" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span className="tag-label">
                           {tag.name}
                         </span>
                       </button>
@@ -450,9 +374,8 @@ export const AuthenticationPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSavePreferences}
-                  className="modal-submit-btn"
+                  className="modal-submit-btn profile-save-prefs-btn"
                   disabled={savingPrefs || selectedTags.length === 0}
-                  style={{ marginTop: '1rem' }}
                 >
                   {savingPrefs ? 'Guardando...' : 'Guardar Preferencias'}
                 </button>
@@ -466,14 +389,8 @@ export const AuthenticationPage: React.FC = () => {
 
   // Render Login/Registration Form when NOT authenticated
   return (
-    <div className="auth-page-container" style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '70vh',
-      padding: '2rem 0'
-    }}>
-      <div className="modal-card" style={{ animation: 'none' }}>
+    <div className="auth-page-container">
+      <div className="modal-card modal-card-no-anim">
         <div className="modal-header">
           <h2>{isLogin ? 'Iniciar sesión' : 'Únete a Bookmachs'}</h2>
           <p>
@@ -557,7 +474,7 @@ export const AuthenticationPage: React.FC = () => {
         </div>
 
         <div className="google-sso-wrapper">
-          <div id="google-btn-container" style={{ display: 'flex', justifyContent: 'center' }}></div>
+          <div id="google-btn-container" className="google-btn-flex-center"></div>
         </div>
 
         <div className="modal-footer">

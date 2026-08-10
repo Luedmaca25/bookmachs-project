@@ -205,6 +205,18 @@ public class AuthService : IAuthService
             throw new KeyNotFoundException($"El usuario con ID {userId} no existe.");
         }
 
+        var now = DateTime.UtcNow;
+        if (now.Date > user.LastSwipeResetDate.Date)
+        {
+            user.DailySwipesConsumed = 0;
+            user.LastSwipeResetDate = now;
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
+        int swipeLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 100);
+
         return new UserProfileDto
         {
             Id = user.Id,
@@ -215,7 +227,9 @@ public class AuthService : IAuthService
             IsPremium = user.IsPremium,
             SubscriptionPlan = user.SubscriptionPlan,
             Role = user.Role,
-            Preferences = user.Preferences.Select(p => p.PreferenceTag).ToList()
+            Preferences = user.Preferences.Select(p => p.PreferenceTag).ToList(),
+            DailySwipesConsumed = user.DailySwipesConsumed,
+            DailySwipeLimit = swipeLimit
         };
     }
 

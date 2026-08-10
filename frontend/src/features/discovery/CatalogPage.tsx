@@ -170,7 +170,7 @@ export const CatalogPage: React.FC = () => {
         </div>
 
         <div className="catalog-paywall">
-           <span className="paywall-icon"><i className="fa-solid fa-star" style={{ color: '#ffb703' }}></i></span>
+           <span className="paywall-icon"><i className="fa-solid fa-star star-gold"></i></span>
           <h2>Acceso Exclusivo Premium</h2>
           <p>
             El catálogo avanzado en grilla y la búsqueda directa con filtros de categorías, condiciones y fecha de ingreso son beneficios exclusivos de la membresía Premium.
@@ -309,7 +309,7 @@ export const CatalogPage: React.FC = () => {
           {books.map((book) => (
             <div key={book.id} className="catalog-card">
               {isNewlyArrived(book.createdAt) && (
-                <span className="new-arrival-badge"><i className="fa-solid fa-star" style={{ color: '#ffb703' }}></i> Recién Llegado</span>
+                <span className="new-arrival-badge"><i className="fa-solid fa-star star-gold"></i> Recién Llegado</span>
               )}
               <div className="catalog-card-cover">
                 {book.imageUrl ? (
@@ -348,7 +348,7 @@ export const CatalogPage: React.FC = () => {
             <div key={book.id} className="catalog-list-item">
               <div className="catalog-list-item-cover">
                 {isNewlyArrived(book.createdAt) && (
-                  <span className="new-arrival-badge"><i className="fa-solid fa-star" style={{ color: '#ffb703' }}></i> Recién Llegado</span>
+                  <span className="new-arrival-badge"><i className="fa-solid fa-star star-gold"></i> Recién Llegado</span>
                 )}
                 {book.imageUrl ? (
                   <img src={book.imageUrl} alt={book.title} />

@@ -10,6 +10,8 @@ interface User {
   isPremium: boolean;
   subscriptionPlan?: string;
   preferences?: string[];
+  dailySwipesConsumed?: number;
+  dailySwipeLimit?: number;
 }
 
 interface AuthState {

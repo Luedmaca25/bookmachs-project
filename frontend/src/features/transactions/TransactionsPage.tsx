@@ -265,36 +265,36 @@ export const TransactionsPage: React.FC = () => {
           <div className="webpay-redirect-screen">
             <div className="redirect-loader"></div>
             <h3>Conectando de forma segura con Transbank Webpay...</h3>
-            <p style={{marginLeft: "auto", marginRight: "auto", textAlign: "center"}}>Por favor no cierres esta ventana. Se está generando la retención del fee de intercambio.</p>
+            <p className="webpay-redirect-msg">Por favor no cierres esta ventana. Se está generando la retención del fee de intercambio.</p>
           </div>
         ) : checkoutSuccess ? (
           <div className="checkout-success-screen">
-            <span className="success-badge-icon"><i className="fa-solid fa-circle-check" style={{ color: 'var(--neon)' }}></i></span>
+            <span className="success-badge-icon"><i className="fa-solid fa-circle-check icon-neon"></i></span>
             <h3>¡Intercambio y Pre-autorización Confirmados!</h3>
             <p>Los fondos del Fee de servicio <strong>(${selectedTx.feeAmount.toLocaleString()} CLP)</strong> han sido retenidos en tu tarjeta hasta completar la entrega.</p>
             
-            <div className="checkout-summary-box" style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color)', margin: '1.5rem 0' }}>
-              <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <div className="checkout-summary-box">
+              <div className="summary-row">
                 <span>Libro Solicitado:</span>
                 <strong>{selectedTx.bookTitle}</strong>
               </div>
-              <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <div className="summary-row">
                 <span>Libro a Entregar:</span>
                 <strong>{currentOfferedBook?.title || 'Libro cargado en libreta'}</strong>
               </div>
-              <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <div className="summary-row">
                 <span>Método de Entrega:</span>
-                <span className="badge-hold" style={{ background: 'rgba(182, 255, 0, 0.1)', color: 'var(--neon)', border: '1px solid var(--neon)', padding: '0.2rem 0.6rem', borderRadius: '4px' }}>
+                <span className="badge-hold badge-hold-neon">
                   {selectedMethod === 'Donacion' ? 'Donación Comunitaria' : selectedMethod === 'Presencial' ? 'Entrega Presencial Santiago' : 'Envío por Encomienda'}
                 </span>
               </div>
-              <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div className="summary-row">
                 <span>Estado de Pago:</span>
-                <span style={{ color: 'var(--neon)', fontWeight: 700 }}>HOLD RETENIDO 🔒</span>
+                <span className="hold-status-locked">HOLD RETENIDO 🔒</span>
               </div>
             </div>
 
-            <button className="done-btn font-heading" onClick={() => setSearchParams({})} style={{ background: 'var(--neon)', color: '#000', fontWeight: 800, padding: '0.9rem 2rem', borderRadius: '50px' }}>
+            <button className="done-btn font-heading checkout-done-btn" onClick={() => setSearchParams({})}>
               Ver mis intercambios activos
             </button>
           </div>
@@ -303,9 +303,9 @@ export const TransactionsPage: React.FC = () => {
             {/* PASO 1: DUET SWAP DECK (CONFIRMACIÓN DE LIBROS EN INTERCAMBIO) */}
             {activeStep === 1 && (
               <div>
-                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                  <h3 style={{ color: 'var(--neon)', fontSize: '1.4rem' }}>Paso 1: Confirma los Libros del Trueque</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginLeft: "auto", marginRight: "auto" }}>
+                <div className="checkout-step-header">
+                  <h3 className="checkout-step-title">Paso 1: Confirma los Libros del Trueque</h3>
+                  <p className="checkout-step-subtitle">
                     Verifica el libro que vas a recibir y selecciona cuál de tus libros registrados en *"Tengo para intercambiar"* entregarás a cambio.
                   </p>
                 </div>
@@ -318,12 +318,12 @@ export const TransactionsPage: React.FC = () => {
                       {selectedTx.bookImageUrl ? (
                         <img src={selectedTx.bookImageUrl} alt={selectedTx.bookTitle} />
                       ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '2rem' }}>📖</div>
+                        <div className="book-placeholder-icon">📖</div>
                       )}
                     </div>
                     <div className="swap-book-title">{selectedTx.bookTitle}</div>
                     <div className="swap-book-author">por {selectedTx.bookAuthor}</div>
-                    <div style={{ marginTop: '0.5rem' }}>
+                    <div className="offered-select-wrapper">
                       <span className={`condition-badge ${selectedTx.bookCondition.toLowerCase()}`}>
                         Estado: {selectedTx.bookCondition}
                       </span>
@@ -344,11 +344,11 @@ export const TransactionsPage: React.FC = () => {
                     
                     {hasOfferedBooks ? (
                       <div>
-                        <div style={{ margin: '0.5rem 0' }}>
+                        <div className="offered-select-wrapper">
                           <select 
                             value={selectedOfferedBookId} 
                             onChange={(e) => setSelectedOfferedBookId(e.target.value)}
-                            style={{ width: '100%', padding: '0.6rem', background: '#000', color: '#fff', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.85rem' }}
+                            className="offered-book-select"
                           >
                             {myOfferedBooks.map((b) => (
                               <option key={b.id} value={b.id}>{b.title} - {b.author}</option>
@@ -371,14 +371,14 @@ export const TransactionsPage: React.FC = () => {
                         )}
                       </div>
                     ) : (
-                      <div style={{ padding: '1rem 0' }}>
-                        <div style={{ color: '#ffb703', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                      <div className="no-offered-warning-box">
+                        <div className="no-offered-warning-text">
                           <i className="fa-solid fa-circle-exclamation"></i> No tienes ningún libro disponible para intercambiar en tu libreta.
                         </div>
                         <button
                           type="button"
                           onClick={() => navigate('/libreta')}
-                          style={{ background: '#0F9D58', color: '#FFFFFF', border: 'none', padding: '0.75rem 1.25rem', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}
+                          className="btn-green-pill"
                         >
                           ＋ Cargar un libro en Tu Libreta
                         </button>
@@ -387,22 +387,12 @@ export const TransactionsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'right' }}>
+                <div className="btn-right-align">
                   <button
                     type="button"
-                    className="font-heading"
+                    className={`font-heading btn-step-continue ${hasOfferedBooks ? 'enabled' : 'disabled'}`}
                     onClick={() => setActiveStep(2)}
                     disabled={!hasOfferedBooks}
-                    style={{
-                      background: hasOfferedBooks ? 'var(--neon)' : '#333',
-                      color: hasOfferedBooks ? '#000' : '#888',
-                      border: 'none',
-                      padding: '0.9rem 2rem',
-                      borderRadius: '50px',
-                      fontWeight: 800,
-                      cursor: hasOfferedBooks ? 'pointer' : 'not-allowed',
-                      fontSize: '1rem'
-                    }}
                   >
                     Continuar al Paso 2: Logística de Entrega →
                   </button>
@@ -413,9 +403,9 @@ export const TransactionsPage: React.FC = () => {
             {/* PASO 2: RADIO CARDS DE LOGÍSTICA (PANTALLA 11) */}
             {activeStep === 2 && (
               <div>
-                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                  <h3 style={{ color: 'var(--neon)', fontSize: '1.4rem' }}>Paso 2: Elige la Opción de Entrega para tu Libro</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginLeft: "auto", marginRight: "auto"}}>
+                <div className="checkout-step-header">
+                  <h3 className="checkout-step-title">Paso 2: Elige la Opción de Entrega para tu Libro</h3>
+                  <p className="checkout-step-subtitle">
                     Selecciona cómo harás llegar tu libro físico para completar el intercambio cultural y ecológico.
                   </p>
                 </div>
@@ -440,7 +430,7 @@ export const TransactionsPage: React.FC = () => {
 
                       {selectedMethod === 'Donacion' && (
                         <div className="radio-card-expand">
-                          <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                          <label className="evidence-label">
                             Subir Fotografía de Evidencia de Donación:
                           </label>
                           <div className="dropzone-upload-box">
@@ -448,21 +438,21 @@ export const TransactionsPage: React.FC = () => {
                               type="file" 
                               accept="image/*" 
                               onChange={handlePhotoChange}
-                              style={{ display: 'none' }} 
+                              className="file-input-hidden"
                               id="evidence-file-input"
                             />
-                            <label htmlFor="evidence-file-input" style={{ cursor: 'pointer', display: 'block' }}>
+                            <label htmlFor="evidence-file-input" className="evidence-upload-trigger">
                               {evidencePhoto ? (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-                                  <img src={evidencePhoto} alt="Evidencia" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px' }} />
-                                  <span style={{ color: 'var(--neon)', fontWeight: 700, fontSize: '0.85rem' }}>
+                                <div className="evidence-uploaded-row">
+                                  <img src={evidencePhoto} alt="Evidencia" className="evidence-thumb-img" />
+                                  <span className="evidence-thumb-text">
                                     ✓ Fotografía cargada para revisión previa
                                   </span>
                                 </div>
                               ) : (
                                 <div>
-                                  <i className="fa-solid fa-camera" style={{ fontSize: '1.5rem', color: 'var(--neon)', marginBottom: '0.3rem' }}></i>
-                                  <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>Toca para subir foto del colegio o espacio comunitario</div>
+                                  <i className="fa-solid fa-camera camera-icon-large"></i>
+                                  <div className="camera-upload-text">Toca para subir foto del colegio o espacio comunitario</div>
                                 </div>
                               )}
                             </label>
@@ -510,7 +500,7 @@ export const TransactionsPage: React.FC = () => {
 
                       {selectedMethod === 'Envio' && (
                         <div className="radio-card-expand">
-                          <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                          <label className="evidence-label">
                             N° de Comprobante / Tracking Voucher:
                           </label>
                           <input 
@@ -518,7 +508,7 @@ export const TransactionsPage: React.FC = () => {
                             placeholder="Ej. STAR982374982" 
                             value={trackingNumber} 
                             onChange={(e) => setTrackingNumber(e.target.value)}
-                            style={{ width: '100%', padding: '0.6rem', background: '#000', color: '#fff', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.85rem' }}
+                            className="tracking-input"
                           />
                         </div>
                       )}
@@ -526,20 +516,19 @@ export const TransactionsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem' }}>
+                <div className="step-actions-row">
                   <button
                     type="button"
                     onClick={() => setActiveStep(1)}
-                    style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.8rem 1.5rem', borderRadius: '50px', cursor: 'pointer' }}
+                    className="btn-back-step"
                   >
                     ← Volver al Paso 1
                   </button>
 
                   <button
                     type="button"
-                    className="font-heading"
+                    className="font-heading btn-next-step"
                     onClick={() => setActiveStep(3)}
-                    style={{ background: 'var(--neon)', color: '#000', border: 'none', padding: '0.9rem 2rem', borderRadius: '50px', fontWeight: 800, cursor: 'pointer', fontSize: '1rem' }}
                   >
                     Continuar al Paso 3: Pago de Fee →
                   </button>
@@ -550,81 +539,80 @@ export const TransactionsPage: React.FC = () => {
             {/* PASO 3: PAGO DE FEE (WEBPAY HOLD & DESGLOSE) */}
             {activeStep === 3 && (
               <div>
-                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                  <h3 style={{ color: 'var(--neon)', fontSize: '1.4rem' }}>Paso 3: Pago Seguro del Fee de Intercambio</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem',marginLeft: "auto", marginRight: "auto"}}>
+                <div className="checkout-step-header">
+                  <h3 className="checkout-step-title">Paso 3: Pago Seguro del Fee de Intercambio</h3>
+                  <p className="checkout-step-subtitle">
                     La tarifa del servicio calculada por la IA se retiene temporalmente en modo Hold y solo se liquida al concretar la entrega.
                   </p>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                  <div style={{ background: 'var(--bg-surface)', padding: '1.5rem', borderRadius: 'var(--radius-card)', border: '1px solid var(--border-color)' }}>
-                    <h4 style={{ color: 'var(--neon)', marginBottom: '1rem', fontSize: '1.05rem' }}>Resumen del Acuerdo de Intercambio</h4>
+                <div className="fee-step-grid">
+                  <div className="fee-summary-card">
+                    <h4 className="fee-card-title">Resumen del Acuerdo de Intercambio</h4>
                     
-                    <div style={{ fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div className="fee-card-list">
+                      <div className="summary-row">
                         <span>Libro a recibir:</span>
                         <strong>{selectedTx.bookTitle}</strong>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div className="summary-row">
                         <span>Libro a entregar:</span>
                         <strong>{currentOfferedBook?.title || 'Libro propio'}</strong>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div className="summary-row">
                         <span>Opción de Entrega:</span>
-                        <strong style={{ color: 'var(--neon)' }}>
+                        <strong className="icon-neon">
                           {selectedMethod === 'Donacion' ? 'Donación Comunitaria' : selectedMethod === 'Presencial' ? 'Entrega Presencial Santiago' : 'Envío Encomienda'}
                         </strong>
                       </div>
                       
-                      <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '0.6rem', marginTop: '0.4rem', display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
+                      <div className="fee-total-row">
                         <span>Tarifa de servicio (Fee IA):</span>
-                        <strong style={{ color: 'var(--neon)', fontSize: '1.25rem' }}>${selectedTx.feeAmount.toLocaleString()} CLP</strong>
+                        <strong className="fee-total-amount">${selectedTx.feeAmount.toLocaleString()} CLP</strong>
                       </div>
                     </div>
 
                     {selectedTx.isCrossBorder && (
-                      <div style={{ marginTop: '1rem', background: 'rgba(255, 183, 3, 0.1)', padding: '0.8rem', borderRadius: '8px', border: '1px solid #ffb703', fontSize: '0.8rem', color: '#ffb703' }}>
-                        <label style={{ display: 'flex', gap: '0.5rem', cursor: 'pointer', alignItems: 'flex-start' }}>
-                          <input type="checkbox" checked={acceptCrossBorder} onChange={(e) => setAcceptCrossBorder(e.target.checked)} style={{ marginTop: '0.2rem' }} />
+                      <div className="cross-border-alert-box">
+                        <label className="cross-border-label">
+                          <input type="checkbox" checked={acceptCrossBorder} onChange={(e) => setAcceptCrossBorder(e.target.checked)} className="cross-border-checkbox" />
                           <span>Acepto asumir posibles costos adicionales de despacho internacional.</span>
                         </label>
                       </div>
                     )}
                   </div>
 
-                  <div style={{ background: 'var(--bg-surface)', padding: '1.5rem', borderRadius: 'var(--radius-card)', border: '1px solid var(--border-color)', textAlign: 'center' }}>
-                    <h4 style={{ marginBottom: '1rem', fontSize: '1.05rem' }}>Pasarela Transbank Webpay Plus</h4>
+                  <div className="webpay-card-container">
+                    <h4 className="webpay-card-title">Pasarela Transbank Webpay Plus</h4>
                     
                     <img 
                       src="https://www.ecolectura.cl/Content/Images/webpay/1.Webpay_FN_300px.png" 
                       alt="Webpay Plus Transbank" 
-                      style={{ height: '48px', objectFit: 'contain', margin: '0.5rem auto 1rem auto' }}
+                      className="webpay-logo-img"
                     />
                     
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+                    <p className="webpay-desc-text">
                       Al hacer clic en el botón inferior serás redirigido al servidor seguro de Transbank para pre-autorizar el Hold de <strong>${selectedTx.feeAmount.toLocaleString()} CLP</strong>.
                     </p>
 
-                    {checkoutError && <div style={{ color: '#ff4d4d', fontSize: '0.85rem', marginBottom: '1rem' }}>{checkoutError}</div>}
+                    {checkoutError && <div className="webpay-error-text">{checkoutError}</div>}
 
                     <button
                       type="button"
-                      className="confirm-checkout-btn webpay-btn font-heading"
+                      className="confirm-checkout-btn webpay-btn font-heading webpay-pay-btn"
                       onClick={handleWebpayStart}
                       disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
-                      style={{ background: 'var(--neon)', color: '#000', fontWeight: 800, padding: '1rem', fontSize: '1rem', borderRadius: '50px', width: '100%' }}
                     >
                       {checkoutLoading ? 'Conectando con Webpay...' : <>Pagar Fee con Webpay Plus 🔒</>}
                     </button>
                   </div>
                 </div>
 
-                <div style={{ marginTop: '1.5rem' }}>
+                <div className="step-back-action-container">
                   <button
                     type="button"
                     onClick={() => setActiveStep(2)}
-                    style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.8rem 1.5rem', borderRadius: '50px', cursor: 'pointer' }}
+                    className="btn-back-step"
                   >
                     ← Volver al Paso 2
                   </button>
@@ -646,19 +634,19 @@ export const TransactionsPage: React.FC = () => {
       </div>
 
       {!hasOfferedBooks && matches.length > 0 && (
-        <div style={{ background: 'rgba(15, 157, 88, 0.12)', border: '1px solid #0F9D58', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+        <div className="no-offered-alert-green">
           <div>
-            <strong style={{ color: '#0F9D58', fontSize: '1.05rem', display: 'block', marginBottom: '0.25rem' }}>
+            <strong className="alert-title">
               <i className="fa-solid fa-triangle-exclamation"></i> Tienes 0 libros cargados en tu libreta para ofrecer
             </strong>
-            <span style={{ fontSize: '0.85rem', color: '#4A5D55' }}>
+            <span className="alert-subtitle">
               Para poder pagar la tarifa e intercambiar, primero debes agregar al menos un libro en 'Tu Libreta' (Tengo para intercambiar).
             </span>
           </div>
           <button
             type="button"
             onClick={() => navigate('/libreta')}
-            style={{ background: '#0F9D58', color: '#FFFFFF', padding: '0.75rem 1.25rem', borderRadius: '50px', fontWeight: 800, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            className="btn-green-inventory"
           >
             ＋ Ir a Tu Libreta
           </button>
@@ -696,7 +684,7 @@ export const TransactionsPage: React.FC = () => {
                   
                   <div className="match-card-badges">
                     {!hasOfferedBooks ? (
-                      <span className="badge-pending" style={{ background: 'rgba(15, 157, 88, 0.12)', color: '#0F9D58', border: '1px solid rgba(15, 157, 88, 0.3)' }}>
+                      <span className="badge-pending badge-saved-interest">
                         Interés Guardado 💚
                       </span>
                     ) : tx.paymentStatus === 'Pending' ? (
@@ -726,13 +714,6 @@ export const TransactionsPage: React.FC = () => {
 
                 {!hasOfferedBooks ? (
                   <span></span>
-                  // <button
-                  //   className="pay-fee-btn font-heading"
-                  //   onClick={() => navigate('/libreta')}
-                  //   style={{ background: '#0F9D58', color: '#FFFFFF', fontWeight: 800 }}
-                  // >
-                  //   ＋ Cargar mi libro en Tu Libreta
-                  // </button>
                 ) : tx.paymentStatus === 'Pending' || tx.paymentStatus === 'Hold' ? (
                   <button
                     className="pay-fee-btn font-heading"
@@ -742,13 +723,12 @@ export const TransactionsPage: React.FC = () => {
                   </button>
                 ) : (
                   <button
-                    className="pay-fee-btn font-heading"
+                    className="pay-fee-btn font-heading btn-view-details"
                     onClick={() => {
                       setSelectedDetailTx(tx);
                       setIsThankYouMode(false);
                       setDetailModalOpen(true);
                     }}
-                    style={{ background: '#0F9D58', color: '#FFFFFF', fontWeight: 800 }}
                   >
                     🔍 Ver detalle e instrucciones
                   </button>
@@ -762,17 +742,7 @@ export const TransactionsPage: React.FC = () => {
                       setIsThankYouMode(false);
                       setDetailModalOpen(true);
                     }}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid var(--border-color)',
-                      color: 'var(--text-secondary)',
-                      padding: '0.5rem 1rem',
-                      borderRadius: '50px',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      marginTop: '0.5rem',
-                      width: '100%'
-                    }}
+                    className="btn-view-proposal-link"
                   >
                     📋 Ver propuesta de libros y fecha límite
                   </button>

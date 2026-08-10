@@ -182,129 +182,48 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
   return createPortal(
     <div 
-      className="modal-overlay detail-modal-overlay-bootstrap" 
-      style={{ 
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 99999, // Renderizado en document.body via React Portal
-        background: 'rgba(26, 38, 33, 0.85)', // Fondo oscuro sombreado limpio
-        overflowY: 'auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem 1rem',
-        boxSizing: 'border-box'
-      }}
+      className="modal-overlay detail-modal-overlay-bootstrap detail-modal-overlay-custom"
     >
       <div 
-        className="modal-card detail-modal-card-master" 
-        style={{ 
-          maxWidth: '780px', 
-          width: '100%', 
-          maxHeight: 'none',
-          height: 'auto',
-          margin: 'auto',
-          position: 'relative',
-          background: '#FFFFFF', // Blanco puro brillante de la maqueta
-          border: '1px solid #E1E8E4',
-          borderRadius: '24px',
-          boxShadow: '0 20px 50px rgba(15, 157, 88, 0.15)',
-          color: 'var(--text-primary)',
-          boxSizing: 'border-box',
-          padding: '2.25rem 2rem'
-        }}
+        className="modal-card detail-modal-card-master detail-modal-card-white"
       >
         {/* Drag Handle Visual (Solo visible en móviles) */}
         <div 
-          className="mobile-drag-handle"
-          style={{
-            width: '45px',
-            height: '5px',
-            background: '#D2DCD7',
-            borderRadius: '10px',
-            margin: '0 auto 1.25rem auto'
-          }}
+          className="mobile-drag-handle drag-handle-gray"
         />
 
         {/* Botón Cerrar Ultra-Sleek */}
         <button 
           onClick={onClose}
           aria-label="Cerrar modal"
-          style={{
-            position: 'absolute',
-            top: '1.25rem',
-            right: '1.25rem',
-            background: '#F0F4F2',
-            border: '1px solid #E1E8E4',
-            color: '#1A2621',
-            width: '38px',
-            height: '38px',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            fontSize: '1.1rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease',
-            zIndex: 20
-          }}
+          className="btn-modal-close-round"
         >
           ✕
         </button>
 
         {/* HERO HEADER - UX/UI MASTER */}
         {isThankYouPage ? (
-          <div style={{ textAlign: 'center', marginBottom: '1.75rem', padding: '0 0.5rem' }}>
+          <div className="hero-header-center">
             <div 
-              style={{ 
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.4rem',
-                background: 'rgba(15, 157, 88, 0.12)', 
-                color: '#0F9D58', 
-                border: '1px solid rgba(15, 157, 88, 0.3)',
-                padding: '0.45rem 1.35rem',
-                borderRadius: '50px',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                marginBottom: '0.75rem'
-              }}
+              className="badge-success-pill"
             >
               <span>🎉</span> ¡PAGO WEBPAY AUTORIZADO EXITOSAMENTE!
             </div>
-            <h2 style={{ fontSize: '1.65rem', color: '#1A2621', margin: '0.2rem 0 0.4rem 0', fontWeight: 800, fontFamily: 'var(--font-heading)' }}>
+            <h2 className="thank-you-title">
               ¡Gracias por tu Intercambio en Bookmachs!
             </h2>
-            <p style={{ fontSize: '0.88rem', color: '#4A5D55', maxWidth: '540px', margin: '0 auto', lineHeight: 1.45 }}>
+            <p className="thank-you-desc">
               Tu fee fue pre-autorizado de forma segura. A continuación encuentras el desglose de los libros, los plazos y la logística de entrega.
             </p>
           </div>
         ) : (
-          <div style={{ textAlign: 'center', marginBottom: '1.75rem', padding: '0 0.5rem' }}>
+          <div className="hero-header-center">
             <div 
-              style={{ 
-                display: 'inline-block',
-                background: '#F0F4F2', 
-                color: '#4A5D55', 
-                border: '1px solid #E1E8E4',
-                padding: '0.4rem 1.2rem',
-                borderRadius: '50px',
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                marginBottom: '0.5rem'
-              }}
+              className="badge-detail-pill"
             >
               📋 Detalle de Transacción e Intercambio IA
             </div>
-            <h2 style={{ fontSize: '1.5rem', color: '#1A2621', margin: '0.2rem 0', fontWeight: 800, fontFamily: 'var(--font-heading)' }}>
+            <h2 className="detail-tx-title">
               Intercambio #{transaction.id.substring(0, 8).toUpperCase()}
             </h2>
           </div>
@@ -312,113 +231,56 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
         {/* 3D DUET SWAP SHOWCASE - DESKTOP GRID (3 COLUMNAS) & MOBILE STACK */}
         <div 
-          className="duet-swap-showcase-grid"
-          style={{ 
-            background: '#F7F9F8',
-            border: '1px solid #E1E8E4',
-            borderRadius: '20px',
-            padding: '1.5rem 1.25rem',
-            marginBottom: '1.5rem',
-            position: 'relative'
-          }}
+          className="duet-swap-showcase-grid duet-showcase-container"
         >
           {/* TARJETA 1: LIBRO A RECIBIR */}
           <div 
-            style={{ 
-              background: '#FFFFFF', 
-              border: '1px solid #E1E8E4', 
-              borderRadius: '16px', 
-              padding: '1.25rem 1rem', 
-              textAlign: 'center',
-              boxShadow: '0 4px 15px rgba(15, 157, 88, 0.08)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center'
-            }}
+            className="swap-showcase-card"
           >
             <span 
-              style={{ 
-                display: 'inline-block',
-                background: 'rgba(15, 157, 88, 0.12)', 
-                color: '#0F9D58', 
-                padding: '0.25rem 0.75rem', 
-                borderRadius: '50px', 
-                fontSize: '0.72rem', 
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                marginBottom: '0.85rem'
-              }}
+              className="badge-tag-green"
             >
               📥 Recibes en tu colección
             </span>
 
             {/* MARCO DE PORTADA 3D VISIBLE CON FALLBACK ABSOLUTO */}
             <div 
-              style={{ 
-                width: '105px', 
-                height: '150px', 
-                margin: '0 auto 0.85rem auto',
-                borderRadius: '10px',
-                overflow: 'hidden',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-                border: '2px solid #0F9D58',
-                background: '#F0F4F2',
-                flexShrink: 0
-              }}
+              className="swap-cover-frame-green"
             >
               <img 
                 src={receiveCoverUrl} 
                 alt={transaction.bookTitle}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                className="img-cover-fill"
                 onError={(e) => { e.currentTarget.src = defaultTargetCover; }}
               />
             </div>
 
-            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1A2621', lineHeight: 1.3, marginBottom: '0.25rem' }}>
+            <div className="book-card-title-dark">
               {transaction.bookTitle}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#4A5D55', marginBottom: '0.5rem' }}>
+            <div className="book-card-author-dark">
               por {transaction.bookAuthor}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-              <span className={`condition-badge ${(transaction.bookCondition || 'good').toLowerCase()}`} style={{ fontSize: '0.72rem' }}>
+            <div className="book-card-badges-row">
+              <span className={`condition-badge ${(transaction.bookCondition || 'good').toLowerCase()} badge-text-xs`}>
                 {transaction.bookCondition || 'Excelente'}
               </span>
-              <span style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem' }}>
+              <span className="owner-badge-gray">
                 Dueño: {transaction.ownerName}
               </span>
             </div>
           </div>
 
           {/* PUENTE CENTRAL DE INTERCAMBIO IA */}
-          <div className="swap-bridge-node" style={{ textAlign: 'center', padding: '0 0.25rem' }}>
+          <div className="swap-bridge-node bridge-node-padded">
             <div 
-              style={{ 
-                width: '48px', 
-                height: '48px', 
-                borderRadius: '50%',
-                background: '#0F9D58',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.25rem',
-                margin: '0 auto 0.4rem auto',
-                boxShadow: '0 4px 15px rgba(15, 157, 88, 0.3)'
-              }}
+              className="swap-pulse-circle-green"
             >
               <i className="fa-solid fa-arrows-rotate"></i>
             </div>
             <span 
-              style={{ 
-                display: 'block',
-                fontSize: '0.68rem', 
-                fontWeight: 800, 
-                color: '#0F9D58', 
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}
+              className="bridge-ia-label"
             >
               🤖 Match 100% IA
             </span>
@@ -426,49 +288,21 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
           {/* TARJETA 2: LIBRO A ENTREGAR */}
           <div 
-            style={{ 
-              background: '#FFFFFF', 
-              border: '1px solid #E1E8E4', 
-              borderRadius: '16px', 
-              padding: '1.25rem 1rem', 
-              textAlign: 'center',
-              boxShadow: '0 4px 15px rgba(15, 157, 88, 0.08)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center'
-            }}
+            className="swap-showcase-card"
           >
             <span 
-              style={{ 
-                display: 'inline-block',
-                background: 'rgba(230, 161, 0, 0.12)', 
-                color: '#D97706', 
-                padding: '0.25rem 0.75rem', 
-                borderRadius: '50px', 
-                fontSize: '0.72rem', 
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                marginBottom: '0.85rem'
-              }}
+              className="badge-tag-amber"
             >
               📤 Entregas a cambio
             </span>
 
             {/* SELECCIÓN DE LIBRO DEL INVENTARIO SI EXISTEN VARIOS */}
             {myInventory.length > 1 && (
-              <div style={{ marginBottom: '0.6rem', width: '100%', maxWidth: '240px' }}>
+              <div className="select-offered-inventory-wrapper">
                 <select 
                   value={selectedOfferedId}
                   onChange={(e) => setSelectedOfferedId(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.35rem 0.5rem',
-                    background: '#FFFFFF',
-                    color: '#1A2621',
-                    border: '1px solid #D2DCD7',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem'
-                  }}
+                  className="select-offered-inventory"
                 >
                   {myInventory.map((b) => (
                     <option key={b.id} value={b.id}>{b.title}</option>
@@ -479,38 +313,28 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
             {/* MARCO DE PORTADA 3D CON FALLBACK GARANTIZADO */}
             <div 
-              style={{ 
-                width: '105px', 
-                height: '150px', 
-                margin: '0 auto 0.85rem auto',
-                borderRadius: '10px',
-                overflow: 'hidden',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-                border: '2px solid #D97706',
-                background: '#F0F4F2',
-                flexShrink: 0
-              }}
+              className="swap-cover-frame-amber"
             >
               <img 
                 src={offerCoverUrl} 
                 alt={offerTitle}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                className="img-cover-fill"
                 onError={(e) => { e.currentTarget.src = defaultOfferedCover; }}
               />
             </div>
 
-            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1A2621', lineHeight: 1.3, marginBottom: '0.25rem' }}>
+            <div className="book-card-title-dark">
               {offerTitle}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#4A5D55', marginBottom: '0.5rem' }}>
+            <div className="book-card-author-dark">
               por {offerAuthor}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-              <span className={`condition-badge ${(offerCondition || 'excelente').toLowerCase()}`} style={{ fontSize: '0.72rem' }}>
+            <div className="book-card-badges-row">
+              <span className={`condition-badge ${(offerCondition || 'excelente').toLowerCase()} badge-text-xs`}>
                 {offerCondition}
               </span>
-              <span style={{ background: '#F0F4F2', color: '#4A5D55', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem' }}>
+              <span className="owner-badge-light-gray">
                 Tu propiedad
               </span>
             </div>
@@ -519,63 +343,54 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
         {/* TIMELINE & EXPIRATION DASHBOARD (DESKTOP GRID / MOBILE STACK) */}
         <div 
-          style={{ 
-            background: '#F7F9F8', 
-            border: '1px solid #E1E8E4', 
-            borderRadius: '18px', 
-            padding: '1.25rem',
-            marginBottom: '1.5rem'
-          }}
+          className="timeline-dashboard-card"
         >
           {/* BARRA DE PROGRESO DE 5 DÍAS */}
-          <div style={{ marginBottom: '1.1rem' }}>
-            <div className="cronometer-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: daysRemaining <= 1 ? '#DC2626' : '#D97706' }}>
+          <div className="progress-bar-container">
+            <div className="cronometer-header-row cronometer-header-flex">
+              <span className={`cronometer-label ${daysRemaining <= 1 ? 'urgent' : 'warning'}`}>
                 ⏳ Cronómetro de Entrega: Día {elapsedDays} de 5
               </span>
-              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0F9D58' }}>
+              <span className="cronometer-time-left">
                 {daysRemaining > 0 
                   ? `Quedan ${daysRemaining} día${daysRemaining > 1 ? 's' : ''}${hoursRemainingMod > 0 ? ` y ${hoursRemainingMod}h` : ''}`
                   : `Quedan ${hoursRemainingMod} horas`}
               </span>
             </div>
 
-            <div style={{ height: '8px', background: '#E1E8E4', borderRadius: '10px', overflow: 'hidden' }}>
+            <div className="progress-track-gray">
               <div 
+                className={`progress-fill-bar ${daysRemaining <= 1 ? 'urgent' : ''}`}
                 style={{ 
-                  height: '100%', 
-                  width: `${(elapsedDays / 5) * 100}%`, 
-                  background: daysRemaining <= 1 ? '#DC2626' : 'linear-gradient(90deg, #0F9D58 0%, #D97706 100%)',
-                  borderRadius: '10px',
-                  transition: 'width 0.5s ease'
+                  width: `${(elapsedDays / 5) * 100}%`
                 }} 
               />
             </div>
           </div>
 
           {/* GRID DE METRICAS CLAVE */}
-          <div className="metrics-dashboard-grid" style={{ gap: '0.85rem' }}>
-            <div style={{ background: '#FFFFFF', padding: '0.85rem', borderRadius: '12px', border: '1px solid #E1E8E4' }}>
-              <span style={{ fontSize: '0.7rem', color: '#4A5D55', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <div className="metrics-dashboard-grid metrics-dashboard-gap">
+            <div className="metric-box-white">
+              <span className="metric-box-label">
                 📅 Fecha de Pago:
               </span>
-              <strong style={{ fontSize: '0.88rem', color: '#1A2621' }}>{formattedPaymentDate}</strong>
+              <strong className="metric-box-value-dark">{formattedPaymentDate}</strong>
             </div>
 
-            <div style={{ background: '#FFFFFF', padding: '0.85rem', borderRadius: '12px', border: '1px solid #E1E8E4' }}>
-              <span style={{ fontSize: '0.7rem', color: '#4A5D55', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div className="metric-box-white">
+              <span className="metric-box-label">
                 🔒 Fee Webpay Retenido:
               </span>
-              <strong style={{ fontSize: '0.88rem', color: '#0F9D58' }}>
+              <strong className="metric-box-value-green">
                 ${transaction.feeAmount.toLocaleString('es-CL')} CLP
               </strong>
             </div>
 
-            <div style={{ background: '#FFFFFF', padding: '0.85rem', borderRadius: '12px', border: '1px solid #E1E8E4' }}>
-              <span style={{ fontSize: '0.7rem', color: '#4A5D55', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div className="metric-box-white">
+              <span className="metric-box-label">
                 ⏰ Límite de Expiración:
               </span>
-              <strong style={{ fontSize: '0.88rem', color: daysRemaining <= 1 ? '#DC2626' : '#D97706' }}>
+              <strong className={`metric-box-value-expiration ${daysRemaining <= 1 ? 'urgent' : ''}`}>
                 {formattedDeadlineDate}
               </strong>
             </div>
@@ -584,36 +399,19 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
         {/* CUMPLIMIENTO LOGÍSTICO Y SUBIDA DE COMPROBANTES (PANTALLA 11) */}
         <div 
-          style={{ 
-            background: '#F7F9F8', 
-            border: '1px solid #E1E8E4', 
-            borderRadius: '20px', 
-            padding: '1.35rem',
-            marginBottom: '1.5rem'
-          }}
+          className="logistics-compliance-card"
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div className="logistics-method-header-row">
             <div 
-              style={{ 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '12px', 
-                background: 'rgba(15, 157, 88, 0.12)', 
-                color: '#0F9D58', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                fontSize: '1.2rem',
-                flexShrink: 0
-              }}
+              className="logistics-method-icon-box"
             >
               {currentMethod === 'Donacion' ? '🎁' : currentMethod === 'Envio' ? '📦' : '📍'}
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#1A2621', fontWeight: 800 }}>
+              <h4 className="logistics-method-title">
                 Opción Seleccionada: {currentMethod === 'Donacion' ? 'Donación Comunitaria' : currentMethod === 'Envio' ? 'Envío Encomienda' : 'Entrega Presencial (Santiago)'}
               </h4>
-              <span style={{ fontSize: '0.8rem', color: '#4A5D55' }}>
+              <span className="logistics-method-subtitle">
                 {currentMethod === 'Donacion' 
                   ? 'Sube la foto del colegio o espacio comunitario para proceso de validación previa.'
                   : currentMethod === 'Envio' 
@@ -625,45 +423,38 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
           {/* FORMULARIO DONACIÓN COMUNITARIA */}
           {currentMethod === 'Donacion' && (
-            <form onSubmit={handleSubmitLogistics} style={{ marginTop: '1rem' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', color: '#4A5D55', marginBottom: '0.4rem', fontWeight: 600 }}>
+            <form onSubmit={handleSubmitLogistics} className="mt-1">
+              <div className="mb-1">
+                <label className="form-field-label">
                   Cargar foto del espacio comunitario o colegio donde realizaste la donación:
                 </label>
                 
                 <div 
-                  style={{ 
-                    border: '2px dashed #D2DCD7', 
-                    borderRadius: '14px', 
-                    padding: '1.25rem', 
-                    textAlign: 'center',
-                    background: '#FFFFFF',
-                    cursor: 'pointer'
-                  }}
+                  className="dropzone-upload-border"
                   onClick={() => document.getElementById('donation-photo-input')?.click()}
                 >
-                  <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '2rem', color: '#0F9D58', marginBottom: '0.5rem' }}></i>
-                  <div style={{ fontSize: '0.85rem', color: '#1A2621', fontWeight: 700 }}>Haz clic para seleccionar o arrastrar fotografía</div>
-                  <div style={{ fontSize: '0.75rem', color: '#4A5D55' }}>Formatos permitidos: JPG, PNG, WEBP (Máx 5MB)</div>
+                  <i className="fa-solid fa-cloud-arrow-up cloud-upload-icon"></i>
+                  <div className="dropzone-title">Haz clic para seleccionar o arrastrar fotografía</div>
+                  <div className="dropzone-subtitle">Formatos permitidos: JPG, PNG, WEBP (Máx 5MB)</div>
                   
                   <input 
                     id="donation-photo-input"
                     type="file" 
                     accept="image/*" 
                     onChange={handlePhotoChange} 
-                    style={{ display: 'none' }}
+                    className="file-input-hidden"
                   />
                 </div>
               </div>
 
               {evidencePreview && (
-                <div style={{ marginBottom: '1.1rem', textAlign: 'center', background: '#F0F4F2', padding: '0.75rem', borderRadius: '12px' }}>
+                <div className="preview-box-green">
                   <img 
                     src={evidencePreview} 
                     alt="Vista previa donación" 
-                    style={{ maxHeight: '160px', borderRadius: '10px', border: '2px solid #0F9D58' }} 
+                    className="preview-img-donation" 
                   />
-                  <div style={{ fontSize: '0.78rem', color: '#0F9D58', marginTop: '0.4rem', fontWeight: 700 }}>
+                  <div className="preview-success-text">
                     ✓ Fotografía lista para proceso de validación previa
                   </div>
                 </div>
@@ -672,19 +463,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               <button
                 type="submit"
                 disabled={uploading || (!evidencePhotoFile && !evidencePreview)}
-                style={{
-                  width: '100%',
-                  background: '#0F9D58',
-                  color: '#FFFFFF',
-                  fontWeight: 800,
-                  padding: '0.9rem',
-                  borderRadius: '50px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.92rem',
-                  boxShadow: '0 4px 15px rgba(15, 157, 88, 0.3)',
-                  opacity: uploading || (!evidencePhotoFile && !evidencePreview) ? 0.5 : 1
-                }}
+                className="btn-submit-green-pill"
               >
                 {uploading ? 'Enviando fotografía...' : '📤 Subir Foto de Donación para Validación Previa'}
               </button>
@@ -693,9 +472,9 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
           {/* FORMULARIO ENVÍO ENCOMIENDA */}
           {currentMethod === 'Envio' && (
-            <form onSubmit={handleSubmitLogistics} style={{ marginTop: '1rem' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', color: '#4A5D55', marginBottom: '0.35rem', fontWeight: 600 }}>
+            <form onSubmit={handleSubmitLogistics} className="mt-1">
+              <div className="mb-1">
+                <label className="form-field-label">
                   N° de Orden de Seguimiento o Voucher:
                 </label>
                 <input 
@@ -703,44 +482,32 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                   placeholder="Ej: CHI-998234812" 
                   value={trackingNumberInput}
                   onChange={(e) => setTrackingNumberInput(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem 1rem', background: '#FFFFFF', color: '#1A2621', border: '1px solid #D2DCD7', borderRadius: '10px', fontSize: '0.88rem' }}
+                  className="input-white-field"
                 />
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', color: '#4A5D55', marginBottom: '0.35rem', fontWeight: 600 }}>
+              <div className="mb-1">
+                <label className="form-field-label">
                   Adjuntar Captura del Comprobante / Voucher:
                 </label>
                 <input 
                   type="file" 
                   accept="image/*" 
                   onChange={handlePhotoChange} 
-                  style={{ background: '#FFFFFF', color: '#1A2621', padding: '0.6rem', border: '1px solid #D2DCD7', borderRadius: '10px', width: '100%', fontSize: '0.82rem' }}
+                  className="file-input-white"
                 />
               </div>
 
               {evidencePreview && (
-                <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                  <img src={evidencePreview} alt="Vista previa voucher" style={{ maxHeight: '140px', borderRadius: '10px', border: '2px solid #0F9D58' }} />
+                <div className="preview-box-center">
+                  <img src={evidencePreview} alt="Vista previa voucher" className="preview-img-voucher" />
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={uploading || (!trackingNumberInput && !evidencePhotoFile)}
-                style={{
-                  width: '100%',
-                  background: '#0F9D58',
-                  color: '#FFFFFF',
-                  fontWeight: 800,
-                  padding: '0.9rem',
-                  borderRadius: '50px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.92rem',
-                  boxShadow: '0 4px 15px rgba(15, 157, 88, 0.3)',
-                  opacity: uploading || (!trackingNumberInput && !evidencePhotoFile) ? 0.5 : 1
-                }}
+                className="btn-submit-green-pill"
               >
                 {uploading ? 'Registrando comprobante...' : '📦 Registrar Comprobante de Envío'}
               </button>
@@ -750,77 +517,47 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
           {/* TARJETA ENTREGA PRESENCIAL */}
           {currentMethod === 'Presencial' && (
             <div 
-              style={{ 
-                padding: '1.1rem', 
-                background: '#FFFFFF', 
-                border: '1px dashed #D2DCD7',
-                borderRadius: '14px', 
-                fontSize: '0.85rem', 
-                color: '#4A5D55', 
-                lineHeight: 1.5 
-              }}
+              className="presencial-address-card"
             >
-              <div style={{ color: '#1A2621', fontWeight: 800, fontSize: '0.95rem', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div className="presencial-address-header">
                 <span>📍 Dirección Oficial de Entrega Presencial:</span>
                 <button
                   type="button"
                   onClick={copyAddressToClipboard}
-                  style={{
-                    background: copiedAddress ? '#0F9D58' : '#F0F4F2',
-                    color: copiedAddress ? '#FFFFFF' : '#0F9D58',
-                    border: '1px solid #0F9D58',
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '50px',
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
+                  className={`btn-copy-address ${copiedAddress ? 'copied' : ''}`}
                 >
                   {copiedAddress ? '✓ ¡Copiado!' : '📋 Copiar Dirección'}
                 </button>
               </div>
 
-              <div style={{ color: '#0F9D58', fontSize: '1rem', fontWeight: 800, marginBottom: '0.3rem' }}>
+              <div className="presencial-address-text">
                 Patronato 447, Recoleta, Santiago, Chile
               </div>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#4A5D55' }}>
+              <p className="presencial-address-note">
                 Muestra este código de transacción <strong>#{transaction.id.substring(0, 8).toUpperCase()}</strong> al momento de entregar tu ejemplar.
               </p>
             </div>
           )}
 
           {uploadSuccessMsg && (
-            <div style={{ background: 'rgba(15, 157, 88, 0.12)', border: '1px solid #0F9D58', color: '#0F9D58', borderRadius: '10px', padding: '0.85rem', marginTop: '1rem', fontSize: '0.85rem', textAlign: 'center', fontWeight: 700 }}>
+            <div className="alert-upload-success">
               ✓ {uploadSuccessMsg}
             </div>
           )}
 
           {uploadError && (
-            <div style={{ background: 'rgba(220, 38, 38, 0.12)', border: '1px solid #DC2626', color: '#DC2626', borderRadius: '10px', padding: '0.85rem', marginTop: '1rem', fontSize: '0.85rem', textAlign: 'center', fontWeight: 700 }}>
+            <div className="alert-upload-error">
               ⚠️ {uploadError}
             </div>
           )}
         </div>
 
         {/* ACCIONES FINALES */}
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="final-actions-flex">
           <button
             type="button"
             onClick={onClose}
-            style={{
-              flex: 1,
-              background: '#0F9D58',
-              color: '#FFFFFF',
-              fontWeight: 800,
-              padding: '1rem',
-              borderRadius: '50px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '0.95rem',
-              boxShadow: '0 4px 15px rgba(15, 157, 88, 0.3)',
-              fontFamily: 'var(--font-heading)'
-            }}
+            className="btn-modal-close-final font-heading"
           >
             {isThankYouPage ? '✓ Entendido, ir a mis Intercambios' : 'Cerrar Detalle'}
           </button>

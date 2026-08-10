@@ -206,7 +206,7 @@ export const SocialPage: React.FC = () => {
           </div>
         ) : historyError ? (
           <div className="history-error">
-             <p><i className="fa-solid fa-triangle-exclamation" style={{ color: '#ffb703' }}></i> {historyError}</p>
+             <p><i className="fa-solid fa-triangle-exclamation icon-gold"></i> {historyError}</p>
             <button onClick={loadHistory} className="history-retry-btn">Reintentar</button>
           </div>
         ) : history.length === 0 ? (
@@ -374,7 +374,7 @@ export const SocialPage: React.FC = () => {
     return (
       <div className="social-error-container">
         <div className="error-card">
-           <h2><i className="fa-solid fa-triangle-exclamation" style={{ color: '#ffb703' }}></i> Error de Carga</h2>
+           <h2><i className="fa-solid fa-triangle-exclamation icon-gold"></i> Error de Carga</h2>
           <p>{error}</p>
           <button className="retry-btn" onClick={loadData}>Reintentar</button>
         </div>
@@ -421,7 +421,7 @@ export const SocialPage: React.FC = () => {
           <div className="metrics-grid">
             {/* Tarjeta 1: Libros Salvados */}
             <div className="metric-impact-card">
-              <div className="card-glow" style={{ background: 'rgba(255, 209, 102, 0.15)' }}></div>
+              <div className="card-glow card-glow-yellow"></div>
                <span className="card-emoji"><i className="fa-solid fa-book-bookmark"></i></span>
               <span className="card-metric-value">{metrics.userTotalBooks}</span>
               <h3 className="card-metric-title">Libros Rescatados</h3>
@@ -434,7 +434,7 @@ export const SocialPage: React.FC = () => {
 
             {/* Tarjeta 2: CO2 Evitado */}
             <div className="metric-impact-card">
-              <div className="card-glow" style={{ background: 'rgba(6, 214, 160, 0.15)' }}></div>
+              <div className="card-glow card-glow-green"></div>
                <span className="card-emoji"><i className="fa-solid fa-leaf"></i></span>
               <span className="card-metric-value">{metrics.userCo2AvoidedKg} <small>kg</small></span>
               <h3 className="card-metric-title">Huella de CO₂ Evitada</h3>
@@ -446,7 +446,7 @@ export const SocialPage: React.FC = () => {
 
             {/* Tarjeta 3: Árboles Equivalentes */}
             <div className="metric-impact-card">
-              <div className="card-glow" style={{ background: 'rgba(27, 154, 170, 0.15)' }}></div>
+              <div className="card-glow card-glow-blue"></div>
                <span className="card-emoji"><i className="fa-solid fa-tree"></i></span>
               <span className="card-metric-value">{metrics.userEquivalentTrees}</span>
               <h3 className="card-metric-title">Bosque Personal</h3>
@@ -515,10 +515,9 @@ export const SocialPage: React.FC = () => {
                   </div>
                   <div className="comm-bar-track">
                     <div 
-                      className="comm-bar-fill" 
+                      className="comm-bar-fill comm-bar-fill-primary" 
                       style={{ 
-                        width: `${metrics.communityTotalBooks > 0 ? Math.min((metrics.userTotalBooks / metrics.communityTotalBooks) * 100, 100) : 0}%`,
-                        background: 'var(--gradient-primary)'
+                        width: `${metrics.communityTotalBooks > 0 ? Math.min((metrics.userTotalBooks / metrics.communityTotalBooks) * 100, 100) : 0}%`
                       }}
                     ></div>
                   </div>
@@ -531,10 +530,9 @@ export const SocialPage: React.FC = () => {
                   </div>
                   <div className="comm-bar-track">
                     <div 
-                      className="comm-bar-fill" 
+                      className="comm-bar-fill comm-bar-fill-secondary" 
                       style={{ 
-                        width: `${metrics.communityCo2AvoidedKg > 0 ? Math.min((metrics.userCo2AvoidedKg / metrics.communityCo2AvoidedKg) * 100, 100) : 0}%`,
-                        background: 'linear-gradient(90deg, #06d6a0 0%, #1b9aaa 100%)'
+                        width: `${metrics.communityCo2AvoidedKg > 0 ? Math.min((metrics.userCo2AvoidedKg / metrics.communityCo2AvoidedKg) * 100, 100) : 0}%`
                       }}
                     ></div>
                   </div>

@@ -137,42 +137,22 @@ export const InventoryPage: React.FC = () => {
       </div>
 
       {/* Pestañas de Tu Libreta (Pantalla 4) */}
-      <div className="libreta-tabs" style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+      <div className="libreta-tabs">
         <button
           type="button"
           onClick={() => setActiveTab('interested')}
-          style={{
-            flex: 1,
-            padding: '0.75rem 1rem',
-            borderRadius: '10px',
-            border: activeTab === 'interested' ? '2px solid var(--neon)' : '1px solid var(--border-color)',
-            background: activeTab === 'interested' ? 'rgba(0, 229, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-            color: activeTab === 'interested' ? 'var(--neon)' : 'var(--text-secondary)',
-            fontWeight: 700,
-            cursor: 'pointer',
-            fontSize: '0.95rem'
-          }}
+          className={`libreta-tab-btn ${activeTab === 'interested' ? 'active' : ''}`}
         >
-          <i className="fa-solid fa-heart" style={{ marginRight: '0.5rem' }}></i>
+          <i className="fa-solid fa-heart"></i>
           Me interesan ({likedMatches.length})
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('offered')}
-          style={{
-            flex: 1,
-            padding: '0.75rem 1rem',
-            borderRadius: '10px',
-            border: activeTab === 'offered' ? '2px solid var(--neon)' : '1px solid var(--border-color)',
-            background: activeTab === 'offered' ? 'rgba(0, 229, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-            color: activeTab === 'offered' ? 'var(--neon)' : 'var(--text-secondary)',
-            fontWeight: 700,
-            cursor: 'pointer',
-            fontSize: '0.95rem'
-          }}
+          className={`libreta-tab-btn ${activeTab === 'offered' ? 'active' : ''}`}
         >
-          <i className="fa-solid fa-book-bookmark" style={{ marginRight: '0.5rem' }}></i>
+          <i className="fa-solid fa-book-bookmark"></i>
           Tengo para intercambiar ({offeredBooks.length})
         </button>
       </div>
@@ -184,12 +164,12 @@ export const InventoryPage: React.FC = () => {
       {activeTab === 'interested' && (
         <div className="tab-interested-content">
           {offeredBooks.length === 0 && (
-            <div style={{ background: 'rgba(255, 183, 3, 0.1)', border: '1px solid #ffb703', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+            <div className="no-offered-alert">
               <div>
-                <strong style={{ color: '#ffb703', fontSize: '0.95rem', display: 'block', marginBottom: '0.25rem' }}>
+                <strong className="no-offered-title">
                   <i className="fa-solid fa-triangle-exclamation"></i> No tienes libros cargados en 'Tengo para intercambiar'
                 </strong>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <span className="no-offered-text">
                   Para concretar un intercambio y aceptar propuestas de match, primero debes registrar al menos un libro en tu libreta para ofrecer a cambio.
                 </span>
               </div>
@@ -199,7 +179,7 @@ export const InventoryPage: React.FC = () => {
                   setActiveTab('offered');
                   setShowAddForm(true);
                 }}
-                style={{ background: '#ffb703', color: '#000', padding: '0.6rem 1rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                className="no-offered-btn"
               >
                 ＋ Cargar mi libro ahora
               </button>
@@ -217,40 +197,30 @@ export const InventoryPage: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="matches-libreta-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="matches-libreta-list">
               {likedMatches.map((item, index) => (
                 <div 
                   key={item.id} 
                   className="libreta-match-card"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '12px',
-                    padding: '1rem',
-                    gap: '1rem'
-                  }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '60px', height: '80px', borderRadius: '6px', overflow: 'hidden', background: '#222', flexShrink: 0 }}>
+                  <div className="match-card-content">
+                    <div className="match-card-thumb">
                       {item.bookImageUrl ? (
-                        <img src={item.bookImageUrl} alt={item.bookTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={item.bookImageUrl} alt={item.bookTitle} />
                       ) : (
-                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#666' }}><i className="fa-solid fa-book"></i></div>
+                        <div className="match-card-thumb-placeholder"><i className="fa-solid fa-book"></i></div>
                       )}
                     </div>
                     <div>
-                      <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.05rem', color: 'var(--text-primary)' }}>{item.bookTitle}</h3>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{item.bookAuthor}</span>
+                      <h3 className="match-card-title">{item.bookTitle}</h3>
+                      <span className="match-card-author">{item.bookAuthor}</span>
                       
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.4rem', fontSize: '0.8rem' }}>
-                        <span style={{ color: 'var(--accent-secondary)', fontWeight: 600 }}>
+                      <div className="match-card-meta">
+                        <span className="match-card-match-count">
                           <i className="fa-solid fa-arrows-rotate"></i> Match con {offeredBooks.length > 0 ? (index % 2 === 0 ? '2 tuyos' : '1 tuyo') : '0 libros tuyos'}
                         </span>
-                        <span style={{ color: 'var(--text-muted)' }}>•</span>
-                        <span style={{ color: 'var(--neon)', fontWeight: 700 }}>
+                        <span>•</span>
+                        <span className="match-card-fee">
                           Costo de intercambio: ${item.feeAmount.toLocaleString()} CLP
                         </span>
                       </div>
@@ -263,24 +233,14 @@ export const InventoryPage: React.FC = () => {
                       setSelectedProposal(item);
                       setMatchModalOpen(true);
                     }}
-                    style={{
-                      background: 'rgba(0, 229, 255, 0.1)',
-                      border: '1px solid var(--neon)',
-                      color: 'var(--neon)',
-                      padding: '0.6rem 1rem',
-                      borderRadius: '8px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      whiteSpace: 'nowrap'
-                    }}
+                    className="match-card-proposal-btn"
                   >
                     Ver propuesta {'>'}
                   </button>
                 </div>
               ))}
 
-              <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <div className="matches-libreta-footer">
                 <button 
                   className="add-book-trigger-btn font-heading" 
                   onClick={() => {
@@ -301,20 +261,19 @@ export const InventoryPage: React.FC = () => {
       {/* CONTENIDO DE PESTAÑA: TENGO PARA INTERCAMBIAR */}
       {activeTab === 'offered' && (
         <div className="tab-offered-content">
-          <div style={{ display: 'flex', justifyContent: 'end', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <div className="add-book-bar">
             <button 
               className="add-book-trigger-btn font-heading"
               onClick={() => setShowAddForm(!showAddForm)}
-              style={{ whiteSpace: 'nowrap' }}
             >
               {showAddForm ? 'Cancelar' : '＋ Agregar un Libro'}
             </button>
           </div>
 
           {showAddForm ? (
-            <div className="inventory-form-card" style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
+            <div className="inventory-form-card">
               <h2><i className="fa-solid fa-book-open"></i> Detalles del Libro a Ofrecer</h2>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+              <p className="inventory-form-desc">
                 Bookmachs es una red exclusiva de intercambio. Recuerda que no asignas ningún precio en dinero a tu libro.
               </p>
 
@@ -373,18 +332,18 @@ export const InventoryPage: React.FC = () => {
                         accept="image/*"
                         onChange={handleImageChange}
                         required
-                        style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', border: '1px dashed var(--border-color)', width: '100%' }}
+                        className="inventory-file-input"
                       />
                       {imagePreview && (
-                        <div style={{ marginTop: '0.5rem' }}>
-                          <img src={imagePreview} alt="Preview" style={{ height: '70px', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
+                        <div className="image-preview-wrapper">
+                          <img src={imagePreview} alt="Preview" />
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="form-actions" style={{ marginTop: '1.25rem' }}>
+                <div className="form-actions form-actions-mt">
                   <button type="submit" className="save-book-btn" disabled={submitting}>
                     {submitting ? 'Guardando en libreta...' : 'Cargar en mi libreta'}
                   </button>

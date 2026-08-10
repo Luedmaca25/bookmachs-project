@@ -312,7 +312,7 @@ export const AdminSettingsPage: React.FC = () => {
                         className={`status-toggle-btn ${tag.isActive ? 'deactivate' : 'activate'}`}
                         title={tag.isActive ? 'Desactivar' : 'Activar'}
                       >
-                        {tag.isActive ? <><i className="fa-solid fa-circle-check" style={{ color: '#4caf50' }}></i> Activo</> : <><i className="fa-solid fa-circle-xmark" style={{ color: '#f44336' }}></i> Inactivo</>}
+                        {tag.isActive ? <><i className="fa-solid fa-circle-check icon-active-green"></i> Activo</> : <><i className="fa-solid fa-circle-xmark icon-inactive-red"></i> Inactivo</>}
                       </button>
                       <button 
                         onClick={() => handleDeleteTag(tag.id)} 

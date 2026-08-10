@@ -47,7 +47,7 @@ export const MainLayout: React.FC = () => {
     <div className="app-container">
       <header className="app-header">
         <div className="header-logo">
-          <Link to="/" style={{ textDecoration: 'none' }}>
+          <Link to="/" className="header-logo-link">
             <span className="logo-text"><i className="fa-solid fa-book"></i> Bookmachs</span>
           </Link>
         </div>
@@ -76,21 +76,13 @@ export const MainLayout: React.FC = () => {
           )}
           
           {isAuthenticated && user ? (
-            <div className="user-nav-container" style={{ display: 'flex', alignItems: 'center', gap: '2.2rem' }}>
+            <div className="user-nav-container">
               <Link to="/auth" className="nav-link user-profile-link">
                 Mi perfil
               </Link>
               <button 
                 onClick={logout} 
                 className="nav-link logout-button-nav"
-                style={{ 
-                  background: 'transparent', 
-                  border: 'none', 
-                  cursor: 'pointer',
-                  color: 'var(--text-secondary)',
-                  fontFamily: 'inherit',
-                  fontSize: 'inherit'
-                }}
               >
                 Salir
               </button>
@@ -144,7 +136,7 @@ export const MainLayout: React.FC = () => {
               <div className="offcanvas-divider" />
 
               {isAuthenticated && user ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div className="offcanvas-user-actions">
                   <Link to="/auth" className="offcanvas-user-info">
                     Mi perfil
                   </Link>

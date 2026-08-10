@@ -117,6 +117,31 @@ public class BooksController : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpGet("swipe-status")]
+    public async Task<ActionResult<SwipeStatusDto>> GetSwipeStatus()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            var status = await _bookService.GetSwipeStatusAsync(userId);
+            return Ok(status);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("{id}/swipe")]
     public async Task<ActionResult<SwipeResultDto>> SwipeBook(Guid id, [FromBody] SwipeBookRequest request)
     {

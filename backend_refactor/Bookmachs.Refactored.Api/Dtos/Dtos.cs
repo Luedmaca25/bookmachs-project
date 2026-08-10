@@ -25,6 +25,15 @@ public class UserProfileDto
     public string SubscriptionPlan { get; set; } = "Free";
     public string Role { get; set; } = "User";
     public System.Collections.Generic.List<string> Preferences { get; set; } = new System.Collections.Generic.List<string>();
+    public int DailySwipesConsumed { get; set; }
+    public int DailySwipeLimit { get; set; }
+}
+
+public class SwipeStatusDto
+{
+    public int SwipesConsumed { get; set; }
+    public int SwipeLimit { get; set; }
+    public bool LimitReached { get; set; }
 }
 
 public class BookDto

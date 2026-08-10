@@ -18,6 +18,7 @@ public interface IBookService
     Task<IEnumerable<BookDto>> GetMyInventoryAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, decimal baseValue, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetRecommendationsAsync(Guid userId, int limit, CancellationToken cancellationToken = default);
+    Task<SwipeStatusDto> GetSwipeStatusAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<SwipeResultDto> SwipeBookAsync(Guid bookId, Guid userId, string action, CancellationToken cancellationToken = default);
     Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> ReserveBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
@@ -250,6 +251,53 @@ public class BookService : IBookService
                 CreatedAt = p.FechaRegistro ?? DateTime.UtcNow
             };
         });
+    }
+
+    public async Task<SwipeStatusDto> GetSwipeStatusAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("Usuario no encontrado.");
+        }
+
+        var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
+        int swipeLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 100);
+
+        var cacheKey = $"swipes_consumed_{user.Id}";
+        int consumed = 0;
+        var now = DateTime.UtcNow;
+        bool isNewDay = now.Date > user.LastSwipeResetDate.Date;
+
+        if (isNewDay)
+        {
+            consumed = 0;
+            user.DailySwipesConsumed = 0;
+            user.LastSwipeResetDate = now;
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(1));
+        }
+        else
+        {
+            var cachedSwipes = _cacheService.Get<int?>(cacheKey);
+            if (cachedSwipes.HasValue)
+            {
+                consumed = cachedSwipes.Value;
+            }
+            else
+            {
+                consumed = user.DailySwipesConsumed;
+                _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(1));
+            }
+        }
+
+        return new SwipeStatusDto
+        {
+            SwipesConsumed = consumed,
+            SwipeLimit = swipeLimit,
+            LimitReached = consumed >= swipeLimit
+        };
     }
 
     public async Task<SwipeResultDto> SwipeBookAsync(Guid bookId, Guid userId, string action, CancellationToken cancellationToken = default)
