@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
@@ -65,6 +65,7 @@ export const SwipePage: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const dragModeRef = useRef<'none' | 'horizontal' | 'vertical'>('none');
 
   // Control de cuota y contador de swipes persisitido en base de datos
   const [swipesConsumed, setSwipesConsumed] = useState(user?.dailySwipesConsumed ?? 0);
@@ -138,28 +139,55 @@ export const SwipePage: React.FC = () => {
 
   const currentBook = books[currentBookIndex];
 
-  // Gestos de arrastre Touch y Mouse
+  // Gestos de arrastre Touch (Móvil) y Mouse (Escritorio)
   const handleTouchStart = (e: React.TouchEvent) => {
     if (limitReached || !currentBook || swipeDirection) return;
     setIsDragging(true);
+    dragModeRef.current = 'none';
     setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
     setDragOffset({ x: 0, y: 0 });
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || dragModeRef.current === 'vertical') return;
+
     const deltaX = e.touches[0].clientX - dragStart.x;
     const deltaY = e.touches[0].clientY - dragStart.y;
-    setDragOffset({ x: deltaX, y: deltaY });
+
+    // Discriminar intención de scroll vertical vs swipe horizontal en los primeros píxeles
+    if (dragModeRef.current === 'none') {
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
+      if (absX > 6 || absY > 6) {
+        if (absY > absX) {
+          // El usuario está haciendo scroll vertical en el teléfono: ignorar swipe horizontal
+          dragModeRef.current = 'vertical';
+          setDragOffset({ x: 0, y: 0 });
+          return;
+        } else {
+          // El usuario está deslizando la tarjeta horizontalmente
+          dragModeRef.current = 'horizontal';
+        }
+      }
+    }
+
+    if (dragModeRef.current === 'horizontal') {
+      setDragOffset({ x: deltaX, y: 0 });
+    }
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
+    const mode = dragModeRef.current;
     setIsDragging(false);
-    if (dragOffset.x > 80) {
-      triggerSwipe('right');
-    } else if (dragOffset.x < -80) {
-      triggerSwipe('left');
+    dragModeRef.current = 'none';
+
+    if (mode === 'horizontal') {
+      if (dragOffset.x > 100) {
+        triggerSwipe('right');
+      } else if (dragOffset.x < -100) {
+        triggerSwipe('left');
+      }
     }
     setDragOffset({ x: 0, y: 0 });
   };
@@ -167,6 +195,7 @@ export const SwipePage: React.FC = () => {
   const handleMouseDown = (e: React.MouseEvent) => {
     if (limitReached || !currentBook || swipeDirection) return;
     setIsDragging(true);
+    dragModeRef.current = 'none';
     setDragStart({ x: e.clientX, y: e.clientY });
     setDragOffset({ x: 0, y: 0 });
   };
@@ -181,9 +210,9 @@ export const SwipePage: React.FC = () => {
   const handleMouseUp = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    if (dragOffset.x > 80) {
+    if (dragOffset.x > 100) {
       triggerSwipe('right');
-    } else if (dragOffset.x < -80) {
+    } else if (dragOffset.x < -100) {
       triggerSwipe('left');
     }
     setDragOffset({ x: 0, y: 0 });
