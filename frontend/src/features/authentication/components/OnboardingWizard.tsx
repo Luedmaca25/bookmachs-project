@@ -39,7 +39,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
         setError(null);
         try {
           const response = await apiClient.get<PreferenceTag[]>('/MasterPreferenceTags?onlyActive=true');
-          setTags(response);
+          const sortedTags = [...response].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+          setTags(sortedTags);
         } catch (err: unknown) {
           if (err instanceof Error) {
             setError(err.message || 'Error al cargar el catálogo de gustos.');

@@ -48,7 +48,7 @@ export const MainLayout: React.FC = () => {
       <header className="app-header">
         <div className="header-logo">
           <Link to="/" className="header-logo-link">
-            <span className="logo-text"><i className="fa-solid fa-book"></i> Bookmachs</span>
+            <img src="/logo-verde.png" alt="Bookmachs" className="brand-logo-img" />
           </Link>
         </div>
 
@@ -107,8 +107,12 @@ export const MainLayout: React.FC = () => {
         <div className="offcanvas-backdrop" onClick={() => setMobileMenuOpen(false)}>
           <div className="offcanvas-panel" onClick={(e) => e.stopPropagation()}>
             <div className="offcanvas-header">
-              <span className="logo-text"><i className="fa-solid fa-book"></i> Bookmachs</span>
-              <button className="offcanvas-close-btn" onClick={() => setMobileMenuOpen(false)}>✕</button>
+              <Link to="/" className="header-logo-link">
+                <img src="/logo-verde.png" alt="Bookmachs" className="brand-logo-img" />
+              </Link>
+              <button className="offcanvas-close-btn" onClick={() => setMobileMenuOpen(false)}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
             </div>
 
             <div className="offcanvas-body">
@@ -116,7 +120,7 @@ export const MainLayout: React.FC = () => {
 
               {isAuthenticated && user && (
                 <>
-                  <Link to="/catalogo" className="offcanvas-link">Catálogo</Link>
+                  <Link to="/catalogo" className="offcanvas-link"><i className="fa-solid fa-book"></i>Catálogo</Link>
                   <Link to="/libreta" className="offcanvas-link"><i className="fa-solid fa-book-bookmark"></i> Tu libreta</Link>
                   <Link to="/transacciones" className="offcanvas-link"><i className="fa-solid fa-handshake"></i> Matches</Link>
                 </>

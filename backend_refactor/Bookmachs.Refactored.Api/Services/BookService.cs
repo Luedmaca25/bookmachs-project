@@ -31,17 +31,20 @@ public class BookService : IBookService
     private readonly EcolecturaDbContext _ecolecturaDbContext;
     private readonly IFileStorageService _fileStorageService;
     private readonly ICacheService _cacheService;
+    private readonly ICategoryHomologationService _homologationService;
 
     public BookService(
         BookmachsDbContext dbContext,
         EcolecturaDbContext ecolecturaDbContext,
         IFileStorageService fileStorageService,
-        ICacheService cacheService)
+        ICacheService cacheService,
+        ICategoryHomologationService homologationService)
     {
         _dbContext = dbContext;
         _ecolecturaDbContext = ecolecturaDbContext;
         _fileStorageService = fileStorageService;
         _cacheService = cacheService;
+        _homologationService = homologationService;
     }
 
     public async Task<BookDto> GetGuestRandomAsync(CancellationToken cancellationToken = default)
@@ -145,12 +148,28 @@ public class BookService : IBookService
             .AsNoTracking()
             .Where(p => p.Activo && p.Stock > 0 && !swipedBookIds.Contains(p.IdProducto));
 
-        // Si el usuario tiene preferencias, filtramos en SQL por los que coincidan con alguna etiqueta
+        // Si el usuario tiene preferencias de conceptos homologados
         if (userPreferenceTags.Any())
         {
-            var firstTag = userPreferenceTags.First();
-            baseQuery = baseQuery.Where(p =>
-                (p.Categoria != null && p.Categoria.NombreCategoria.Contains(firstTag)));
+            var mappedItems = _homologationService.GetMappedItemsForConcepts(userPreferenceTags);
+            if (mappedItems.Any())
+            {
+                var categoryOnlyIds = mappedItems
+                    .Where(m => !m.SubcategoryId.HasValue)
+                    .Select(m => m.CategoryId)
+                    .Distinct()
+                    .ToList();
+
+                var subcategoryIds = mappedItems
+                    .Where(m => m.SubcategoryId.HasValue)
+                    .Select(m => m.SubcategoryId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                baseQuery = baseQuery.Where(p =>
+                    (p.IdCategoriaProducto.HasValue && categoryOnlyIds.Contains(p.IdCategoriaProducto.Value)) ||
+                    (p.IdSubcategoria.HasValue && subcategoryIds.Contains(p.IdSubcategoria.Value)));
+            }
         }
 
         // Traemos de la base de datos ÚNICAMENTE un grupo pequeño (ej. 50 libros) ordenados por lo más reciente
@@ -171,8 +190,8 @@ public class BookService : IBookService
             })
             .ToListAsync(cancellationToken);
 
-        // Si por filtros estrictos vinieron muy pocos, obtenemos un fallback rápido sin filtro de etiqueta (respetando exclusión)
-        if (candidateProducts.Count < limit)
+        // Si el usuario NO tiene preferencias especificadas y vinieron muy pocos, obtenemos un fallback rápido sin filtro de etiqueta (respetando exclusión)
+        if (!userPreferenceTags.Any() && candidateProducts.Count < limit)
         {
             var fallbackProducts = await _ecolecturaDbContext.Productos
                 .AsNoTracking()
@@ -480,9 +499,32 @@ public class BookService : IBookService
         if (!string.IsNullOrWhiteSpace(category))
         {
             var cat = category.Trim();
-            query = query.Where(p =>
-                p.Categoria != null && p.Categoria.NombreCategoria.Contains(cat)
-            );
+            var mappedItems = _homologationService.GetMappedItemsForConcepts(new[] { cat });
+            if (mappedItems.Any())
+            {
+                var categoryOnlyIds = mappedItems
+                    .Where(m => !m.SubcategoryId.HasValue)
+                    .Select(m => m.CategoryId)
+                    .Distinct()
+                    .ToList();
+
+                var subcategoryIds = mappedItems
+                    .Where(m => m.SubcategoryId.HasValue)
+                    .Select(m => m.SubcategoryId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                query = query.Where(p =>
+                    (p.IdCategoriaProducto.HasValue && categoryOnlyIds.Contains(p.IdCategoriaProducto.Value)) ||
+                    (p.IdSubcategoria.HasValue && subcategoryIds.Contains(p.IdSubcategoria.Value)) ||
+                    (p.Categoria != null && p.Categoria.NombreCategoria.Contains(cat)));
+            }
+            else
+            {
+                query = query.Where(p =>
+                    p.Categoria != null && p.Categoria.NombreCategoria.Contains(cat)
+                );
+            }
         }
 
         query = sortBy?.ToLower() switch

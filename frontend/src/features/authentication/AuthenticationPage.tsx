@@ -127,7 +127,8 @@ export const AuthenticationPage: React.FC = () => {
         setPrefError(null);
         try {
           const response = await apiClient.get<any[]>('/MasterPreferenceTags?onlyActive=true');
-          setTags(response);
+          const sortedTags = [...response].sort((a: any, b: any) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+          setTags(sortedTags);
         } catch (err: unknown) {
           console.error(err);
           setPrefError('Error al cargar el catálogo de gustos.');

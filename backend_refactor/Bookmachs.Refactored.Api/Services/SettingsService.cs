@@ -24,11 +24,13 @@ public class SettingsService : ISettingsService
 {
     private readonly BookmachsDbContext _dbContext;
     private readonly EcolecturaDbContext _ecolecturaDbContext;
+    private readonly ICategoryHomologationService _homologationService;
 
-    public SettingsService(BookmachsDbContext dbContext, EcolecturaDbContext ecolecturaDbContext)
+    public SettingsService(BookmachsDbContext dbContext, EcolecturaDbContext ecolecturaDbContext, ICategoryHomologationService homologationService)
     {
         _dbContext = dbContext;
         _ecolecturaDbContext = ecolecturaDbContext;
+        _homologationService = homologationService;
     }
 
     public async Task<GlobalSettingsDto> GetGlobalSettingsAsync(CancellationToken cancellationToken = default)
@@ -70,23 +72,8 @@ public class SettingsService : ISettingsService
 
     public async Task<IEnumerable<MasterPreferenceTagDto>> GetMasterPreferenceTagsAsync(bool onlyActive, CancellationToken cancellationToken = default)
     {
-        IQueryable<EcolecturaCategoria> query = _ecolecturaDbContext.CategoriaProductos;
-        if (onlyActive)
-        {
-            query = query.Where(t => t.Activo);
-        }
-
-        var tags = await query
-            .OrderBy(t => t.NombreCategoria)
-            .ToListAsync(cancellationToken);
-
-        return tags.Select(t => new MasterPreferenceTagDto
-        {
-            Id = t.IdCategoriaProducto,
-            Name = t.NombreCategoria,
-            IsActive = t.Activo,
-            CreatedAt = DateTime.UtcNow
-        });
+        var tags = _homologationService.GetPreferenceTagDtos();
+        return await Task.FromResult(tags);
     }
 
     public async Task<MasterPreferenceTagDto> CreateMasterPreferenceTagAsync(string name, bool isActive, CancellationToken cancellationToken = default)

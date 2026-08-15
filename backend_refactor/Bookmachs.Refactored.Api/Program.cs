@@ -42,6 +42,7 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddSingleton<ICategoryHomologationService, CategoryHomologationService>();
 builder.Services.AddScoped<ISendGridEmailService, SendGridEmailService>();
 builder.Services.AddScoped<IExchangeFulfillmentJob, ExchangeFulfillmentJob>();
 
