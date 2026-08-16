@@ -271,7 +271,7 @@ export const TransactionsPage: React.FC = () => {
           <div className="checkout-success-screen">
             <span className="success-badge-icon"><i className="fa-solid fa-circle-check icon-neon"></i></span>
             <h3>¡Intercambio y Pre-autorización Confirmados!</h3>
-            <p>Los fondos del Fee de servicio <strong>(${selectedTx.feeAmount.toLocaleString()} CLP)</strong> han sido retenidos en tu tarjeta hasta completar la entrega.</p>
+            <p>Los fondos del Fee de servicio <strong>(${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP)</strong> han sido retenidos en tu tarjeta hasta completar la entrega.</p>
             
             <div className="checkout-summary-box">
               <div className="summary-row">
@@ -304,7 +304,7 @@ export const TransactionsPage: React.FC = () => {
             {activeStep === 1 && (
               <div>
                 <div className="checkout-step-header">
-                  <h3 className="checkout-step-title">Paso 1: Confirma los Libros del Trueque</h3>
+                  <h3 className="checkout-step-title">Paso 1: Confirma los Libros</h3>
                   <p className="checkout-step-subtitle">
                     Verifica el libro que vas a recibir y selecciona cuál de tus libros registrados en *"Tengo para intercambiar"* entregarás a cambio.
                   </p>
@@ -325,7 +325,7 @@ export const TransactionsPage: React.FC = () => {
                     <div className="swap-book-author">por {selectedTx.bookAuthor}</div>
                     <div className="offered-select-wrapper">
                       <span className={`condition-badge ${selectedTx.bookCondition.toLowerCase()}`}>
-                        Estado: {selectedTx.bookCondition}
+                        Estado libro: {selectedTx.bookCondition}
                       </span>
                     </div>
                   </div>
@@ -335,7 +335,6 @@ export const TransactionsPage: React.FC = () => {
                     <div className="swap-pulse-badge">
                       <i className="fa-solid fa-arrows-rotate"></i>
                     </div>
-                    <span className="swap-match-ratio">IA Match 100% Validado</span>
                   </div>
 
                   {/* Tarjeta 2: Libro Ofrecido (Entregas) */}
@@ -367,6 +366,11 @@ export const TransactionsPage: React.FC = () => {
                             </div>
                             <div className="swap-book-title">{currentOfferedBook.title}</div>
                             <div className="swap-book-author">por {currentOfferedBook.author}</div>
+                            <div className="offered-select-wrapper">
+                              <span className={`condition-badge ${(currentOfferedBook.condition || 'Excelente').toLowerCase()}`}>
+                                Estado libro: {currentOfferedBook.condition || 'Excelente'}
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -422,7 +426,7 @@ export const TransactionsPage: React.FC = () => {
                         <span className="radio-card-title">
                           <i className="fa-solid fa-heart"></i> 1. Donación Comunitaria
                         </span>
-                        <span className="radio-card-badge badge-validation">Validación Previa por IA/Equipo</span>
+                        <span className="radio-card-badge badge-validation">Validación Previa por Equipo</span>
                       </div>
                       <p className="radio-card-desc">
                         Dona tu libro físico en un colegio o espacio comunitario. Carga la foto de evidencia que pasará por un proceso de verificación previa antes de enviar el libro escogido.
@@ -567,8 +571,8 @@ export const TransactionsPage: React.FC = () => {
                       </div>
                       
                       <div className="fee-total-row">
-                        <span>Tarifa de servicio (Fee IA):</span>
-                        <strong className="fee-total-amount">${selectedTx.feeAmount.toLocaleString()} CLP</strong>
+                        <span>Tarifa de servicio (Fee):</span>
+                        <strong className="fee-total-amount">${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP</strong>
                       </div>
                     </div>
 
@@ -583,16 +587,16 @@ export const TransactionsPage: React.FC = () => {
                   </div>
 
                   <div className="webpay-card-container">
-                    <h4 className="webpay-card-title">Pasarela Transbank Webpay Plus</h4>
+                    {/* <h4 className="webpay-card-title">Pasarela Transbank Webpay Plus</h4> */}
                     
                     <img 
-                      src="https://www.ecolectura.cl/Content/Images/webpay/1.Webpay_FN_300px.png" 
+                      src="/WebpayPlus_FB.png" 
                       alt="Webpay Plus Transbank" 
                       className="webpay-logo-img"
                     />
                     
                     <p className="webpay-desc-text">
-                      Al hacer clic en el botón inferior serás redirigido al servidor seguro de Transbank para pre-autorizar el Hold de <strong>${selectedTx.feeAmount.toLocaleString()} CLP</strong>.
+                      Al hacer clic en el botón inferior serás redirigido al servidor seguro de Transbank para pre-autorizar el Hold de <strong>${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP</strong>.
                     </p>
 
                     {checkoutError && <div className="webpay-error-text">{checkoutError}</div>}
@@ -603,7 +607,7 @@ export const TransactionsPage: React.FC = () => {
                       onClick={handleWebpayStart}
                       disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
                     >
-                      {checkoutLoading ? 'Conectando con Webpay...' : <>Pagar Fee con Webpay Plus 🔒</>}
+                      {checkoutLoading ? 'Conectando con Webpay...' : <>Pagar Fee</>}
                     </button>
                   </div>
                 </div>
@@ -709,7 +713,7 @@ export const TransactionsPage: React.FC = () => {
               <div className="match-card-actions">
                 <div className="fee-amount-display">
                   <span>Fee de Intercambio:</span>
-                  <strong>${tx.feeAmount.toLocaleString()} CLP</strong>
+                  <strong>${Math.round(tx.feeAmount).toLocaleString('es-CL')} CLP</strong>
                 </div>
 
                 {!hasOfferedBooks ? (

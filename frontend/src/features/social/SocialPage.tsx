@@ -415,7 +415,7 @@ export const SocialPage: React.FC = () => {
         <>
           <div className="metrics-section-title">
              <h2>Mi Huella Ecológica Colectiva <i className="fa-solid fa-leaf"></i></h2>
-            <p>Monitoreo en tiempo real de tu aporte ambiental al dar segundas oportunidades a los libros.</p>
+            <p>Monitoreo en tiempo real de tu aporte ambiental al dar segundas oportunidades a los libros en equivalencia.</p>
           </div>
 
           <div className="metrics-grid">
@@ -535,6 +535,52 @@ export const SocialPage: React.FC = () => {
                         width: `${metrics.communityCo2AvoidedKg > 0 ? Math.min((metrics.userCo2AvoidedKg / metrics.communityCo2AvoidedKg) * 100, 100) : 0}%`
                       }}
                     ></div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+          {/* 3.5 Sección Transparente de Cálculo del Impacto Ecológico */}
+          <div className="impact-transparency-card">
+            <div className="transparency-header">
+              <div className="transparency-badge">
+                <i className="fa-solid fa-calculator"></i> Transparencia Total del Cálculo Ecológico
+              </div>
+              <h3>¿Cómo calculamos tu huella ecológica?</h3>
+              <p>En Bookmachs nos regimos por factores de emisión físicos internacionales para garantizar 100% de transparencia en cada métrica.</p>
+            </div>
+
+            <div className="transparency-grid">
+              <div className="transparency-step">
+                <div className="step-number">1</div>
+                <div className="step-content">
+                  <h4>Peso Promedio de Papel Rescatado</h4>
+                  <p>Cada libro físico equivale a un peso promedio estándar de <strong>400 g (0.4 kg)</strong> de papel de celulosa producido.</p>
+                  <div className="step-calc-box">
+                    <code>{metrics.userTotalBooks} libro(s) × 0.4 kg = <strong>{(metrics.userTotalBooks * 0.4).toFixed(1)} kg de papel</strong></code>
+                  </div>
+                </div>
+              </div>
+
+              <div className="transparency-step">
+                <div className="step-number">2</div>
+                <div className="step-content">
+                  <h4>Factor de Emisión CO₂ Evitado</h4>
+                  <p>La producción de 1 kg de papel nuevo emite <strong>2.71 kg de CO₂</strong>. Al darle reutilización, evitas esas emisiones.</p>
+                  <div className="step-calc-box">
+                    <code>{(metrics.userTotalBooks * 0.4).toFixed(1)} kg × 2.71 = <strong>{metrics.userCo2AvoidedKg} kg de CO₂ salvados</strong></code>
+                  </div>
+                </div>
+              </div>
+
+              <div className="transparency-step">
+                <div className="step-number">3</div>
+                <div className="step-content">
+                  <h4>Árboles Equivalentes Absorbentes</h4>
+                  <p>Un árbol adulto sano absorbe aproximadamente <strong>22 kg de CO₂ al año</strong> de la atmósfera.</p>
+                  <div className="step-calc-box">
+                    <code>{metrics.userCo2AvoidedKg} kg ÷ 22 kg/árbol = <strong>{metrics.userEquivalentTrees} árboles cultivados</strong></code>
                   </div>
                 </div>
               </div>

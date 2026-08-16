@@ -285,10 +285,11 @@ export const SwipePage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      // Validar si el error fue por límite diario (403 Forbidden o código DailyLimitExceeded)
+      // Validar si el error fue por límite mensual (403 Forbidden o código MonthlyLimitExceeded)
       const isLimitError = err.message && (
         err.message.includes('403') || 
-        err.message.includes('DailyLimitExceeded')
+        err.message.includes('DailyLimitExceeded') ||
+        err.message.includes('MonthlyLimitExceeded')
       );
       
       if (isLimitError) {
@@ -415,8 +416,8 @@ export const SwipePage: React.FC = () => {
               )}
               
               {currentBook && (
-                <span className={`condition-badge ${currentBook.condition.toLowerCase()}`}>
-                  {currentBook.condition}
+                <span className={`condition-badge condition-badge-absolute ${currentBook.condition.toLowerCase()}`}>
+                  Estado libro: {currentBook.condition}
                 </span>
               )}
             </div>
@@ -481,8 +482,8 @@ export const SwipePage: React.FC = () => {
           {limitReached && (
             <div className="card-blur-overlay">
               <span className="lock-icon"><i className="fa-solid fa-lock"></i></span>
-              <h3>Límite diario alcanzado</h3>
-              <p>Regresa mañana para seguir descubriendo libros o pásate a un plan Premium hoy mismo.</p>
+              <h3>Límite mensual alcanzado</h3>
+              <p>Has consumido tu cuota mensual de swipes en el plan gratuito (1° al último día del mes). Tu saldo se renovará el 1° del próximo mes o pásate a Premium hoy mismo.</p>
               <button className="upsell-trigger-btn font-heading" onClick={() => setUpsellOpen(true)}>
                 Ver Planes Premium <i className="fa-solid fa-bolt"></i>
               </button>

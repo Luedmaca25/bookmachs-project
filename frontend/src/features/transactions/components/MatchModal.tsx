@@ -168,7 +168,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
             <div className="swap-book-author swap-book-author-sm">por {book.author}</div>
             <div className="mt-04">
               <span className={`condition-badge ${book.condition.toLowerCase()}`}>
-                {book.condition}
+                Estado libro: {book.condition}
               </span>
             </div>
           </div>
@@ -211,6 +211,11 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                     </div>
                     <div className="swap-book-title swap-book-title-sm">{currentOfferedBook.title}</div>
                     <div className="swap-book-author swap-book-author-sm">por {currentOfferedBook.author}</div>
+                    <div className="mt-04">
+                      <span className={`condition-badge ${(currentOfferedBook.condition || 'Excelente').toLowerCase()}`}>
+                        Estado libro: {currentOfferedBook.condition || 'Excelente'}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -238,7 +243,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
             <div>
               <span className="fee-estimate-label">Tarifa estimada de servicio (Fee):</span>
               <div className="fee-estimate-amount">
-                ${feeDetails ? feeDetails.finalFee.toLocaleString() : '3.200'} CLP
+                ${feeDetails ? Math.round(feeDetails.finalFee).toLocaleString('es-CL') : '3.200'} CLP
               </div>
             </div>
             <button 
@@ -254,15 +259,15 @@ export const MatchModal: React.FC<MatchModalProps> = ({
             <div className="fee-details-list fee-details-expanded">
               <div className="fee-row fee-detail-row">
                 <span>Base ponderada del libro:</span>
-                <span>${feeDetails.baseValue.toLocaleString()} CLP</span>
+                <span>${Math.round(feeDetails.baseValue).toLocaleString('es-CL')} CLP</span>
               </div>
               <div className="fee-row fee-detail-row">
-                <span>Porcentaje regla IA ({Math.round(feeDetails.feePercentage * 100)}%):</span>
-                <span>${feeDetails.rawFee.toLocaleString()} CLP</span>
+                <span>Porcentaje:</span>
+                <span>${Math.round(feeDetails.rawFee).toLocaleString('es-CL')} CLP</span>
               </div>
               <div className="fee-row fee-detail-row-final">
                 <span>Monto final retención:</span>
-                <span>${feeDetails.finalFee.toLocaleString()} CLP</span>
+                <span>${Math.round(feeDetails.finalFee).toLocaleString('es-CL')} CLP</span>
               </div>
             </div>
           )}

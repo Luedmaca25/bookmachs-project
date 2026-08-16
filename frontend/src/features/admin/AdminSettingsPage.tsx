@@ -167,7 +167,7 @@ export const AdminSettingsPage: React.FC = () => {
               <form onSubmit={handleSettingsSubmit} className="admin-form">
                 <div className="form-grid">
                   <div className="form-group">
-                    <label htmlFor="dailySwipeLimitFree">Límite Diario Swipes (Gratis)</label>
+                    <label htmlFor="dailySwipeLimitFree">Límite Mensual Swipes (Plan Gratuito)</label>
                     <input 
                       type="number" 
                       id="dailySwipeLimitFree" 
@@ -176,10 +176,11 @@ export const AdminSettingsPage: React.FC = () => {
                       min="0"
                       required 
                     />
+                    <small className="form-help-text">Ciclo del 1° al último día del mes en curso.</small>
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="dailySwipeLimitPremium">Límite Diario Swipes (Premium)</label>
+                    <label htmlFor="dailySwipeLimitPremium">Límite Mensual Swipes (Plan Premium)</label>
                     <input 
                       type="number" 
                       id="dailySwipeLimitPremium" 
@@ -188,6 +189,7 @@ export const AdminSettingsPage: React.FC = () => {
                       min="0"
                       required 
                     />
+                    <small className="form-help-text">Establece 1000 o más para cuota ilimitada.</small>
                   </div>
 
                   <div className="form-group">

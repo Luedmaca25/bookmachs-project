@@ -13,8 +13,8 @@ export const UpsellModal: React.FC<UpsellModalProps> = ({ isOpen, onClose, limit
     <div className="modal-overlay">
       <div className="modal-card upsell-modal-card">
         <div className="modal-header">
-          <h2>⚡ Límite Diario Alcanzado</h2>
-          <p>Has consumido tu cuota gratuita diaria de <strong>{limitValue} swipes</strong>.</p>
+          <h2>⚡ Límite Mensual Alcanzado</h2>
+          <p>Has consumido tu cuota gratuita de <strong>{limitValue} swipes mensuales</strong> (1° al último día del mes).</p>
         </div>
 
         <div className="upsell-benefits">
@@ -22,7 +22,7 @@ export const UpsellModal: React.FC<UpsellModalProps> = ({ isOpen, onClose, limit
             <span className="benefit-icon">🚀</span>
             <div className="benefit-text">
               <h4>Desliza sin límites</h4>
-              <p>Aumenta tu límite hasta 1,000 swipes diarios y no te pierdas ningún libro.</p>
+              <p>Aumenta tu cuota a swipes ilimitados y no te pierdas ningún libro.</p>
             </div>
           </div>
 
@@ -47,7 +47,7 @@ export const UpsellModal: React.FC<UpsellModalProps> = ({ isOpen, onClose, limit
           <div className="plan-card">
             <h3>Plan Básico</h3>
             <span className="plan-price font-heading">$2.00 USD <small>/mes</small></span>
-            <p className="plan-desc">Aumenta tu cuota a 500 swipes diarios.</p>
+            <p className="plan-desc">Aumenta tu cuota a 500 swipes mensuales.</p>
             <button className="plan-btn" onClick={() => alert('Pasarela de pagos en desarrollo...')}>
               Elegir Básico
             </button>
@@ -66,7 +66,7 @@ export const UpsellModal: React.FC<UpsellModalProps> = ({ isOpen, onClose, limit
 
         <div className="modal-footer">
           <button type="button" className="close-upsell-btn" onClick={onClose}>
-            Seguir explorando mañana
+            Entendido, volver el 1° del mes
           </button>
         </div>
       </div>

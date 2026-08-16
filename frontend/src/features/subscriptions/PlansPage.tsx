@@ -25,7 +25,7 @@ export const PlansPage: React.FC = () => {
       name: 'Plan Gratuito',
       price: '$0 CLP',
       priceValue: 0,
-      swipes: '100 Swipes diarios',
+      swipes: '100 Swipes mensuales (1° al último día del mes)',
       matches: 'Máx. 2 intercambios al mes',
       features: [
         'Exploración de libros básica',

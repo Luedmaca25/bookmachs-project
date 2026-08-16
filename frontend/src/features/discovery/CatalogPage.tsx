@@ -318,7 +318,7 @@ export const CatalogPage: React.FC = () => {
                   <span className="no-cover-placeholder"><i className="fa-solid fa-book"></i></span>
                 )}
                 <span className={`condition-badge ${book.condition.toLowerCase()}`}>
-                  {book.condition}
+                  Estado libro: {book.condition}
                 </span>
               </div>
               <div className="catalog-card-info">
@@ -358,7 +358,7 @@ export const CatalogPage: React.FC = () => {
               </div>
               <div className="catalog-list-item-info">
                 <span className={`condition-badge ${book.condition.toLowerCase()}`}>
-                  {book.condition}
+                  Estado libro: {book.condition}
                 </span>
                 <h3>{book.title}</h3>
                 <span className="author">por {book.author}</span>

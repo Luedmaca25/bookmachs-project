@@ -59,6 +59,30 @@ public class TransactionsController : ControllerBase
         }
     }
 
+    [HttpDelete("my-matches/{id}")]
+    public async Task<ActionResult<bool>> DeleteMatch(Guid id)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            await _transactionService.DeleteMatchAsync(id, userId);
+            return Ok(new { message = "Libro eliminado de tus intereses exitosamente." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpGet("estimate-fee/{bookId}")]
     public async Task<ActionResult<FeeEstimationDto>> EstimateFee(Guid bookId)
     {

@@ -181,128 +181,72 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const currentMethod = transaction.logisticsMethod || 'Presencial';
 
   return createPortal(
-    <div 
-      className="modal-overlay detail-modal-overlay-bootstrap detail-modal-overlay-custom"
-    >
-      <div 
-        className="modal-card detail-modal-card-master detail-modal-card-white"
-      >
-        {/* Drag Handle Visual (Solo visible en móviles) */}
-        <div 
-          className="mobile-drag-handle drag-handle-gray"
-        />
-
-        {/* Botón Cerrar Ultra-Sleek */}
+    <div className="modal-overlay">
+      <div className="modal-card match-modal-card match-modal-card-custom">
+        {/* Botón de Cierre Superior */}
         <button 
+          type="button" 
+          className="modal-close-btn-top" 
           onClick={onClose}
           aria-label="Cerrar modal"
-          className="btn-modal-close-round"
         >
-          ✕
+          <i className="fa-solid fa-xmark"></i>
         </button>
 
-        {/* HERO HEADER - UX/UI MASTER */}
-        {isThankYouPage ? (
-          <div className="hero-header-center">
-            <div 
-              className="badge-success-pill"
-            >
-              <span>🎉</span> ¡PAGO WEBPAY AUTORIZADO EXITOSAMENTE!
-            </div>
-            <h2 className="thank-you-title">
-              ¡Gracias por tu Intercambio en Bookmachs!
-            </h2>
-            <p className="thank-you-desc">
-              Tu fee fue pre-autorizado de forma segura. A continuación encuentras el desglose de los libros, los plazos y la logística de entrega.
-            </p>
+        {/* Encabezado Neón Principal */}
+        <div className="checkout-step-header">
+          <div className="neon-badge-pill">
+            {isThankYouPage ? '🎉 ¡Pago Webpay Autorizado Exitosamente!' : '📋 Detalle de Transacción e Intercambio IA'}
           </div>
-        ) : (
-          <div className="hero-header-center">
-            <div 
-              className="badge-detail-pill"
-            >
-              📋 Detalle de Transacción e Intercambio IA
-            </div>
-            <h2 className="detail-tx-title">
-              Intercambio #{transaction.id.substring(0, 8).toUpperCase()}
-            </h2>
-          </div>
-        )}
+          
+          <h3 className="match-modal-title">
+            {isThankYouPage ? '¡Gracias por tu Intercambio en Bookmachs!' : `Intercambio #${transaction.id.substring(0, 8).toUpperCase()}`}
+          </h3>
+          <p className="match-modal-subtitle">
+            {isThankYouPage 
+              ? 'Tu fee fue pre-autorizado de forma segura. A continuación encuentras el desglose de los libros, los plazos y la logística de entrega.'
+              : 'Detalle completo de libros acordados, plazos de entrega y estado de la logística.'}
+          </p>
+        </div>
 
-        {/* 3D DUET SWAP SHOWCASE - DESKTOP GRID (3 COLUMNAS) & MOBILE STACK */}
-        <div 
-          className="duet-swap-showcase-grid duet-showcase-container"
-        >
-          {/* TARJETA 1: LIBRO A RECIBIR */}
-          <div 
-            className="swap-showcase-card"
-          >
-            <span 
-              className="badge-tag-green"
-            >
-              📥 Recibes en tu colección
-            </span>
-
-            {/* MARCO DE PORTADA 3D VISIBLE CON FALLBACK ABSOLUTO */}
-            <div 
-              className="swap-cover-frame-green"
-            >
+        {/* DUET SWAP DECK - MOSTRAR LOS 2 LIBROS DEL INTERCAMBIO */}
+        <div className="duet-swap-deck duet-swap-deck-modal">
+          {/* Libro Recibido */}
+          <div className="swap-book-card target-card">
+            <span className="swap-card-tag receive">Libro que recibes</span>
+            <div className="swap-cover-frame swap-cover-frame-fixed">
               <img 
                 src={receiveCoverUrl} 
                 alt={transaction.bookTitle}
-                className="img-cover-fill"
-                onError={(e) => { e.currentTarget.src = defaultTargetCover; }}
+                onError={(e) => { e.currentTarget.src = defaultTargetCover; }} 
               />
             </div>
-
-            <div className="book-card-title-dark">
-              {transaction.bookTitle}
-            </div>
-            <div className="book-card-author-dark">
-              por {transaction.bookAuthor}
-            </div>
-
-            <div className="book-card-badges-row">
-              <span className={`condition-badge ${(transaction.bookCondition || 'good').toLowerCase()} badge-text-xs`}>
-                {transaction.bookCondition || 'Excelente'}
-              </span>
-              <span className="owner-badge-gray">
-                Dueño: {transaction.ownerName}
+            <div className="swap-book-title swap-book-title-sm">{transaction.bookTitle}</div>
+            <div className="swap-book-author swap-book-author-sm">por {transaction.bookAuthor}</div>
+            <div className="mt-04">
+              <span className={`condition-badge ${(transaction.bookCondition || 'Excelente').toLowerCase()}`}>
+                Estado libro: {transaction.bookCondition || 'Excelente'}
               </span>
             </div>
           </div>
 
-          {/* PUENTE CENTRAL DE INTERCAMBIO IA */}
-          <div className="swap-bridge-node bridge-node-padded">
-            <div 
-              className="swap-pulse-circle-green"
-            >
+          {/* Centro: Puente de Intercambio */}
+          <div className="swap-bridge-center">
+            <div className="swap-pulse-badge swap-pulse-badge-md">
               <i className="fa-solid fa-arrows-rotate"></i>
             </div>
-            <span 
-              className="bridge-ia-label"
-            >
-              🤖 Match 100% IA
-            </span>
           </div>
 
-          {/* TARJETA 2: LIBRO A ENTREGAR */}
-          <div 
-            className="swap-showcase-card"
-          >
-            <span 
-              className="badge-tag-amber"
-            >
-              📤 Entregas a cambio
-            </span>
-
-            {/* SELECCIÓN DE LIBRO DEL INVENTARIO SI EXISTEN VARIOS */}
+          {/* Libro Entregado */}
+          <div className="swap-book-card offered-card">
+            <span className="swap-card-tag give">Libro que tú entregas</span>
+            
             {myInventory.length > 1 && (
-              <div className="select-offered-inventory-wrapper">
+              <div className="mb-04">
                 <select 
-                  value={selectedOfferedId}
-                  onChange={(e) => setSelectedOfferedId(e.target.value)}
-                  className="select-offered-inventory"
+                  value={selectedOfferedId} 
+                  onChange={(e) => setSelectedOfferedId(e.target.value)} 
+                  className="select-offered-modal"
                 >
                   {myInventory.map((b) => (
                     <option key={b.id} value={b.id}>{b.title}</option>
@@ -311,132 +255,77 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               </div>
             )}
 
-            {/* MARCO DE PORTADA 3D CON FALLBACK GARANTIZADO */}
-            <div 
-              className="swap-cover-frame-amber"
-            >
+            <div className="swap-cover-frame swap-cover-frame-fixed">
               <img 
                 src={offerCoverUrl} 
-                alt={offerTitle}
-                className="img-cover-fill"
-                onError={(e) => { e.currentTarget.src = defaultOfferedCover; }}
+                alt={offerTitle} 
+                onError={(e) => { e.currentTarget.src = defaultOfferedCover; }} 
               />
             </div>
-
-            <div className="book-card-title-dark">
-              {offerTitle}
-            </div>
-            <div className="book-card-author-dark">
-              por {offerAuthor}
-            </div>
-
-            <div className="book-card-badges-row">
-              <span className={`condition-badge ${(offerCondition || 'excelente').toLowerCase()} badge-text-xs`}>
-                {offerCondition}
-              </span>
-              <span className="owner-badge-light-gray">
-                Tu propiedad
+            <div className="swap-book-title swap-book-title-sm">{offerTitle}</div>
+            <div className="swap-book-author swap-book-author-sm">por {offerAuthor}</div>
+            <div className="mt-04">
+              <span className={`condition-badge ${(offerCondition || 'Excelente').toLowerCase()}`}>
+                Estado libro: {offerCondition}
               </span>
             </div>
           </div>
         </div>
 
-        {/* TIMELINE & EXPIRATION DASHBOARD (DESKTOP GRID / MOBILE STACK) */}
-        <div 
-          className="timeline-dashboard-card"
-        >
-          {/* BARRA DE PROGRESO DE 5 DÍAS */}
-          <div className="progress-bar-container">
-            <div className="cronometer-header-row cronometer-header-flex">
-              <span className={`cronometer-label ${daysRemaining <= 1 ? 'urgent' : 'warning'}`}>
-                ⏳ Cronómetro de Entrega: Día {elapsedDays} de 5
-              </span>
-              <span className="cronometer-time-left">
-                {daysRemaining > 0 
-                  ? `Quedan ${daysRemaining} día${daysRemaining > 1 ? 's' : ''}${hoursRemainingMod > 0 ? ` y ${hoursRemainingMod}h` : ''}`
-                  : `Quedan ${hoursRemainingMod} horas`}
-              </span>
-            </div>
-
-            <div className="progress-track-gray">
-              <div 
-                className={`progress-fill-bar ${daysRemaining <= 1 ? 'urgent' : ''}`}
-                style={{ 
-                  width: `${(elapsedDays / 5) * 100}%`
-                }} 
-              />
-            </div>
-          </div>
-
-          {/* GRID DE METRICAS CLAVE */}
-          <div className="metrics-dashboard-grid metrics-dashboard-gap">
-            <div className="metric-box-white">
-              <span className="metric-box-label">
-                📅 Fecha de Pago:
-              </span>
-              <strong className="metric-box-value-dark">{formattedPaymentDate}</strong>
-            </div>
-
-            <div className="metric-box-white">
-              <span className="metric-box-label">
-                🔒 Fee Webpay Retenido:
-              </span>
-              <strong className="metric-box-value-green">
-                ${transaction.feeAmount.toLocaleString('es-CL')} CLP
-              </strong>
-            </div>
-
-            <div className="metric-box-white">
-              <span className="metric-box-label">
-                ⏰ Límite de Expiración:
-              </span>
-              <strong className={`metric-box-value-expiration ${daysRemaining <= 1 ? 'urgent' : ''}`}>
-                {formattedDeadlineDate}
-              </strong>
-            </div>
-          </div>
-        </div>
-
-        {/* CUMPLIMIENTO LOGÍSTICO Y SUBIDA DE COMPROBANTES (PANTALLA 11) */}
-        <div 
-          className="logistics-compliance-card"
-        >
-          <div className="logistics-method-header-row">
-            <div 
-              className="logistics-method-icon-box"
-            >
-              {currentMethod === 'Donacion' ? '🎁' : currentMethod === 'Envio' ? '📦' : '📍'}
-            </div>
+        {/* DASHBOARD DE CRONÓMETRO Y TARIFAS */}
+        <div className="fee-estimate-container">
+          <div className="fee-estimate-flex">
             <div>
-              <h4 className="logistics-method-title">
-                Opción Seleccionada: {currentMethod === 'Donacion' ? 'Donación Comunitaria' : currentMethod === 'Envio' ? 'Envío Encomienda' : 'Entrega Presencial (Santiago)'}
-              </h4>
-              <span className="logistics-method-subtitle">
-                {currentMethod === 'Donacion' 
-                  ? 'Sube la foto del colegio o espacio comunitario para proceso de validación previa.'
-                  : currentMethod === 'Envio' 
-                  ? 'Registra el N° de seguimiento y comprobante de envío.'
-                  : 'Entrega tu libro en la ubicación oficial acordada.'}
+              <span className="fee-estimate-label">
+                ⏳ Cronómetro de Entrega (5 Días Máx):
               </span>
+              <div className="fee-estimate-amount" style={{ fontSize: '1.15rem' }}>
+                Día {elapsedDays} de 5 — {daysRemaining > 0 ? `${daysRemaining} día(s) restante(s)` : `${hoursRemainingMod} horas restantes`}
+              </div>
             </div>
           </div>
 
-          {/* FORMULARIO DONACIÓN COMUNITARIA */}
+          <div className="fee-details-list fee-details-expanded">
+            <div className="fee-row fee-detail-row">
+              <span>Fecha de Confirmación:</span>
+              <span>{formattedPaymentDate}</span>
+            </div>
+            <div className="fee-row fee-detail-row">
+              <span>Fee Webpay Retenido:</span>
+              <span className="fee-estimate-amount" style={{ fontSize: '1rem' }}>
+                ${transaction.feeAmount.toLocaleString('es-CL')} CLP
+              </span>
+            </div>
+            <div className="fee-row fee-detail-row-final">
+              <span>Fecha Límite Expiración:</span>
+              <span className={daysRemaining <= 1 ? 'fee-error-msg' : ''}>{formattedDeadlineDate}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* SECCIÓN LOGÍSTICA & SUBIDA DE COMPROBANTES */}
+        <div className="fee-estimate-container mt-04" style={{ marginTop: '1rem' }}>
+          <div style={{ color: 'var(--neon)', fontWeight: '700', fontSize: '0.95rem', marginBottom: '0.4rem' }}>
+            {currentMethod === 'Donacion' ? '🎁 Donación Comunitaria' : currentMethod === 'Envio' ? '📦 Envío por Encomienda' : '📍 Entrega Presencial (Santiago)'}
+          </div>
+          <p className="match-modal-subtitle" style={{ textAlign: 'left', margin: '0 0 1rem 0' }}>
+            {currentMethod === 'Donacion' 
+              ? 'Sube la foto del colegio o espacio comunitario para proceso de validación previa.'
+              : currentMethod === 'Envio' 
+              ? 'Registra el N° de seguimiento y comprobante de envío.'
+              : 'Entrega tu libro en la ubicación oficial acordada.'}
+          </p>
+
           {currentMethod === 'Donacion' && (
-            <form onSubmit={handleSubmitLogistics} className="mt-1">
-              <div className="mb-1">
-                <label className="form-field-label">
-                  Cargar foto del espacio comunitario o colegio donde realizaste la donación:
-                </label>
-                
+            <form onSubmit={handleSubmitLogistics}>
+              <div className="mb-04">
                 <div 
-                  className="dropzone-upload-border"
+                  className="dropzone-upload-box"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed var(--border-color)', borderRadius: '10px', padding: '1rem', textAlign: 'center', cursor: 'pointer' }}
                   onClick={() => document.getElementById('donation-photo-input')?.click()}
                 >
-                  <i className="fa-solid fa-cloud-arrow-up cloud-upload-icon"></i>
-                  <div className="dropzone-title">Haz clic para seleccionar o arrastrar fotografía</div>
-                  <div className="dropzone-subtitle">Formatos permitidos: JPG, PNG, WEBP (Máx 5MB)</div>
-                  
+                  <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '1.5rem', color: 'var(--neon)', marginBottom: '0.4rem' }}></i>
+                  <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>Toca para seleccionar o subir fotografía de donación</div>
                   <input 
                     id="donation-photo-input"
                     type="file" 
@@ -448,14 +337,10 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               </div>
 
               {evidencePreview && (
-                <div className="preview-box-green">
-                  <img 
-                    src={evidencePreview} 
-                    alt="Vista previa donación" 
-                    className="preview-img-donation" 
-                  />
-                  <div className="preview-success-text">
-                    ✓ Fotografía lista para proceso de validación previa
+                <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+                  <img src={evidencePreview} alt="Vista previa" style={{ maxHeight: '120px', borderRadius: '6px' }} />
+                  <div style={{ fontSize: '0.8rem', color: 'var(--neon)', fontWeight: '700', marginTop: '0.4rem' }}>
+                    ✓ Fotografía cargada correctamente
                   </div>
                 </div>
               )}
@@ -463,101 +348,98 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               <button
                 type="submit"
                 disabled={uploading || (!evidencePhotoFile && !evidencePreview)}
-                className="btn-submit-green-pill"
+                className="checkout-proceed-btn font-heading btn-accept-checkout"
+                style={{ width: '100%', marginTop: '0.75rem', padding: '0.75rem', fontSize: '0.9rem' }}
               >
-                {uploading ? 'Enviando fotografía...' : '📤 Subir Foto de Donación para Validación Previa'}
+                {uploading ? 'Enviando...' : '📤 Subir Foto para Validación Previa'}
               </button>
             </form>
           )}
 
-          {/* FORMULARIO ENVÍO ENCOMIENDA */}
           {currentMethod === 'Envio' && (
-            <form onSubmit={handleSubmitLogistics} className="mt-1">
-              <div className="mb-1">
-                <label className="form-field-label">
-                  N° de Orden de Seguimiento o Voucher:
+            <form onSubmit={handleSubmitLogistics}>
+              <div className="mb-04">
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
+                  N° de Orden de Seguimiento / Voucher:
                 </label>
                 <input 
                   type="text" 
                   placeholder="Ej: CHI-998234812" 
                   value={trackingNumberInput}
                   onChange={(e) => setTrackingNumberInput(e.target.value)}
-                  className="input-white-field"
+                  className="offered-book-select"
                 />
               </div>
 
-              <div className="mb-1">
-                <label className="form-field-label">
-                  Adjuntar Captura del Comprobante / Voucher:
+              <div className="mb-04">
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
+                  Adjuntar Comprobante (Opcional):
                 </label>
                 <input 
                   type="file" 
                   accept="image/*" 
-                  onChange={handlePhotoChange} 
-                  className="file-input-white"
+                  onChange={handlePhotoChange}
+                  style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}
                 />
               </div>
 
               {evidencePreview && (
-                <div className="preview-box-center">
-                  <img src={evidencePreview} alt="Vista previa voucher" className="preview-img-voucher" />
+                <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+                  <img src={evidencePreview} alt="Voucher" style={{ maxHeight: '120px', borderRadius: '6px' }} />
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={uploading || (!trackingNumberInput && !evidencePhotoFile)}
-                className="btn-submit-green-pill"
+                className="checkout-proceed-btn font-heading btn-accept-checkout"
+                style={{ width: '100%', marginTop: '0.75rem', padding: '0.75rem', fontSize: '0.9rem' }}
               >
-                {uploading ? 'Registrando comprobante...' : '📦 Registrar Comprobante de Envío'}
+                {uploading ? 'Registrando...' : '📦 Registrar Comprobante de Envío'}
               </button>
             </form>
           )}
 
-          {/* TARJETA ENTREGA PRESENCIAL */}
           {currentMethod === 'Presencial' && (
-            <div 
-              className="presencial-address-card"
-            >
-              <div className="presencial-address-header">
-                <span>📍 Dirección Oficial de Entrega Presencial:</span>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: '700' }}>📍 Dirección de Entrega Presencial:</span>
                 <button
                   type="button"
                   onClick={copyAddressToClipboard}
-                  className={`btn-copy-address ${copiedAddress ? 'copied' : ''}`}
+                  style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--neon)', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
                 >
-                  {copiedAddress ? '✓ ¡Copiado!' : '📋 Copiar Dirección'}
+                  {copiedAddress ? '✓ ¡Copiado!' : '📋 Copiar'}
                 </button>
               </div>
-
-              <div className="presencial-address-text">
+              <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--neon)' }}>
                 Patronato 447, Recoleta, Santiago, Chile
               </div>
-              <p className="presencial-address-note">
-                Muestra este código de transacción <strong>#{transaction.id.substring(0, 8).toUpperCase()}</strong> al momento de entregar tu ejemplar.
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0.4rem 0 0 0' }}>
+                Presenta el código <strong>#{transaction.id.substring(0, 8).toUpperCase()}</strong> al entregar tu ejemplar.
               </p>
             </div>
           )}
 
           {uploadSuccessMsg && (
-            <div className="alert-upload-success">
+            <div className="warning-requirements-box" style={{ background: 'rgba(6, 214, 160, 0.1)', borderColor: '#06d6a0', color: '#06d6a0', marginTop: '0.75rem' }}>
               ✓ {uploadSuccessMsg}
             </div>
           )}
 
           {uploadError && (
-            <div className="alert-upload-error">
+            <div className="fee-error fee-error-msg" style={{ marginTop: '0.75rem' }}>
               ⚠️ {uploadError}
             </div>
           )}
         </div>
 
         {/* ACCIONES FINALES */}
-        <div className="final-actions-flex">
-          <button
-            type="button"
+        <div className="match-actions match-actions-col">
+          <button 
+            type="button" 
+            className="keep-swiping-btn btn-keep-discovering" 
             onClick={onClose}
-            className="btn-modal-close-final font-heading"
           >
             {isThankYouPage ? '✓ Entendido, ir a mis Intercambios' : 'Cerrar Detalle'}
           </button>

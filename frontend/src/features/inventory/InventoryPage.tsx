@@ -98,6 +98,19 @@ export const InventoryPage: React.FC = () => {
     }
   };
 
+  const handleDeleteLikedMatch = async (matchId: string) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este libro de tus intereses?')) return;
+    setFormError(null);
+    setFormSuccess(null);
+    try {
+      await apiClient.delete(`/transactions/my-matches/${matchId}`);
+      setLikedMatches((prev) => prev.filter((item) => item.id !== matchId));
+      setFormSuccess('El libro fue eliminado de tus intereses exitosamente.');
+    } catch (err: any) {
+      setFormError(err.message || 'No se pudo eliminar el libro de tus intereses.');
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -239,25 +252,35 @@ export const InventoryPage: React.FC = () => {
                         </span>
                         <span>•</span>
                         <span className="match-card-fee">
-                          Costo de intercambio: ${item.feeAmount.toLocaleString()} CLP
+                          Costo de intercambio: ${Math.round(item.feeAmount).toLocaleString('es-CL')} CLP
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    disabled={offeredBooks.length === 0}
-                    onClick={() => {
-                      if (offeredBooks.length === 0) return;
-                      setSelectedProposal(item);
-                      setMatchModalOpen(true);
-                    }}
-                    className={`match-card-proposal-btn ${offeredBooks.length === 0 ? 'disabled' : ''}`}
-                    title={offeredBooks.length === 0 ? 'Debes cargar al menos un libro en "Tengo para intercambiar" para ver propuestas' : 'Ver propuesta de intercambio'}
-                  >
-                    Ver propuesta
-                  </button>
+                  <div className="match-card-actions-row">
+                    <button
+                      type="button"
+                      disabled={offeredBooks.length === 0}
+                      onClick={() => {
+                        if (offeredBooks.length === 0) return;
+                        setSelectedProposal(item);
+                        setMatchModalOpen(true);
+                      }}
+                      className={`match-card-proposal-btn ${offeredBooks.length === 0 ? 'disabled' : ''}`}
+                      title={offeredBooks.length === 0 ? 'Debes cargar al menos un libro en "Tengo para intercambiar" para ver propuestas' : 'Ver propuesta de intercambio'}
+                    >
+                      Ver propuesta
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteLikedMatch(item.id)}
+                      className="match-card-delete-btn"
+                      title="Eliminar de me interesan"
+                    >
+                      <i className="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
                 </div>
               ))}
 
@@ -416,7 +439,7 @@ export const InventoryPage: React.FC = () => {
                         <span className="book-fallback-icon"><i className="fa-solid fa-book"></i></span>
                       )}
                       <span className={`condition-badge ${book.condition.toLowerCase()}`}>
-                        {book.condition}
+                        Estado libro: {book.condition}
                       </span>
                     </div>
                     <div className="book-card-info">

@@ -14,6 +14,7 @@ namespace Bookmachs.Refactored.Api.Services;
 public interface ITransactionService
 {
     Task<IEnumerable<MatchTransactionDto>> GetMyMatchesAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<bool> DeleteMatchAsync(Guid matchTransactionId, Guid userId, CancellationToken cancellationToken = default);
     Task<FeeEstimationDto> EstimateFeeAsync(Guid bookId, Guid requesterUserId, CancellationToken cancellationToken = default);
     Task<CheckoutResultDto> CheckoutCardAsync(Guid matchTransactionId, string cardToken, Guid requesterUserId, bool acceptCrossBorder, CancellationToken cancellationToken = default);
     Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, CancellationToken cancellationToken = default);
@@ -67,6 +68,28 @@ public class TransactionService : ITransactionService
             IsCrossBorder = t.IsCrossBorder,
             CreatedAt = t.CreatedAt
         }).ToList();
+    }
+
+    public async Task<bool> DeleteMatchAsync(Guid matchTransactionId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        var transaction = await _dbContext.MatchTransactions
+            .Include(t => t.Book)
+            .FirstOrDefaultAsync(t => t.Id == matchTransactionId && (t.RequesterUserId == userId || t.OwnerUserId == userId), cancellationToken);
+
+        if (transaction == null)
+        {
+            throw new KeyNotFoundException("La propuesta de match no fue encontrada.");
+        }
+
+        if (transaction.Book != null)
+        {
+            transaction.Book.IsAvailable = true;
+            _dbContext.Books.Update(transaction.Book);
+        }
+
+        _dbContext.MatchTransactions.Remove(transaction);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     public async Task<FeeEstimationDto> EstimateFeeAsync(Guid bookId, Guid requesterUserId, CancellationToken cancellationToken = default)

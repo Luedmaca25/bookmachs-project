@@ -289,16 +289,17 @@ public class BookService : IBookService
         var cacheKey = $"swipes_consumed_{user.Id}";
         int consumed = 0;
         var now = DateTime.UtcNow;
-        bool isNewDay = now.Date > user.LastSwipeResetDate.Date;
+        bool isNewMonth = (now.Year > user.LastSwipeResetDate.Year) || 
+                          (now.Year == user.LastSwipeResetDate.Year && now.Month > user.LastSwipeResetDate.Month);
 
-        if (isNewDay)
+        if (isNewMonth)
         {
             consumed = 0;
             user.DailySwipesConsumed = 0;
             user.LastSwipeResetDate = now;
             _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(1));
+            _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
         }
         else
         {
@@ -310,7 +311,7 @@ public class BookService : IBookService
             else
             {
                 consumed = user.DailySwipesConsumed;
-                _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(1));
+                _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
             }
         }
 
@@ -340,16 +341,17 @@ public class BookService : IBookService
         var cacheKey = $"swipes_consumed_{user.Id}";
         int consumed = 0;
         var now = DateTime.UtcNow;
-        bool isNewDay = now.Date > user.LastSwipeResetDate.Date;
+        bool isNewMonth = (now.Year > user.LastSwipeResetDate.Year) || 
+                          (now.Year == user.LastSwipeResetDate.Year && now.Month > user.LastSwipeResetDate.Month);
 
-        if (isNewDay)
+        if (isNewMonth)
         {
             consumed = 0;
             user.DailySwipesConsumed = 0;
             user.LastSwipeResetDate = now;
             _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(1));
+            _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
         }
         else
         {
@@ -361,7 +363,7 @@ public class BookService : IBookService
             else
             {
                 consumed = user.DailySwipesConsumed;
-                _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(1));
+                _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
             }
         }
 
@@ -372,8 +374,8 @@ public class BookService : IBookService
                 Success = false,
                 SwipesConsumed = consumed,
                 SwipeLimit = swipeLimit,
-                ErrorCode = "DailyLimitExceeded",
-                Message = $"Has alcanzado tu límite diario de {swipeLimit} swipes en la cuenta gratuita. Pásate a Premium para deslizar sin límites."
+                ErrorCode = "MonthlyLimitExceeded",
+                Message = $"Has alcanzado tu límite mensual de {swipeLimit} swipes en el plan gratuito (1° al último día del mes). Pásate a Premium para deslizar sin límites."
             };
         }
 
