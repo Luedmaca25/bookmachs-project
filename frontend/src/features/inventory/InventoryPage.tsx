@@ -235,7 +235,7 @@ export const InventoryPage: React.FC = () => {
                     }}
                     className="match-card-proposal-btn"
                   >
-                    Ver propuesta {'>'}
+                    Ver propuesta
                   </button>
                 </div>
               ))}
@@ -266,7 +266,7 @@ export const InventoryPage: React.FC = () => {
               className="add-book-trigger-btn font-heading"
               onClick={() => setShowAddForm(!showAddForm)}
             >
-              {showAddForm ? 'Cancelar' : '＋ Agregar un Libro'}
+              {showAddForm ? 'Regresar' : '＋ Agregar un Libro'}
             </button>
           </div>
 
