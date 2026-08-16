@@ -244,11 +244,14 @@ export const InventoryPage: React.FC = () => {
 
                   <button
                     type="button"
+                    disabled={offeredBooks.length === 0}
                     onClick={() => {
+                      if (offeredBooks.length === 0) return;
                       setSelectedProposal(item);
                       setMatchModalOpen(true);
                     }}
-                    className="match-card-proposal-btn"
+                    className={`match-card-proposal-btn ${offeredBooks.length === 0 ? 'disabled' : ''}`}
+                    title={offeredBooks.length === 0 ? 'Debes cargar al menos un libro en "Tengo para intercambiar" para ver propuestas' : 'Ver propuesta de intercambio'}
                   >
                     Ver propuesta
                   </button>
@@ -257,13 +260,16 @@ export const InventoryPage: React.FC = () => {
 
               <div className="matches-libreta-footer">
                 <button 
-                  className="add-book-trigger-btn font-heading" 
+                  className={`add-book-trigger-btn font-heading ${offeredBooks.length === 0 ? 'disabled' : ''}`}
+                  disabled={offeredBooks.length === 0}
                   onClick={() => {
+                    if (offeredBooks.length === 0) return;
                     if (likedMatches.length > 0) {
                       setSelectedProposal(likedMatches[0]);
                       setMatchModalOpen(true);
                     }
                   }}
+                  title={offeredBooks.length === 0 ? 'Debes cargar al menos un libro en "Tengo para intercambiar" para ver propuestas' : 'Ver propuestas de intercambio'}
                 >
                   ★ Ver propuestas de intercambio
                 </button>

@@ -2082,16 +2082,41 @@ p {
    ========================================================================== */
 .match-modal-card {
   position: relative;
-  top: 200px;
-  margin-bottom: 200px;
-  max-width: 520px !important;
-  padding: 3rem 2.5rem !important;
+  top: 0 !important;
+  margin: auto !important;
+  max-width: 580px !important;
+  padding: 2.5rem 2rem !important;
   text-align: center;
   align-items: center;
   border: 1px solid rgba(6, 214, 160, 0.3) !important;
-  /* Borde verde para indicar match exitoso */
   box-shadow: 0 16px 48px rgba(6, 214, 160, 0.15) !important;
   gap: 1.25rem !important;
+}
+
+.modal-close-btn-top {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  z-index: 10;
+  transition: all var(--transition-fast);
+}
+
+.modal-close-btn-top:hover {
+  background: rgba(239, 71, 111, 0.2);
+  color: #ef476f;
+  border-color: rgba(239, 71, 111, 0.4);
+  transform: scale(1.05);
 }
 
 .match-badge {
@@ -5233,7 +5258,7 @@ p {
   grid-template-columns: 1fr auto 1fr;
   gap: 1.5rem;
   align-items: center;
-  background: rgba(10, 10, 10, 0.7);
+  background: #f2f2f2;
   backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-card);
@@ -5351,7 +5376,6 @@ p {
   align-items: center;
   justify-content: center;
   font-size: 1.3rem;
-  box-shadow: 0 0 25px var(--neon-glow-strong);
   animation: pulseBridge 2.5s infinite ease-in-out;
 }
 
@@ -5359,12 +5383,12 @@ p {
 
   0%,
   100% {
-    box-shadow: 0 0 15px var(--neon-glow);
+    /* box-shadow: 0 0 15px var(--neon-glow); */
     transform: scale(1);
   }
 
   50% {
-    box-shadow: 0 0 35px var(--neon-glow-strong);
+    /* box-shadow: 0 0 35px var(--neon-glow-strong); */
     transform: scale(1.12);
   }
 }
@@ -6375,7 +6399,7 @@ p {
 
 .checkout-step-header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .checkout-step-title {
@@ -6693,6 +6717,19 @@ p {
   width: 100%;
 }
 
+.match-card-proposal-btn:disabled,
+.match-card-proposal-btn.disabled,
+.add-book-trigger-btn:disabled,
+.add-book-trigger-btn.disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+  box-shadow: none !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--border-color) !important;
+}
+
 /* Match Modals (MatchModal & MatchDetailModal) */
 .match-modal-card-custom {
   max-width: 680px;
@@ -6717,7 +6754,7 @@ p {
 
 .match-modal-title {
   font-size: 1.35rem;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0.2rem 0 0.4rem 0;
 }
 
@@ -6817,17 +6854,20 @@ p {
 }
 
 .fee-estimate-container {
+  width: 100%;
   background: rgba(255, 255, 255, 0.02);
   padding: 1rem 1.25rem;
   border-radius: 14px;
   border: 1px solid var(--border-color);
-  margin: 1rem 0;
+  margin: 0;
 }
 
 .fee-estimate-flex {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  gap: 16px;
 }
 
 .fee-estimate-label {
@@ -6888,7 +6928,7 @@ p {
 
 .btn-accept-checkout {
   background: var(--neon);
-  color: #000000;
+  color: #fff;
   font-weight: 800;
   padding: 0.95rem;
   font-size: 1rem;
@@ -6900,7 +6940,7 @@ p {
 
 .btn-load-book-checkout {
   background: #ffb703;
-  color: #000000;
+  color: #fff;
   font-weight: 800;
   padding: 0.95rem;
   font-size: 0.95rem;
@@ -7415,6 +7455,42 @@ p {
 
   .swap-bridge-node {
     margin: -0.2rem 0;
+  }
+
+  .duet-swap-deck {
+    background: none;
+  }
+
+  /* Rediseño responsivo para Duet Swap Deck en Modal de Propuesta */
+  .duet-swap-deck-modal {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+    padding: 1rem 0.75rem !important;
+    margin: 0.75rem 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: visible;
+  }
+
+  .duet-swap-deck-modal .swap-book-card {
+    padding: 0.85rem 0.75rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .duet-swap-deck-modal .swap-bridge-center {
+    margin: 0.1rem 0 !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+  }
+
+  .match-modal-card-custom {
+    max-width: 95vw !important;
+    width: 95vw !important;
+    padding: 1.5rem 1rem !important;
+    box-sizing: border-box !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
   }
 
   .metrics-dashboard-grid {

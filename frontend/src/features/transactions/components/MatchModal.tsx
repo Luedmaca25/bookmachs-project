@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { apiClient } from '../../../lib/apiClient';
 
 interface BookItem {
@@ -58,6 +59,22 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   const [myBooks, setMyBooks] = useState<MyOfferedBook[]>([]);
   const [selectedOfferedBookId, setSelectedOfferedBookId] = useState<string>('');
 
+  // Bloquear scroll de html y body mientras el modal de propuesta esté abierto
+  useEffect(() => {
+    if (isOpen) {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -101,9 +118,19 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   const currentOfferedBook = myBooks.find((b) => b.id === selectedOfferedBookId) || myBooks[0];
   const userHasBooks = hasOfferedBooks && myBooks.length > 0;
 
-  return (
+  return createPortal(
     <div className="modal-overlay">
       <div className="modal-card match-modal-card match-modal-card-custom">
+        {/* Botón de Cierre Superior */}
+        <button 
+          type="button" 
+          className="modal-close-btn-top" 
+          onClick={onClose}
+          aria-label="Cerrar modal"
+        >
+          <i className="fa-solid fa-xmark"></i>
+        </button>
+
         {/* Insignia de Encabezado Neón */}
         <div className="checkout-step-header">
           <div className="neon-badge-pill">
@@ -151,7 +178,6 @@ export const MatchModal: React.FC<MatchModalProps> = ({
             <div className="swap-pulse-badge swap-pulse-badge-md">
               <i className="fa-solid fa-arrows-rotate"></i>
             </div>
-            <span className="swap-match-ratio swap-match-ratio-xs">IA Validado</span>
           </div>
 
           {/* Libro Entregado */}
@@ -240,11 +266,6 @@ export const MatchModal: React.FC<MatchModalProps> = ({
               </div>
             </div>
           )}
-
-          <div className="business-rule-note">
-            <i className="fa-solid fa-circle-info icon-neon"></i>
-            <span><strong>Regla de negocio:</strong> Los libros nunca se compran con dinero. Das a cambio un libro de tu libreta.</span>
-          </div>
         </div>
 
         {/* Acciones Principales */}
@@ -276,6 +297,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
