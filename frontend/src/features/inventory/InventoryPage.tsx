@@ -53,6 +53,21 @@ export const InventoryPage: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
+  // Estado de expansión de descripción para los libros de la libreta
+  const [expandedBookIds, setExpandedBookIds] = useState<Set<string>>(new Set());
+
+  const toggleExpandBook = (bookId: string) => {
+    setExpandedBookIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(bookId)) {
+        next.delete(bookId);
+      } else {
+        next.add(bookId);
+      }
+      return next;
+    });
+  };
+
   useEffect(() => {
     fetchLikedMatches();
     fetchOfferedBooks();
@@ -365,28 +380,43 @@ export const InventoryPage: React.FC = () => {
             </div>
           ) : (
             <div className="inventory-grid">
-              {offeredBooks.map((book) => (
-                <div key={book.id} className="inventory-card">
-                  <div className="inventory-card-cover">
-                    {book.imageUrl ? (
-                      <div className="book-3d-wrapper">
-                        <div className="book-spine"></div>
-                        <img src={book.imageUrl} alt={book.title} className="inventory-card-img" />
-                      </div>
-                    ) : (
-                      <div className="no-cover-placeholder"><i className="fa-solid fa-book"></i></div>
-                    )}
-                    <span className={`condition-badge ${book.condition.toLowerCase()}`}>
-                      {book.condition}
-                    </span>
+              {offeredBooks.map((book) => {
+                const isExpanded = expandedBookIds.has(book.id);
+                return (
+                  <div key={book.id} className="book-swipe-card libreta-swipe-card">
+                    <div className="book-card-image-placeholder">
+                      {book.imageUrl ? (
+                        <img src={book.imageUrl} alt={book.title} className="swipe-card-img" />
+                      ) : (
+                        <span className="book-fallback-icon"><i className="fa-solid fa-book"></i></span>
+                      )}
+                      <span className={`condition-badge ${book.condition.toLowerCase()}`}>
+                        {book.condition}
+                      </span>
+                    </div>
+                    <div className="book-card-info">
+                      <h3>{book.title}</h3>
+                      <span className="book-author">{book.author}</span>
+                      <p className={`book-desc ${isExpanded ? 'expanded' : ''}`}>
+                        {book.description}
+                      </p>
+                      {book.description && book.description.length > 80 && (
+                        <button
+                          type="button"
+                          className="see-more-btn"
+                          onClick={() => toggleExpandBook(book.id)}
+                        >
+                          {isExpanded ? (
+                            <>Ver menos <i className="fa-solid fa-chevron-up"></i></>
+                          ) : (
+                            <>Ver más <i className="fa-solid fa-chevron-down"></i></>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="inventory-card-body">
-                    <h3>{book.title}</h3>
-                    <span className="author-label">{book.author}</span>
-                    <p className="desc-label">{book.description}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
