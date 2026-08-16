@@ -1058,14 +1058,24 @@ p {
   display: flex;
   justify-content: center;
   width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 #google-btn-container {
   min-height: 40px;
-  width: 100%;
+  width: 100% !important;
   max-width: 380px;
   display: flex;
   justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#google-btn-container > div,
+#google-btn-container iframe {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* ==========================================================================
@@ -1332,7 +1342,7 @@ p {
 
 .add-book-trigger-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(182, 255, 0, 0.5);
+  /* box-shadow: 0 6px 20px rgba(182, 255, 0, 0.5); */
 }
 
 .inventory-toast {
@@ -5738,7 +5748,7 @@ p {
   justify-content: center;
   gap: 0.5rem;
   background: var(--neon);
-  color: #000;
+  color: #fff;
   padding: 0.9rem;
   border-radius: 50px;
   font-weight: 800;

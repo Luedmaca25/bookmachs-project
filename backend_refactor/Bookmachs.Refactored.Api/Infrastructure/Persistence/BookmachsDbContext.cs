@@ -44,6 +44,7 @@ public class BookmachsDbContext : DbContext
             entity.Property(b => b.Title).IsRequired().HasMaxLength(200);
             entity.Property(b => b.Author).IsRequired().HasMaxLength(100);
             entity.Property(b => b.Condition).IsRequired().HasMaxLength(20);
+            entity.Property(b => b.Category).HasMaxLength(100);
             entity.Property(b => b.BaseValue).HasPrecision(18, 2);
 
             // Relación del libro con su propietario original

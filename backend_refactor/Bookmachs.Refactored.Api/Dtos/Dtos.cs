@@ -43,6 +43,7 @@ public class BookDto
     public string Author { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Condition { get; set; } = string.Empty;
+    public string? Category { get; set; }
     public string? ImageUrl { get; set; }
     public decimal BaseValue { get; set; }
     public bool IsInternalStock { get; set; }

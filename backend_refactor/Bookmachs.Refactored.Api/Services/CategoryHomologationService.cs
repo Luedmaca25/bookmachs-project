@@ -27,6 +27,7 @@ public interface ICategoryHomologationService
     IEnumerable<MasterPreferenceTagDto> GetPreferenceTagDtos();
     List<RawCategoryItem> GetMappedItemsForConcepts(IEnumerable<string> concepts);
     bool MatchesConcept(string conceptName, int? categoryId, int? subcategoryId);
+    string? GetConceptNameForProduct(int? categoryId, int? subcategoryId);
 }
 
 public class CategoryHomologationService : ICategoryHomologationService
@@ -231,5 +232,33 @@ public class CategoryHomologationService : ICategoryHomologationService
         }
 
         return false;
+    }
+
+    public string? GetConceptNameForProduct(int? categoryId, int? subcategoryId)
+    {
+        if (!categoryId.HasValue) return null;
+
+        // 1. Coincidencia exacta con SubcategoryId
+        if (subcategoryId.HasValue)
+        {
+            var matchWithSubcategory = Concepts.FirstOrDefault(c =>
+                c.MappedItems.Any(i => i.CategoryId == categoryId.Value && i.SubcategoryId == subcategoryId.Value)
+            );
+            if (matchWithSubcategory != null)
+            {
+                return matchWithSubcategory.ConceptName;
+            }
+        }
+
+        // 2. Coincidencia por solo CategoryId
+        var matchWithCategoryOnly = Concepts.FirstOrDefault(c =>
+            c.MappedItems.Any(i => i.CategoryId == categoryId.Value && i.SubcategoryId == null)
+        );
+        if (matchWithCategoryOnly != null)
+        {
+            return matchWithCategoryOnly.ConceptName;
+        }
+
+        return null;
     }
 }

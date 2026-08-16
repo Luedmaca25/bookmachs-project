@@ -16,7 +16,7 @@ public interface IBookService
 {
     Task<BookDto> GetGuestRandomAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetMyInventoryAsync(Guid userId, CancellationToken cancellationToken = default);
-    Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, decimal baseValue, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, string? category, decimal baseValue, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetRecommendationsAsync(Guid userId, int limit, CancellationToken cancellationToken = default);
     Task<SwipeStatusDto> GetSwipeStatusAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<SwipeResultDto> SwipeBookAsync(Guid bookId, Guid userId, string action, CancellationToken cancellationToken = default);
@@ -50,8 +50,10 @@ public class BookService : IBookService
     public async Task<BookDto> GetGuestRandomAsync(CancellationToken cancellationToken = default)
     {
         var productList = await _ecolecturaDbContext.Productos
+            .AsNoTracking()
+            .Where(p => p.Activo && p.Stock > 0)
             .Include(p => p.Imagenes)
-            .Where(p => p.IdProducto == "00017ddc-ce2c-43b4-af74-736dcc7c9b43")
+            .Take(50)
             .ToListAsync(cancellationToken);
 
         if (!productList.Any())
@@ -86,7 +88,7 @@ public class BookService : IBookService
         return books.Select(MapToBookDto);
     }
 
-    public async Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, decimal baseValue, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
+    public async Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, string? category, decimal baseValue, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(author))
         {
@@ -106,6 +108,7 @@ public class BookService : IBookService
             Author = author,
             Description = description,
             Condition = condition,
+            Category = category,
             ImageUrl = imageUrl,
             BaseValue = baseValue,
             IsInternalStock = false,
@@ -652,6 +655,7 @@ public class BookService : IBookService
             Author = b.Author,
             Description = b.Description,
             Condition = b.Condition,
+            Category = b.Category,
             ImageUrl = FormatImageUrl(b.ImageUrl),
             BaseValue = b.BaseValue,
             IsInternalStock = b.IsInternalStock,
@@ -666,6 +670,20 @@ public class BookService : IBookService
         var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == bookId, cancellationToken);
         if (book != null)
         {
+            if (string.IsNullOrEmpty(book.Category))
+            {
+                var productEco = await _ecolecturaDbContext.Productos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.IdProducto == bookId.ToString(), cancellationToken);
+                if (productEco != null)
+                {
+                    book.Category = _homologationService.GetConceptNameForProduct(
+                        productEco.IdCategoriaProducto,
+                        productEco.IdSubcategoria
+                    );
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                }
+            }
             return book;
         }
 
@@ -683,6 +701,11 @@ public class BookService : IBookService
                               ?? product.Imagenes.FirstOrDefault()?.RutaImagen;
         string? imageUrl = FormatImageUrl(rawImageUrl);
 
+        string? categoryName = _homologationService.GetConceptNameForProduct(
+            product.IdCategoriaProducto,
+            product.IdSubcategoria
+        );
+
         // Crear registro en la base de datos local
         book = new Book
         {
@@ -691,6 +714,7 @@ public class BookService : IBookService
             Author = product.Autor ?? "Desconocido",
             Description = product.Resena,
             Condition = "Bueno", // Por defecto para inventario de Ecolectura
+            Category = categoryName,
             ImageUrl = imageUrl,
             BaseValue = product.Precio ?? 0.00m,
             IsInternalStock = true,
@@ -704,12 +728,17 @@ public class BookService : IBookService
         return book;
     }
 
-    private static BookDto MapEcolecturaProductToBookDto(EcolecturaProducto product)
+    private BookDto MapEcolecturaProductToBookDto(EcolecturaProducto product)
     {
         Guid bookId = Guid.TryParse(product.IdProducto, out var parsedGuid) ? parsedGuid : Guid.Empty;
         string? rawImageUrl = product.Imagenes.FirstOrDefault(i => i.Principal)?.RutaImagen
                               ?? product.Imagenes.FirstOrDefault()?.RutaImagen;
         string? imageUrl = FormatImageUrl(rawImageUrl);
+
+        string? categoryName = _homologationService.GetConceptNameForProduct(
+            product.IdCategoriaProducto,
+            product.IdSubcategoria
+        );
 
         return new BookDto
         {
@@ -717,7 +746,8 @@ public class BookService : IBookService
             Title = product.NombreLibro,
             Author = product.Autor ?? "Desconocido",
             Description = product.Resena,
-            Condition = "Bueno", // Por defecto
+            Condition = "Bueno",
+            Category = categoryName,
             ImageUrl = imageUrl,
             BaseValue = product.Precio ?? 0.00m,
             IsInternalStock = true,

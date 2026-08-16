@@ -175,7 +175,14 @@ using (var scope = app.Services.CreateScope())
 {
     // Aplicar migraciones pendientes automáticamente al iniciar la app
     var dbContext = scope.ServiceProvider.GetRequiredService<BookmachsDbContext>();
-    dbContext.Database.Migrate();
+    try
+    {
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DbContext] Nota de migración al iniciar: {ex.Message}");
+    }
 
     var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
     recurringJobManager.AddOrUpdate<Bookmachs.Refactored.Api.Jobs.CleanupBooksJob>(

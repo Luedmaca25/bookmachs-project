@@ -145,7 +145,10 @@ export const MainLayout: React.FC = () => {
                     Mi perfil
                   </Link>
                   <button 
-                    onClick={logout} 
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }} 
                     className="offcanvas-logout-btn"
                   >
                     <i className="fa-solid fa-right-from-bracket"></i> Cerrar Sesión

@@ -9,6 +9,7 @@ public class Book
     public string Author { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Condition { get; set; } = "Good"; // New, LikeNew, Good, Fair, Poor
+    public string? Category { get; set; }
     public string? ImageUrl { get; set; }
     
     // Valor estimado para calcular el 30% del Fee de intercambio

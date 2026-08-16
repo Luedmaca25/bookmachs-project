@@ -47,6 +47,7 @@ export const InventoryPage: React.FC = () => {
   const [author, setAuthor] = useState('');
   const [description, setDescription] = useState('');
   const [condition, setCondition] = useState('Excelente');
+  const [category, setCategory] = useState('Arte, Cultura y Estilo de Vida');
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -79,7 +80,7 @@ export const InventoryPage: React.FC = () => {
       const data = await apiClient.get<MatchTransaction[]>('/transactions/my-matches');
       setLikedMatches(data);
     } catch (err) {
-      console.error('Error al cargar libros de interés:', err);
+      console.error('Error al cargar matches para la libreta:', err);
     } finally {
       setLoadingMatches(false);
     }
@@ -88,10 +89,10 @@ export const InventoryPage: React.FC = () => {
   const fetchOfferedBooks = async () => {
     setLoadingOffered(true);
     try {
-      const response = await apiClient.get<MyBookItem[]>('/books/my-inventory');
-      setOfferedBooks(response);
+      const inventory = await apiClient.get<MyBookItem[]>('/books/my-inventory');
+      setOfferedBooks(inventory);
     } catch (err) {
-      console.error('Error al cargar libros para ofrecer:', err);
+      console.error('Error al cargar inventario para la libreta:', err);
     } finally {
       setLoadingOffered(false);
     }
@@ -121,6 +122,7 @@ export const InventoryPage: React.FC = () => {
       formData.append('author', author.trim());
       formData.append('description', description.trim());
       formData.append('condition', condition);
+      formData.append('category', category);
       formData.append('coverImage', coverImage);
 
       await apiClient.post<MyBookItem>('/books/upload', formData);
@@ -130,6 +132,7 @@ export const InventoryPage: React.FC = () => {
       setAuthor('');
       setDescription('');
       setCondition('Excelente');
+      setCategory('Arte, Cultura y Estilo de Vida');
       setCoverImage(null);
       setImagePreview(null);
       setShowAddForm(false);
@@ -330,6 +333,22 @@ export const InventoryPage: React.FC = () => {
                         <option value="Bueno">Bueno (Leído, buen estado general)</option>
                         <option value="Aceptable">Aceptable (Con señales de uso)</option>
                         <option value="Desgastado">Desgastado (Portadas o bordes gastados)</option>
+                      </select>
+                    </div>
+
+                    <div className="inventory-field">
+                      <label>Categoría del Libro</label>
+                      <select value={category} onChange={(e) => setCategory(e.target.value)} required>
+                        <option value="Arte, Cultura y Estilo de Vida">Arte, Cultura y Estilo de Vida</option>
+                        <option value="Ciencia, Tecnología y Medicina">Ciencia, Tecnología y Medicina</option>
+                        <option value="Desarrollo Personal y Bienestar">Desarrollo Personal y Bienestar</option>
+                        <option value="Educación, Aprendizaje y Consulta">Educación, Aprendizaje y Consulta</option>
+                        <option value="Ficción, Novelas y Relatos">Ficción, Novelas y Relatos</option>
+                        <option value="Historia, Humanidades y Sociedad">Historia, Humanidades y Sociedad</option>
+                        <option value="Idiomas, Colecciones y Packs">Idiomas, Colecciones y Packs</option>
+                        <option value="Infantil, Juvenil y Cómics">Infantil, Juvenil y Cómics</option>
+                        <option value="Negocios, Economía y Derecho">Negocios, Economía y Derecho</option>
+                        <option value="Oportunidades y Novedades">Oportunidades y Novedades</option>
                       </select>
                     </div>
                   </div>

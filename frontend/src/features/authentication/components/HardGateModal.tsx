@@ -59,9 +59,11 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
 
         const btnContainer = document.getElementById('google-btn-container');
         if (btnContainer) {
+          const containerWidth = btnContainer.parentElement?.clientWidth || btnContainer.clientWidth || 320;
+          const targetWidth = Math.min(Math.max(containerWidth, 240), 380).toString();
           gWindow.google.accounts.id.renderButton(
             btnContainer,
-            { theme: 'outline', size: 'large', type: 'standard', text: 'continue_with', width: '380' }
+            { theme: 'outline', size: 'large', type: 'standard', text: 'continue_with', width: targetWidth }
           );
         }
       }

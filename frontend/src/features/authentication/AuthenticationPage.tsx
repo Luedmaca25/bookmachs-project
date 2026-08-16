@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { apiClient } from '../../lib/apiClient';
 
 export const AuthenticationPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user, isAuthenticated, login: loginAction, logout } = useAuthStore();
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +41,15 @@ export const AuthenticationPage: React.FC = () => {
     logout();
   };
 
+  // Redirigir a la pantalla principal (Swipe) si el usuario ya completó el perfil y preferencias
+  const checkAndRedirect = (profileData: any) => {
+    const hasProfileDetails = profileData?.pais && profileData?.documentoIdentidad;
+    const hasPreferences = profileData?.preferences && profileData.preferences.length > 0;
+    if (hasProfileDetails && hasPreferences) {
+      navigate('/');
+    }
+  };
+
   // Determine if onboarding is required
   const needsOnboarding = isAuthenticated && (
     !user?.pais || 
@@ -51,6 +61,7 @@ export const AuthenticationPage: React.FC = () => {
 
   const handleOnboardingComplete = () => {
     setOnboardingCompleted(true);
+    navigate('/');
   };
 
   // Google SSO Initialization
@@ -82,6 +93,7 @@ export const AuthenticationPage: React.FC = () => {
               });
               loginAction(profile, apiResponse.token);
               resetFormFields();
+              checkAndRedirect(profile);
             } catch (err: unknown) {
               if (err instanceof Error) {
                 setError(err.message || 'Error al iniciar sesión con Google.');
@@ -96,9 +108,11 @@ export const AuthenticationPage: React.FC = () => {
 
         const btnContainer = document.getElementById('google-btn-container');
         if (btnContainer) {
+          const containerWidth = btnContainer.parentElement?.clientWidth || btnContainer.clientWidth || 320;
+          const targetWidth = Math.min(Math.max(containerWidth, 240), 380).toString();
           gWindow.google.accounts.id.renderButton(
             btnContainer,
-            { theme: 'outline', size: 'large', type: 'standard', text: 'continue_with', width: '380' }
+            { theme: 'outline', size: 'large', type: 'standard', text: 'continue_with', width: targetWidth }
           );
         }
       }
@@ -170,6 +184,7 @@ export const AuthenticationPage: React.FC = () => {
         });
         loginAction(profile, response.token);
         resetFormFields();
+        checkAndRedirect(profile);
       } else {
         const response = await apiClient.post<{ 
           id: string; 
@@ -193,6 +208,7 @@ export const AuthenticationPage: React.FC = () => {
         });
         loginAction(profile, response.token);
         resetFormFields();
+        checkAndRedirect(profile);
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -233,6 +249,7 @@ export const AuthenticationPage: React.FC = () => {
         loginAction(updatedProfile, token);
       }
       setPrefSuccess(true);
+      navigate('/');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setPrefError(err.message || 'Error al guardar tus gustos de lectura.');
