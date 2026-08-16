@@ -53,12 +53,18 @@ export const SwipePage: React.FC = () => {
   const books = queryBooks || [];
   const error = queryError ? 'Ocurrió un error al cargar las recomendaciones de libros.' : null;
   const [currentBookIndex, setCurrentBookIndex] = useState(0);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-  // Reiniciar el índice de libro actual cuando cambia la lista de libros cargados
+  // Reiniciar el índice de libro actual y expansión de descripción cuando cambia la lista o el libro
   useEffect(() => {
     setCurrentBookIndex(0);
+    setIsDescriptionExpanded(false);
     setLimitReached(false);
   }, [queryBooks]);
+
+  useEffect(() => {
+    setIsDescriptionExpanded(false);
+  }, [currentBookIndex]);
 
   // Estados de animación y arrastre (Drag / Slide Gesture)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -418,7 +424,27 @@ export const SwipePage: React.FC = () => {
             <div className="book-card-info">
               <h3>{currentBook?.title || 'Descubre Libros'}</h3>
               <span className="book-author">{currentBook?.author || 'Bookmachs'}</span>
-              <p className="book-desc">{currentBook?.description || 'Encuentra tu próximo match.'}</p>
+              <p className={`book-desc ${isDescriptionExpanded ? 'expanded' : ''}`}>
+                {currentBook?.description || 'Encuentra tu próximo match.'}
+              </p>
+              {currentBook?.description && currentBook.description.length > 80 && (
+                <button
+                  type="button"
+                  className="see-more-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDescriptionExpanded(!isDescriptionExpanded);
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                >
+                  {isDescriptionExpanded ? (
+                    <>Ver menos <i className="fa-solid fa-chevron-up"></i></>
+                  ) : (
+                    <>Ver más <i className="fa-solid fa-chevron-down"></i></>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 

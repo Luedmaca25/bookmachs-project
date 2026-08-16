@@ -741,6 +741,38 @@ p {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.book-desc.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.see-more-btn {
+  margin: 0 auto;
+  background: transparent;
+  border: none;
+  color: var(--neon);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  margin-top: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  align-self: flex-start;
+}
+
+.see-more-btn:hover {
+  color: var(--accent-secondary);
 }
 
 .swipe-controls {
