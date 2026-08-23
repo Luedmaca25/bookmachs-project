@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
 import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
-import { UpsellModal } from './components/UpsellModal';
 import { MatchModal } from '../transactions/components/MatchModal';
 import { apiClient } from '../../lib/apiClient';
 
@@ -94,7 +93,6 @@ export const SwipePage: React.FC = () => {
           setSwipeLimit(data.swipeLimit);
           if (data.limitReached || data.swipesConsumed >= data.swipeLimit) {
             setLimitReached(true);
-            setLimitValue(data.swipeLimit);
           }
         }
       } catch (err) {
@@ -107,7 +105,6 @@ export const SwipePage: React.FC = () => {
             setSwipeLimit(user.dailySwipeLimit);
             if (user.dailySwipesConsumed !== undefined && user.dailySwipesConsumed >= user.dailySwipeLimit) {
               setLimitReached(true);
-              setLimitValue(user.dailySwipeLimit);
             }
           }
         }
@@ -131,8 +128,6 @@ export const SwipePage: React.FC = () => {
 
   // Control de límites diarios (Fase 6)
   const [limitReached, setLimitReached] = useState(false);
-  const [limitValue, setLimitValue] = useState(100);
-  const [upsellOpen, setUpsellOpen] = useState(false);
 
   // Control de Match (Fase 7)
   const [matchOpen, setMatchOpen] = useState(false);
@@ -294,18 +289,7 @@ export const SwipePage: React.FC = () => {
       
       if (isLimitError) {
         setLimitReached(true);
-        setUpsellOpen(true);
-        
-        let limit = user?.isPremium ? 1000 : 100;
-        try {
-          const parsed = JSON.parse(err.message);
-          if (parsed && typeof parsed.swipeLimit === 'number') {
-            limit = parsed.swipeLimit;
-          }
-        } catch (e) {
-          // No es un JSON válido o no tiene swipeLimit, usamos fallback
-        }
-        setLimitValue(limit);
+        navigate('/planes');
       } else {
         console.error('Error al registrar swipe:', err);
       }
@@ -484,19 +468,13 @@ export const SwipePage: React.FC = () => {
               <span className="lock-icon"><i className="fa-solid fa-lock"></i></span>
               <h3>Límite mensual alcanzado</h3>
               <p>Has consumido tu cuota mensual de swipes en el plan gratuito (1° al último día del mes). Tu saldo se renovará el 1° del próximo mes o pásate a Premium hoy mismo.</p>
-              <button className="upsell-trigger-btn font-heading" onClick={() => setUpsellOpen(true)}>
+              <button className="upsell-trigger-btn font-heading" onClick={() => navigate('/planes')}>
                 Ver Planes Premium <i className="fa-solid fa-bolt"></i>
               </button>
             </div>
           )}
         </div>
       )}
-
-      <UpsellModal
-        isOpen={upsellOpen}
-        onClose={() => setUpsellOpen(false)}
-        limitValue={limitValue}
-      />
 
       <MatchModal
         isOpen={matchOpen}

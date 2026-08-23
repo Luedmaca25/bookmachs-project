@@ -9,6 +9,8 @@ public class AuthResponseDto
     public string Name { get; set; } = string.Empty;
     public string DocumentoIdentidad { get; set; } = string.Empty;
     public string Pais { get; set; } = string.Empty;
+    public string Telefono { get; set; } = string.Empty;
+    public string? ProfileImageUrl { get; set; }
     public string Role { get; set; } = string.Empty;
     public bool IsPremium { get; set; }
     public string Token { get; set; } = string.Empty;
@@ -21,6 +23,8 @@ public class UserProfileDto
     public string Name { get; set; } = string.Empty;
     public string DocumentoIdentidad { get; set; } = string.Empty;
     public string Pais { get; set; } = string.Empty;
+    public string Telefono { get; set; } = string.Empty;
+    public string? ProfileImageUrl { get; set; }
     public bool IsPremium { get; set; }
     public string SubscriptionPlan { get; set; } = "Free";
     public string Role { get; set; } = "User";

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
+import { getFileUrl } from '../../lib/formatters';
 
 interface UserImpactMetrics {
   userBooksExchanged: number;
@@ -389,11 +390,15 @@ export const SocialPage: React.FC = () => {
       {user && (
         <div className="profile-header-card">
           <div className="profile-avatar-wrapper">
-            <div className="profile-avatar-gradient">
-              <span className="avatar-initials">
-                {user.name ? user.name.substring(0, 2).toUpperCase() : 'US'}
-              </span>
-            </div>
+            {user.profileImageUrl ? (
+              <img src={getFileUrl(user.profileImageUrl)} alt={user.name} className="profile-avatar-img" />
+            ) : (
+              <div className="profile-avatar-gradient">
+                <span className="avatar-initials">
+                  {user.name ? user.name.substring(0, 2).toUpperCase() : 'US'}
+                </span>
+              </div>
+            )}
           </div>
           <div className="profile-details-wrapper">
             <div className="profile-name-row">

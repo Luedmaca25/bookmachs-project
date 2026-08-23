@@ -6,6 +6,8 @@ interface User {
   name: string;
   documentoIdentidad: string;
   pais: string;
+  telefono?: string;
+  profileImageUrl?: string;
   role: string;
   isPremium: boolean;
   subscriptionPlan?: string;

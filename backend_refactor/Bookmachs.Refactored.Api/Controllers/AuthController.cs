@@ -8,6 +8,8 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Bookmachs.Refactored.Api.Infrastructure.Services;
+
 namespace Bookmachs.Refactored.Api.Controllers;
 
 [ApiController]
@@ -15,10 +17,12 @@ namespace Bookmachs.Refactored.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IFileStorageService _fileStorageService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IFileStorageService fileStorageService)
     {
         _authService = authService;
+        _fileStorageService = fileStorageService;
     }
 
     [HttpPost("register")]
@@ -45,7 +49,8 @@ public class AuthController : ControllerBase
                 request.Password, 
                 request.Name, 
                 request.DocumentoIdentidad, 
-                request.Pais);
+                request.Pais,
+                request.Telefono ?? string.Empty);
             return Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -138,7 +143,7 @@ public class AuthController : ControllerBase
 
         try
         {
-            var result = await _authService.UpdateProfileAsync(userId, request.DocumentoIdentidad, request.Pais);
+            var result = await _authService.UpdateProfileAsync(userId, request.DocumentoIdentidad, request.Pais, request.Telefono ?? string.Empty);
             return Ok(result);
         }
         catch (KeyNotFoundException ex)
@@ -175,6 +180,70 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [Authorize]
+    [HttpPost("avatar")]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<AuthResponseDto>> UpdateAvatar([FromForm] AvatarUploadRequest request)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        string finalUrl = string.Empty;
+
+        if (request != null && request.File != null && request.File.Length > 0)
+        {
+            using (var stream = request.File.OpenReadStream())
+            {
+                finalUrl = await _fileStorageService.SaveSecureUserAvatarAsync(userId, stream, request.File.FileName);
+            }
+        }
+        else if (request != null && !string.IsNullOrWhiteSpace(request.ProfileImageUrl))
+        {
+            finalUrl = request.ProfileImageUrl;
+        }
+        else
+        {
+            return BadRequest("Debes proporcionar un archivo de imagen o una URL de avatar válida.");
+        }
+
+        try
+        {
+            var result = await _authService.UpdateAvatarAsync(userId, finalUrl);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("avatar/{userId}")]
+    public IActionResult GetUserAvatar(Guid userId)
+    {
+        var filePath = _fileStorageService.GetSecureUserAvatarPath(userId);
+        if (string.IsNullOrEmpty(filePath) || !System.IO.File.Exists(filePath))
+        {
+            return NotFound(new { message = "Avatar no encontrado." });
+        }
+
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        var contentType = ext switch
+        {
+            ".png" => "image/png",
+            ".jpg" => "image/jpeg",
+            ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
+            _ => "application/octet-stream"
+        };
+
+        return PhysicalFile(filePath, contentType);
+    }
 }
 
 public class RegisterRequest
@@ -184,6 +253,7 @@ public class RegisterRequest
     public string Name { get; set; } = string.Empty;
     public string DocumentoIdentidad { get; set; } = string.Empty;
     public string Pais { get; set; } = string.Empty;
+    public string Telefono { get; set; } = string.Empty;
 }
 
 public class LoginRequest
@@ -201,4 +271,11 @@ public class UpdateProfileRequest
 {
     public string DocumentoIdentidad { get; set; } = string.Empty;
     public string Pais { get; set; } = string.Empty;
+    public string Telefono { get; set; } = string.Empty;
+}
+
+public class AvatarUploadRequest
+{
+    public Microsoft.AspNetCore.Http.IFormFile? File { get; set; }
+    public string? ProfileImageUrl { get; set; }
 }

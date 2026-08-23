@@ -12,6 +12,8 @@ public class User
     // Documento de identidad dinámico adaptable por país (ej. RUT en Chile, DNI en Argentina, etc.)
     public string DocumentoIdentidad { get; set; } = string.Empty;
     public string Pais { get; set; } = string.Empty;
+    public string Telefono { get; set; } = string.Empty;
+    public string? ProfileImageUrl { get; set; }
     
     // Control de cuota diaria de swipes
     public int DailySwipesConsumed { get; set; } = 0;

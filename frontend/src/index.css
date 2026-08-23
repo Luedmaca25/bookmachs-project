@@ -154,6 +154,7 @@ body {
   position: relative;
   padding: 0.5rem 0;
   transition: color var(--transition-fast);
+  text-decoration: none;
 }
 
 .nav-link:hover {
@@ -1551,7 +1552,7 @@ p {
 
 .inventory-empty-state {
   text-align: center;
-  padding: 5rem 2rem;
+  padding: 2rem;
   background: var(--gradient-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -2026,7 +2027,7 @@ p {
   font-size: 1.75rem;
   font-weight: 800;
   color: #fff;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   display: flex;
   align-items: baseline;
   gap: 0.25rem;
@@ -3232,7 +3233,7 @@ p {
 }
 
 .plan-card-header {
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 
 .plan-card-header h3 {
@@ -3269,7 +3270,8 @@ p {
   background: rgba(255, 255, 255, 0.02);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+  width: 100%;
 }
 
 .limit-item {
@@ -5879,6 +5881,7 @@ p {
   font-weight: 800;
   font-size: 0.95rem;
   text-align: center;
+  text-decoration: none;
 }
 
 
@@ -6004,6 +6007,7 @@ p {
   color: var(--text-secondary);
   font-size: 0.9rem;
   margin: 0 auto;
+  text-align: center;
 }
 
 .profile-grid {
@@ -7587,6 +7591,58 @@ p {
   margin: 0;
 }
 
+/* Avatar Image & Custom Upload Styles */
+.profile-avatar-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 15px rgba(27, 154, 170, 0.4);
+  border: 3px solid #00ff88;
+}
+
+.profile-avatar-edit-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.avatar-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #1b9aaa 0%, #06d6a0 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.88rem;
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.avatar-upload-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.avatar-status-text {
+  font-size: 0.85rem;
+  color: #00ff88;
+}
+
 @media (max-width: 1199px) {
   .desktop-nav {
     display: none !important;
@@ -8094,5 +8150,25 @@ p {
   .forest-grid {
     grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
     gap: 0.75rem;
+  }
+
+  .modal-field-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .profile-row-two-col {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .no-offered-alert-green {
+    flex-direction: column;
+  }
+
+  .btn-green-inventory {
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
   }
 }

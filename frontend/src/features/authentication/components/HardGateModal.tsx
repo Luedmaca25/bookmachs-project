@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../../../lib/apiClient';
+import { formatRut, formatPhoneByCountry, getPhonePlaceholder } from '../../../lib/formatters';
 
 interface HardGateModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
   const [name, setName] = useState('');
   const [documento, setDocumento] = useState('');
   const [pais, setPais] = useState('Chile');
+  const [telefono, setTelefono] = useState('');
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -115,6 +117,7 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
           name: string; 
           documentoIdentidad: string; 
           pais: string; 
+          telefono?: string;
           role: string; 
           isPremium: boolean; 
           token: string 
@@ -123,7 +126,8 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
           password,
           name,
           documentoIdentidad: documento,
-          pais
+          pais,
+          telefono
         });
         
         loginAction(response, response.token);
@@ -167,7 +171,18 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
               <div className="modal-field-group">
                 <div className="modal-field">
                   <label>País</label>
-                  <select value={pais} onChange={(e) => setPais(e.target.value)} required>
+                  <select 
+                    value={pais} 
+                    onChange={(e) => {
+                      const newPais = e.target.value;
+                      setPais(newPais);
+                      setTelefono(formatPhoneByCountry(telefono, newPais));
+                      if (newPais === 'Chile') {
+                        setDocumento(formatRut(documento));
+                      }
+                    }} 
+                    required
+                  >
                     <option value="Chile">Chile</option>
                     <option value="Argentina">Argentina</option>
                     <option value="Colombia">Colombia</option>
@@ -182,10 +197,21 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
                     type="text" 
                     placeholder={pais === 'Chile' ? '12.345.678-9' : 'Número de Documento'} 
                     value={documento} 
-                    onChange={(e) => setDocumento(e.target.value)} 
+                    onChange={(e) => setDocumento(pais === 'Chile' ? formatRut(e.target.value) : e.target.value)} 
                     required 
                   />
                 </div>
+              </div>
+
+              <div className="modal-field">
+                <label>Teléfono Celular ({pais})</label>
+                <input 
+                  type="tel" 
+                  placeholder={getPhonePlaceholder(pais)} 
+                  value={telefono} 
+                  onChange={(e) => setTelefono(formatPhoneByCountry(e.target.value, pais))} 
+                  required 
+                />
               </div>
             </>
           )}

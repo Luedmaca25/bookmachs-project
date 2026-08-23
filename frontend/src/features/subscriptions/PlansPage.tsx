@@ -43,6 +43,7 @@ export const PlansPage: React.FC = () => {
       features: [
         'Escanear Portada IA (Autocompletado)',
         'Acceso a Catálogo Avanzado en Grilla',
+        'Búsqueda directa por título, autor o palabras clave (hasta 10)',
         'Early Access a libros Recién Llegados',
         'Reserva de libros por 48 horas',
         'Soporte premium 24/7'

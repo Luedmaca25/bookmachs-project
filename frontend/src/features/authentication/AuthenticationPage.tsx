@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { apiClient } from '../../lib/apiClient';
+import { formatRut, formatPhoneByCountry, getPhonePlaceholder, getFileUrl } from '../../lib/formatters';
 
 export const AuthenticationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export const AuthenticationPage: React.FC = () => {
   const [name, setName] = useState('');
   const [documento, setDocumento] = useState('');
   const [pais, setPais] = useState('Chile');
+  const [telefono, setTelefono] = useState('');
 
   // Profile preferences states
   const [tags, setTags] = useState<any[]>([]);
@@ -27,12 +29,57 @@ export const AuthenticationPage: React.FC = () => {
   const [prefSuccess, setPrefSuccess] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
 
+  // Avatar upload states
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarSuccess, setAvatarSuccess] = useState<string | null>(null);
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarUploading(true);
+    setAvatarError(null);
+    setAvatarSuccess(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('token') || '';
+      await apiClient.post<any>('/auth/avatar', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const updatedProfile = await apiClient.get<any>('/auth/me');
+      const timestampedProfile = {
+        ...updatedProfile,
+        profileImageUrl: updatedProfile.profileImageUrl
+          ? `${updatedProfile.profileImageUrl.split('?')[0]}?t=${Date.now()}`
+          : updatedProfile.profileImageUrl
+      };
+      loginAction(timestampedProfile, token);
+      setAvatarSuccess('¡Imagen de perfil actualizada con éxito!');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setAvatarError(err.message || 'Error al actualizar la imagen de perfil.');
+      } else {
+        setAvatarError('Error al subir la imagen de perfil.');
+      }
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const resetFormFields = () => {
     setEmail('');
     setPassword('');
     setName('');
     setDocumento('');
     setPais('Chile');
+    setTelefono('');
     setError(null);
   };
 
@@ -192,6 +239,7 @@ export const AuthenticationPage: React.FC = () => {
           name: string; 
           documentoIdentidad: string; 
           pais: string; 
+          telefono?: string;
           role: string; 
           isPremium: boolean; 
           token: string 
@@ -200,7 +248,8 @@ export const AuthenticationPage: React.FC = () => {
           password,
           name,
           documentoIdentidad: documento,
-          pais
+          pais,
+          telefono
         });
         
         const profile = await apiClient.get<any>('/auth/me', {
@@ -288,6 +337,41 @@ export const AuthenticationPage: React.FC = () => {
               Datos Personales
             </h2>
 
+            <div className="profile-avatar-edit-container">
+              <div className="profile-avatar-wrapper">
+                {user.profileImageUrl ? (
+                  <img src={getFileUrl(user.profileImageUrl)} alt={user.name} className="profile-avatar-img" />
+                ) : (
+                  <div className="profile-avatar-gradient">
+                    <span className="avatar-initials">
+                      {user.name ? user.name.substring(0, 2).toUpperCase() : 'US'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="avatar-actions">
+                <label className="avatar-upload-btn">
+                  <i className="fa-solid fa-camera"></i> {avatarUploading ? 'Subiendo...' : 'Cambiar Foto de Perfil'}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleAvatarFileChange} 
+                    disabled={avatarUploading}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+                {avatarUploading && <span className="avatar-status-text">Procesando imagen...</span>}
+              </div>
+            </div>
+
+            {avatarError && <div className="modal-error">{avatarError}</div>}
+            {avatarSuccess && (
+              <div className="pref-success-alert">
+                <i className="fa-solid fa-circle-check"></i> {avatarSuccess}
+              </div>
+            )}
+
             <div className="profile-details-list">
               <div>
                 <label className="profile-label">Nombre</label>
@@ -312,6 +396,13 @@ export const AuthenticationPage: React.FC = () => {
                   <div className="profile-value">{user.documentoIdentidad}</div>
                 </div>
               </div>
+
+              {user.telefono && (
+                <div>
+                  <label className="profile-label">Teléfono Celular</label>
+                  <div className="profile-value">{user.telefono}</div>
+                </div>
+              )}
             </div>
 
             {/* Upgrade Card / Premium Info */}
@@ -437,7 +528,18 @@ export const AuthenticationPage: React.FC = () => {
               <div className="modal-field-group">
                 <div className="modal-field">
                   <label>País</label>
-                  <select value={pais} onChange={(e) => setPais(e.target.value)} required>
+                  <select 
+                    value={pais} 
+                    onChange={(e) => {
+                      const newPais = e.target.value;
+                      setPais(newPais);
+                      setTelefono(formatPhoneByCountry(telefono, newPais));
+                      if (newPais === 'Chile') {
+                        setDocumento(formatRut(documento));
+                      }
+                    }} 
+                    required
+                  >
                     <option value="Chile">Chile</option>
                     <option value="Argentina">Argentina</option>
                     <option value="Colombia">Colombia</option>
@@ -452,10 +554,21 @@ export const AuthenticationPage: React.FC = () => {
                     type="text" 
                     placeholder={pais === 'Chile' ? '12.345.678-9' : 'Número de Documento'} 
                     value={documento} 
-                    onChange={(e) => setDocumento(e.target.value)} 
+                    onChange={(e) => setDocumento(pais === 'Chile' ? formatRut(e.target.value) : e.target.value)} 
                     required 
                   />
                 </div>
+              </div>
+
+              <div className="modal-field">
+                <label>Teléfono Celular ({pais})</label>
+                <input 
+                  type="tel" 
+                  placeholder={getPhonePlaceholder(pais)} 
+                  value={telefono} 
+                  onChange={(e) => setTelefono(formatPhoneByCountry(e.target.value, pais))} 
+                  required 
+                />
               </div>
             </>
           )}

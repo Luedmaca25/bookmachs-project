@@ -179,7 +179,7 @@ export const CatalogPage: React.FC = () => {
           <ul className="paywall-benefits-list">
             <li>
               <span className="benefit-bullet"><i className="fa-solid fa-check"></i></span>
-              <span>Búsqueda directa por título, autor o palabras clave.</span>
+              <span>Búsqueda directa por título, autor o palabras clave (hasta 10).</span>
             </li>
             <li>
               <span className="benefit-bullet"><i className="fa-solid fa-check"></i></span>

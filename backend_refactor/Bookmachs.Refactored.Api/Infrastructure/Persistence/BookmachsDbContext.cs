@@ -32,6 +32,8 @@ public class BookmachsDbContext : DbContext
             entity.Property(u => u.Name).IsRequired().HasMaxLength(100);
             entity.Property(u => u.DocumentoIdentidad).IsRequired().HasMaxLength(50);
             entity.Property(u => u.Pais).IsRequired().HasMaxLength(50);
+            entity.Property(u => u.Telefono).IsRequired().HasMaxLength(30);
+            entity.Property(u => u.ProfileImageUrl).HasMaxLength(500);
             entity.Property(u => u.SubscriptionPlan).IsRequired().HasMaxLength(20);
             entity.Property(u => u.Role).IsRequired().HasMaxLength(20);
             entity.HasIndex(u => u.GoogleSub).HasFilter("[GoogleSub] IS NOT NULL");

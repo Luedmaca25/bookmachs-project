@@ -57,7 +57,6 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const [uploading, setUploading] = useState(false);
   const [uploadSuccessMsg, setUploadSuccessMsg] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [copiedAddress, setCopiedAddress] = useState(false);
 
   // Inventario del usuario para asegurar la visualización del libro entregado
   const [myInventory, setMyInventory] = useState<MyOfferedBook[]>([]);
@@ -170,12 +169,6 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
     } finally {
       setUploading(false);
     }
-  };
-
-  const copyAddressToClipboard = () => {
-    navigator.clipboard.writeText('Patronato 447, Recoleta, Santiago, Chile');
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2500);
   };
 
   const currentMethod = transaction.logisticsMethod || 'Presencial';
@@ -306,14 +299,14 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         {/* SECCIÓN LOGÍSTICA & SUBIDA DE COMPROBANTES */}
         <div className="fee-estimate-container mt-04" style={{ marginTop: '1rem' }}>
           <div style={{ color: 'var(--neon)', fontWeight: '700', fontSize: '0.95rem', marginBottom: '0.4rem' }}>
-            {currentMethod === 'Donacion' ? '🎁 Donación Comunitaria' : currentMethod === 'Envio' ? '📦 Envío por Encomienda' : '📍 Entrega Presencial (Santiago)'}
+            {currentMethod === 'Donacion' ? '🎁 Donación Comunitaria' : currentMethod === 'Envio' ? '📦 Envío por Encomienda' : '📍 Dirección de Entrega'}
           </div>
-          <p className="match-modal-subtitle" style={{ textAlign: 'left', margin: '0 0 1rem 0' }}>
+          <p className="match-modal-subtitle" style={{ textAlign: 'center', margin: '0 0 1rem 0' }}>
             {currentMethod === 'Donacion' 
               ? 'Sube la foto del colegio o espacio comunitario para proceso de validación previa.'
               : currentMethod === 'Envio' 
               ? 'Registra el N° de seguimiento y comprobante de envío.'
-              : 'Entrega tu libro en la ubicación oficial acordada.'}
+              : 'Entrega tu libro en la ubicación acordada.'}
           </p>
 
           {currentMethod === 'Donacion' && (
@@ -402,16 +395,6 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
 
           {currentMethod === 'Presencial' && (
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: '700' }}>📍 Dirección de Entrega Presencial:</span>
-                <button
-                  type="button"
-                  onClick={copyAddressToClipboard}
-                  style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--neon)', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
-                >
-                  {copiedAddress ? '✓ ¡Copiado!' : '📋 Copiar'}
-                </button>
-              </div>
               <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--neon)' }}>
                 Patronato 447, Recoleta, Santiago, Chile
               </div>

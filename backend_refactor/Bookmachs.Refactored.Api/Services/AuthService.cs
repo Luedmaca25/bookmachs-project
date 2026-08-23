@@ -13,11 +13,12 @@ namespace Bookmachs.Refactored.Api.Services;
 
 public interface IAuthService
 {
-    Task<AuthResponseDto> RegisterAsync(string email, string password, string name, string documentoIdentidad, string pais, CancellationToken cancellationToken = default);
+    Task<AuthResponseDto> RegisterAsync(string email, string password, string name, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default);
     Task<AuthResponseDto> LoginAsync(string email, string password, CancellationToken cancellationToken = default);
     Task<AuthResponseDto> GoogleLoginAsync(string googleSub, string email, string name, CancellationToken cancellationToken = default);
     Task<bool> SavePreferencesAsync(Guid userId, List<string> preferenceTags, CancellationToken cancellationToken = default);
-    Task<AuthResponseDto> UpdateProfileAsync(Guid userId, string documentoIdentidad, string pais, CancellationToken cancellationToken = default);
+    Task<AuthResponseDto> UpdateProfileAsync(Guid userId, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default);
+    Task<AuthResponseDto> UpdateAvatarAsync(Guid userId, string profileImageUrl, CancellationToken cancellationToken = default);
     Task<UserProfileDto> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default);
 }
 
@@ -37,7 +38,7 @@ public class AuthService : IAuthService
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    public async Task<AuthResponseDto> RegisterAsync(string email, string password, string name, string documentoIdentidad, string pais, CancellationToken cancellationToken = default)
+    public async Task<AuthResponseDto> RegisterAsync(string email, string password, string name, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default)
     {
         var existingUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         if (existingUser != null)
@@ -52,6 +53,7 @@ public class AuthService : IAuthService
             Name = name,
             DocumentoIdentidad = documentoIdentidad,
             Pais = pais,
+            Telefono = telefono,
             PasswordHash = _passwordHasher.HashPassword(password),
             Role = "User",
             DailySwipesConsumed = 0,
@@ -176,7 +178,7 @@ public class AuthService : IAuthService
         return true;
     }
 
-    public async Task<AuthResponseDto> UpdateProfileAsync(Guid userId, string documentoIdentidad, string pais, CancellationToken cancellationToken = default)
+    public async Task<AuthResponseDto> UpdateProfileAsync(Guid userId, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default)
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (user == null)
@@ -186,6 +188,25 @@ public class AuthService : IAuthService
 
         user.DocumentoIdentidad = documentoIdentidad;
         user.Pais = pais;
+        user.Telefono = telefono;
+
+        _dbContext.Users.Update(user);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var token = _jwtTokenGenerator.GenerateToken(user);
+
+        return MapToAuthResponse(user, token);
+    }
+
+    public async Task<AuthResponseDto> UpdateAvatarAsync(Guid userId, string profileImageUrl, CancellationToken cancellationToken = default)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("Usuario no encontrado.");
+        }
+
+        user.ProfileImageUrl = profileImageUrl;
 
         _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -224,6 +245,8 @@ public class AuthService : IAuthService
             Name = user.Name,
             DocumentoIdentidad = user.DocumentoIdentidad,
             Pais = user.Pais,
+            Telefono = user.Telefono,
+            ProfileImageUrl = user.ProfileImageUrl,
             IsPremium = user.IsPremium,
             SubscriptionPlan = user.SubscriptionPlan,
             Role = user.Role,
@@ -242,6 +265,8 @@ public class AuthService : IAuthService
             Name = user.Name,
             DocumentoIdentidad = user.DocumentoIdentidad,
             Pais = user.Pais,
+            Telefono = user.Telefono,
+            ProfileImageUrl = user.ProfileImageUrl,
             Role = user.Role,
             IsPremium = user.IsPremium,
             Token = token

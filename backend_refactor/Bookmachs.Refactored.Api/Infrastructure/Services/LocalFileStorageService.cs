@@ -45,6 +45,59 @@ public class LocalFileStorageService : IFileStorageService
         return $"/{folderName}/{uniqueFileName}";
     }
 
+    public async Task<string> SaveSecureUserAvatarAsync(Guid userId, Stream fileStream, string fileName)
+    {
+        // 1. Ubicación privada segura fuera de wwwroot: App_Data/avatars/{userId}
+        var appDataFolder = Path.Combine(_environment.ContentRootPath, "App_Data", "avatars", userId.ToString());
+
+        if (!Directory.Exists(appDataFolder))
+        {
+            Directory.CreateDirectory(appDataFolder);
+        }
+        else
+        {
+            // 2. Borrar imágenes anteriores del usuario para conservar únicamente la activa
+            var existingFiles = Directory.GetFiles(appDataFolder);
+            foreach (var file in existingFiles)
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[LocalFileStorageService] No se pudo borrar archivo avatar previo: {ex.Message}");
+                }
+            }
+        }
+
+        // 3. Generar un nombre seguro e identificador único por extensión
+        var ext = Path.GetExtension(fileName);
+        if (string.IsNullOrEmpty(ext)) ext = ".png";
+        var uniqueFileName = $"{Guid.NewGuid()}{ext}";
+        var filePath = Path.Combine(appDataFolder, uniqueFileName);
+
+        using (var outputStream = new FileStream(filePath, FileMode.Create))
+        {
+            await fileStream.CopyToAsync(outputStream);
+        }
+
+        // Retorna la ruta del controlador que sirve la imagen de forma segura
+        return $"/auth/avatar/{userId}";
+    }
+
+    public string? GetSecureUserAvatarPath(Guid userId)
+    {
+        var appDataFolder = Path.Combine(_environment.ContentRootPath, "App_Data", "avatars", userId.ToString());
+        if (!Directory.Exists(appDataFolder))
+        {
+            return null;
+        }
+
+        var files = Directory.GetFiles(appDataFolder);
+        return files.FirstOrDefault();
+    }
+
     public void DeleteFile(string fileUrl)
     {
         if (string.IsNullOrEmpty(fileUrl)) return;
