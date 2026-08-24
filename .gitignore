@@ -341,4 +341,6 @@ healthchecksdb
 
 # App_Data & User Avatars
 App_Data/avatars/
+App_Data/books/
 **/App_Data/avatars/
+**/App_Data/books/

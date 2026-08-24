@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { apiClient } from '../../lib/apiClient';
-import { formatRut, formatPhoneByCountry, getPhonePlaceholder, getFileUrl } from '../../lib/formatters';
+import { formatRut, formatPhoneByCountry, getPhonePlaceholder, getFileUrl, getPreferenceTagIcon } from '../../lib/formatters';
 
 export const AuthenticationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -470,7 +470,7 @@ export const AuthenticationPage: React.FC = () => {
                         onClick={() => handleTagToggle(tag.name)}
                       >
                         <span className="tag-icon">
-                          {isSelected ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-book-open"></i>}
+                          {isSelected ? <i className="fa-solid fa-check"></i> : <i className={`fa-solid ${getPreferenceTagIcon(tag.name)}`}></i>}
                         </span>
                         <span className="tag-label">
                           {tag.name}

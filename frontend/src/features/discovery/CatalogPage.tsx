@@ -313,7 +313,14 @@ export const CatalogPage: React.FC = () => {
               )}
               <div className="catalog-card-cover">
                 {book.imageUrl ? (
-                  <img src={book.imageUrl} alt={book.title} />
+                  <img 
+                    src={book.imageUrl} 
+                    alt={book.title} 
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400';
+                    }}
+                  />
                 ) : (
                   <span className="no-cover-placeholder"><i className="fa-solid fa-book"></i></span>
                 )}
@@ -351,7 +358,14 @@ export const CatalogPage: React.FC = () => {
                   <span className="new-arrival-badge"><i className="fa-solid fa-star star-gold"></i> Recién Llegado</span>
                 )}
                 {book.imageUrl ? (
-                  <img src={book.imageUrl} alt={book.title} />
+                  <img 
+                    src={book.imageUrl} 
+                    alt={book.title} 
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400';
+                    }}
+                  />
                 ) : (
                   <span className="no-cover-placeholder"><i className="fa-solid fa-book"></i></span>
                 )}

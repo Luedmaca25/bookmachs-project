@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
+import { getFileUrl } from '../../lib/formatters';
 import { MatchDetailModal } from './components/MatchDetailModal';
 import { formatDateInUserTimezone } from '../../lib/dateUtils';
 
@@ -20,6 +21,7 @@ interface MatchTransaction {
   logisticsStatus: string;
   logisticsMethod: string | null;
   isCrossBorder: boolean;
+  isAvailable?: boolean;
   createdAt: string;
 }
 
@@ -310,13 +312,19 @@ export const TransactionsPage: React.FC = () => {
                   </p>
                 </div>
 
+                {selectedTx.isAvailable === false && (
+                  <div className="warning-requirements-box" style={{ borderColor: '#e74c3c', backgroundColor: '#fff5f5', color: '#c0392b', marginBottom: '1rem' }}>
+                    <strong><i className="fa-solid fa-triangle-exclamation"></i> Libro No Disponible:</strong> Este libro ya no está disponible para intercambio porque fue tomado o reservado por otro usuario.
+                  </div>
+                )}
+
                 <div className="duet-swap-deck">
                   {/* Tarjeta 1: Libro Solicitado (Recibes) */}
                   <div className="swap-book-card target-card">
                     <span className="swap-card-tag receive">Libro que recibes</span>
                     <div className="swap-cover-frame">
                       {selectedTx.bookImageUrl ? (
-                        <img src={selectedTx.bookImageUrl} alt={selectedTx.bookTitle} />
+                        <img src={getFileUrl(selectedTx.bookImageUrl)} alt={selectedTx.bookTitle} />
                       ) : (
                         <div className="book-placeholder-icon">📖</div>
                       )}
@@ -359,7 +367,7 @@ export const TransactionsPage: React.FC = () => {
                           <div>
                             <div className="swap-cover-frame">
                               <img 
-                                src={currentOfferedBook.imageUrl} 
+                                src={getFileUrl(currentOfferedBook.imageUrl)} 
                                 alt={currentOfferedBook.title}
                                 onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=150'; }} 
                               />
@@ -674,7 +682,7 @@ export const TransactionsPage: React.FC = () => {
               <div className="match-card-body">
                 <div className="match-card-img-box">
                   {tx.bookImageUrl ? (
-                    <img src={tx.bookImageUrl} alt={tx.bookTitle} />
+                    <img src={getFileUrl(tx.bookImageUrl)} alt={tx.bookTitle} />
                   ) : (
                     <span>📖</span>
                   )}
@@ -687,7 +695,11 @@ export const TransactionsPage: React.FC = () => {
                   <p className="owner-p">Dueño: <strong>{tx.ownerName}</strong></p>
                   
                   <div className="match-card-badges">
-                    {!hasOfferedBooks ? (
+                    {tx.isAvailable === false ? (
+                      <span className="badge-failed" style={{ backgroundColor: '#e74c3c', color: '#fff' }}>
+                        <i className="fa-solid fa-triangle-exclamation"></i> Libro No Disponible
+                      </span>
+                    ) : !hasOfferedBooks ? (
                       <span className="badge-pending badge-saved-interest">
                         Interés Guardado 💚
                       </span>
@@ -716,7 +728,16 @@ export const TransactionsPage: React.FC = () => {
                   <strong>${Math.round(tx.feeAmount).toLocaleString('es-CL')} CLP</strong>
                 </div>
 
-                {!hasOfferedBooks ? (
+                {tx.isAvailable === false && tx.paymentStatus === 'Pending' ? (
+                  <button
+                    className="pay-fee-btn font-heading disabled-btn"
+                    disabled
+                    style={{ opacity: 0.6, backgroundColor: '#95a5a6', cursor: 'not-allowed' }}
+                    title="Este libro ya fue tomado o reservado por otro usuario."
+                  >
+                    ⚠️ No Disponible
+                  </button>
+                ) : !hasOfferedBooks ? (
                   <span></span>
                 ) : tx.paymentStatus === 'Pending' || tx.paymentStatus === 'Hold' ? (
                   <button

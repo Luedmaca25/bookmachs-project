@@ -25,8 +25,62 @@ export const getFileUrl = (path: string | undefined | null): string => {
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
-  const baseUrl = import.meta.env.VITE_API_URL || '';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5185';
   return `${baseUrl}${path}`;
+};
+
+/**
+ * Obtiene el ícono de FontAwesome representativo para cada categoría / preferencia de lectura
+ * basado en el catálogo maestro y la referencia visual del diseño.
+ */
+export const getPreferenceTagIcon = (tagName: string): string => {
+  if (!tagName) return 'fa-book-open';
+  const normalized = tagName.toLowerCase().trim();
+
+  if (normalized.includes('arte') || normalized.includes('cultura') || normalized.includes('estilo')) {
+    return 'fa-palette';
+  }
+  if (normalized.includes('ciencia') || normalized.includes('tecnología') || normalized.includes('medicina')) {
+    return 'fa-atom';
+  }
+  if (normalized.includes('desarrollo') || normalized.includes('bienestar') || normalized.includes('autoayuda') || normalized.includes('espiritualidad')) {
+    return 'fa-wand-magic-sparkles';
+  }
+  if (normalized.includes('educación') || normalized.includes('aprendizaje') || normalized.includes('consulta') || normalized.includes('paes')) {
+    return 'fa-graduation-cap';
+  }
+  if (normalized.includes('ficción') || normalized.includes('novela') || normalized.includes('relato')) {
+    return 'fa-masks-theater';
+  }
+  if (normalized.includes('historia') || normalized.includes('humanidades') || normalized.includes('sociedad') || normalized.includes('filosofía')) {
+    return 'fa-landmark';
+  }
+  if (normalized.includes('idioma') || normalized.includes('colecciones') || normalized.includes('pack')) {
+    return 'fa-language';
+  }
+  if (normalized.includes('infantil') || normalized.includes('juvenil') || normalized.includes('cómic')) {
+    return 'fa-rocket';
+  }
+  if (normalized.includes('negocio') || normalized.includes('economía') || normalized.includes('derecho') || normalized.includes('inversiones')) {
+    return 'fa-chart-line';
+  }
+  if (normalized.includes('oportunidad') || normalized.includes('novedad') || normalized.includes('oferta')) {
+    return 'fa-star';
+  }
+  if (normalized.includes('terror') || normalized.includes('horror')) {
+    return 'fa-ghost';
+  }
+  if (normalized.includes('misterio') || normalized.includes('thriller')) {
+    return 'fa-magnifying-glass';
+  }
+  if (normalized.includes('romance') || normalized.includes('amor')) {
+    return 'fa-heart';
+  }
+  if (normalized.includes('música') || normalized.includes('musical')) {
+    return 'fa-music';
+  }
+
+  return 'fa-book-open';
 };
 
 /**

@@ -22,6 +22,32 @@ export const MainLayout: React.FC = () => {
     }
   }, [user, login, logout]);
 
+  // Sincronizar automáticamente los me gusta acumulados como invitado al iniciar sesión
+  useEffect(() => {
+    if (isAuthenticated) {
+      const pendingLikesStr = localStorage.getItem('guest_pending_likes');
+      if (pendingLikesStr) {
+        try {
+          const pendingLikes: string[] = JSON.parse(pendingLikesStr);
+          if (Array.isArray(pendingLikes) && pendingLikes.length > 0) {
+            apiClient.post('/books/sync-guest-likes', pendingLikes)
+              .then(() => {
+                localStorage.removeItem('guest_pending_likes');
+                localStorage.removeItem('guest_swipes_count');
+              })
+              .catch((err) => console.error('Error al sincronizar me gusta de invitado:', err));
+          } else {
+            localStorage.removeItem('guest_pending_likes');
+            localStorage.removeItem('guest_swipes_count');
+          }
+        } catch (e) {
+          localStorage.removeItem('guest_pending_likes');
+          localStorage.removeItem('guest_swipes_count');
+        }
+      }
+    }
+  }, [isAuthenticated]);
+
   // Bloquear el scroll de html y body cuando el Offcanvas está activo
   useEffect(() => {
     if (mobileMenuOpen) {

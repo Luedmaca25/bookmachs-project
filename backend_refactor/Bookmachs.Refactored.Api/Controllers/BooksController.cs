@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+using Bookmachs.Refactored.Api.Infrastructure.Services;
+using Microsoft.AspNetCore.Hosting;
+
 namespace Bookmachs.Refactored.Api.Controllers;
 
 [Authorize]
@@ -16,17 +19,21 @@ namespace Bookmachs.Refactored.Api.Controllers;
 public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;
+    private readonly IFileStorageService _fileStorageService;
+    private readonly IWebHostEnvironment _environment;
 
-    public BooksController(IBookService bookService)
+    public BooksController(IBookService bookService, IFileStorageService fileStorageService, IWebHostEnvironment environment)
     {
         _bookService = bookService;
+        _fileStorageService = fileStorageService;
+        _environment = environment;
     }
 
     [AllowAnonymous]
     [HttpGet("guest-random")]
-    public async Task<ActionResult<BookDto>> GetGuestRandom()
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetGuestRandom([FromQuery] int count = 10)
     {
-        var result = await _bookService.GetGuestRandomAsync();
+        var result = await _bookService.GetGuestBooksAsync(count);
         return Ok(result);
     }
 
@@ -95,7 +102,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet("recommendations")]
-    public async Task<ActionResult<IEnumerable<BookDto>>> GetRecommendations([FromQuery] int limit = 20)
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetRecommendations([FromQuery] int limit = 100)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
@@ -181,6 +188,37 @@ public class BooksController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    [HttpPost("sync-guest-likes")]
+    public async Task<ActionResult> SyncGuestLikes([FromBody] List<Guid> bookIds)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        if (bookIds == null || !bookIds.Any())
+        {
+            return Ok(new { synced = 0 });
+        }
+
+        int count = 0;
+        foreach (var bookId in bookIds.Distinct())
+        {
+            try
+            {
+                var result = await _bookService.SwipeBookAsync(bookId, userId, "like");
+                if (result.Success) count++;
+            }
+            catch
+            {
+                // Ignorar errores individuales para asegurar sincronización parcial
+            }
+        }
+
+        return Ok(new { synced = count });
     }
 
     [HttpGet("catalog")]
@@ -282,6 +320,79 @@ public class BooksController : ControllerBase
         {
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
         }
+    }
+
+    [AllowAnonymous]
+    [HttpGet("cover/{userId}/{fileName}")]
+    public IActionResult GetBookCover(Guid userId, string fileName)
+    {
+        var filePath = _fileStorageService.GetSecureUserBookImagePath(userId, fileName);
+        if (string.IsNullOrEmpty(filePath) || !System.IO.File.Exists(filePath))
+        {
+            // Fallback para imágenes guardadas previamente en wwwroot/uploads
+            var legacyPath = System.IO.Path.Combine(_environment.ContentRootPath, "wwwroot", "uploads", fileName);
+            if (System.IO.File.Exists(legacyPath))
+            {
+                filePath = legacyPath;
+            }
+            else
+            {
+                return NotFound(new { message = "Imagen de portada no encontrada." });
+            }
+        }
+
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        var contentType = ext switch
+        {
+            ".png" => "image/png",
+            ".jpg" => "image/jpeg",
+            ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
+            _ => "application/octet-stream"
+        };
+
+        return PhysicalFile(filePath, contentType);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("/uploads/{fileName}")]
+    public IActionResult GetLegacyUpload(string fileName)
+    {
+        var legacyPath = System.IO.Path.Combine(_environment.ContentRootPath, "wwwroot", "uploads", fileName);
+        if (!System.IO.File.Exists(legacyPath))
+        {
+            // Buscar en App_Data/books/ si el nombre coincide
+            var booksFolder = System.IO.Path.Combine(_environment.ContentRootPath, "App_Data", "books");
+            if (System.IO.Directory.Exists(booksFolder))
+            {
+                var foundFile = System.IO.Directory.GetFiles(booksFolder, fileName, System.IO.SearchOption.AllDirectories).FirstOrDefault();
+                if (!string.IsNullOrEmpty(foundFile))
+                {
+                    legacyPath = foundFile;
+                }
+            }
+        }
+
+        if (!System.IO.File.Exists(legacyPath))
+        {
+            return NotFound(new { message = "Archivo no encontrado." });
+        }
+
+        var ext = System.IO.Path.GetExtension(legacyPath).ToLowerInvariant();
+        var contentType = ext switch
+        {
+            ".png" => "image/png",
+            ".jpg" => "image/jpeg",
+            ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
+            _ => "application/octet-stream"
+        };
+
+        return PhysicalFile(legacyPath, contentType);
     }
 }
 

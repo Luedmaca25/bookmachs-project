@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { apiClient } from '../../../lib/apiClient';
 import { calculateFulfillmentTiming } from '../../../lib/dateUtils';
+import { getFileUrl } from '../../../lib/formatters';
 
 export interface MatchTransactionDetail {
   id: string;
@@ -103,7 +104,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const defaultOfferedCover = 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300';
 
   const receiveCoverUrl = (transaction.bookImageUrl && transaction.bookImageUrl.trim() !== '') 
-    ? transaction.bookImageUrl 
+    ? getFileUrl(transaction.bookImageUrl) 
     : defaultTargetCover;
 
   const currentOfferedBook = myInventory.find((b) => b.id === selectedOfferedId) || myInventory[0];
@@ -112,9 +113,11 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const offerAuthor = currentOfferedBook?.author || transaction.offeredBookAuthor || 'Tú (Dueño)';
   const offerCondition = currentOfferedBook?.condition || transaction.offeredBookCondition || 'Excelente';
   
-  const offerCoverUrl = currentOfferedBook?.imageUrl && currentOfferedBook.imageUrl.trim() !== ''
+  const rawOfferUrl = currentOfferedBook?.imageUrl && currentOfferedBook.imageUrl.trim() !== ''
     ? currentOfferedBook.imageUrl
     : (transaction.offeredBookImageUrl && transaction.offeredBookImageUrl.trim() !== '' ? transaction.offeredBookImageUrl : defaultOfferedCover);
+  
+  const offerCoverUrl = getFileUrl(rawOfferUrl);
 
   // Cálculo exacto del cronómetro de 5 días y formateo en la zona horaria del usuario
   const timing = calculateFulfillmentTiming(transaction.createdAt);
@@ -233,20 +236,6 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
           {/* Libro Entregado */}
           <div className="swap-book-card offered-card">
             <span className="swap-card-tag give">Libro que tú entregas</span>
-            
-            {myInventory.length > 1 && (
-              <div className="mb-04">
-                <select 
-                  value={selectedOfferedId} 
-                  onChange={(e) => setSelectedOfferedId(e.target.value)} 
-                  className="select-offered-modal"
-                >
-                  {myInventory.map((b) => (
-                    <option key={b.id} value={b.id}>{b.title}</option>
-                  ))}
-                </select>
-              </div>
-            )}
 
             <div className="swap-cover-frame swap-cover-frame-fixed">
               <img 

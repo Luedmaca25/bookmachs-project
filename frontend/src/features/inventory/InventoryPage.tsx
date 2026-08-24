@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
+import { getFileUrl } from '../../lib/formatters';
 import { MatchModal } from '../transactions/components/MatchModal';
 
 interface MyBookItem {
@@ -23,6 +24,7 @@ interface MatchTransaction {
   paymentStatus: string;
   logisticsStatus: string;
   isCrossBorder: boolean;
+  isAvailable?: boolean;
 }
 
 export const InventoryPage: React.FC = () => {
@@ -140,7 +142,7 @@ export const InventoryPage: React.FC = () => {
 
       await apiClient.post<MyBookItem>('/books/upload', formData);
 
-      setFormSuccess('¡Libro agregado a tu libreta con éxito! Ahora está disponible para recibir intercambios.');
+      setFormSuccess('¡Libro agregado a tu libreta con éxito! Ahora está disponible para recibir intercambios y ofrecerlo para intercambiar con Bookmachs u otros usuarios.');
       setTitle('');
       setAuthor('');
       setDescription('');
@@ -243,7 +245,14 @@ export const InventoryPage: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <h3 className="match-card-title">{item.bookTitle}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="match-card-title">{item.bookTitle}</h3>
+                        {item.isAvailable === false && (
+                          <span className="condition-badge condition-desgastado" style={{ backgroundColor: '#e74c3c', color: '#fff', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px' }}>
+                            <i className="fa-solid fa-triangle-exclamation"></i> No disponible
+                          </span>
+                        )}
+                      </div>
                       <span className="match-card-author">{item.bookAuthor}</span>
                       
                       <div className="match-card-meta">
@@ -261,16 +270,16 @@ export const InventoryPage: React.FC = () => {
                   <div className="match-card-actions-row">
                     <button
                       type="button"
-                      disabled={offeredBooks.length === 0}
+                      disabled={offeredBooks.length === 0 || item.isAvailable === false}
                       onClick={() => {
-                        if (offeredBooks.length === 0) return;
+                        if (offeredBooks.length === 0 || item.isAvailable === false) return;
                         setSelectedProposal(item);
                         setMatchModalOpen(true);
                       }}
-                      className={`match-card-proposal-btn ${offeredBooks.length === 0 ? 'disabled' : ''}`}
-                      title={offeredBooks.length === 0 ? 'Debes cargar al menos un libro en "Tengo para intercambiar" para ver propuestas' : 'Ver propuesta de intercambio'}
+                      className={`match-card-proposal-btn ${offeredBooks.length === 0 || item.isAvailable === false ? 'disabled' : ''}`}
+                      title={item.isAvailable === false ? 'Este libro ya fue tomado o reservado por otro usuario.' : (offeredBooks.length === 0 ? 'Debes cargar al menos un libro en "Tengo para intercambiar" para ver propuestas' : 'Ver propuesta de intercambio')}
                     >
-                      Ver propuesta
+                      {item.isAvailable === false ? '⚠️ No disponible' : 'Ver propuesta'}
                     </button>
                     <button
                       type="button"
@@ -434,15 +443,15 @@ export const InventoryPage: React.FC = () => {
                   <div key={book.id} className="book-swipe-card libreta-swipe-card">
                     <div className="book-card-image-placeholder">
                       {book.imageUrl ? (
-                        <img src={book.imageUrl} alt={book.title} className="swipe-card-img" />
+                        <img src={getFileUrl(book.imageUrl)} alt={book.title} className="swipe-card-img" />
                       ) : (
                         <span className="book-fallback-icon"><i className="fa-solid fa-book"></i></span>
                       )}
+                    </div>
+                    <div className="book-card-info">
                       <span className={`condition-badge ${book.condition.toLowerCase()}`}>
                         Estado libro: {book.condition}
                       </span>
-                    </div>
-                    <div className="book-card-info">
                       <h3>{book.title}</h3>
                       <span className="book-author">{book.author}</span>
                       <p className={`book-desc ${isExpanded ? 'expanded' : ''}`}>

@@ -13,6 +13,7 @@ interface BookItem {
   condition: string;
   description: string;
   imageUrl: string;
+  isFallbackCategory?: boolean;
 }
 
 export const SwipePage: React.FC = () => {
@@ -39,10 +40,9 @@ export const SwipePage: React.FC = () => {
     queryKey: ['books', isAuthenticated],
     queryFn: async () => {
       if (isAuthenticated) {
-        return apiClient.get<BookItem[]>('/books/recommendations?limit=20');
+        return apiClient.get<BookItem[]>('/books/recommendations?limit=100');
       } else {
-        const response = await apiClient.get<BookItem>('/books/guest-random');
-        return [response];
+        return apiClient.get<BookItem[]>('/books/guest-random?count=10');
       }
     },
     enabled: !isRestoringSession && !showWizard,
@@ -58,7 +58,6 @@ export const SwipePage: React.FC = () => {
   useEffect(() => {
     setCurrentBookIndex(0);
     setIsDescriptionExpanded(false);
-    setLimitReached(false);
   }, [queryBooks]);
 
   useEffect(() => {
@@ -133,6 +132,13 @@ export const SwipePage: React.FC = () => {
   const [matchOpen, setMatchOpen] = useState(false);
   const [matchedBook, setMatchedBook] = useState<BookItem | null>(null);
   const [matchTransactionId, setMatchTransactionId] = useState<string | null>(null);
+
+  // Control de swipes para usuarios invitados (hasta 5 swipes gratis acumulando me gusta)
+  const [guestSwipesCount, setGuestSwipesCount] = useState<number>(() => {
+    const saved = localStorage.getItem('guest_swipes_count');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  const [showGuestLimitModal, setShowGuestLimitModal] = useState<boolean>(false);
 
   const handleOnboardingComplete = () => {
     setOnboardingCompleted(true);
@@ -229,8 +235,39 @@ export const SwipePage: React.FC = () => {
     if (limitReached || !currentBook) return;
 
     if (!isAuthenticated) {
-      // Si es invitado, al interactuar con el libro se le redirige a iniciar sesión
-      navigate('/auth');
+      if (guestSwipesCount >= 5) {
+        setShowGuestLimitModal(true);
+        return;
+      }
+
+      const swipedBook = currentBook;
+      const newCount = guestSwipesCount + 1;
+      setGuestSwipesCount(newCount);
+      localStorage.setItem('guest_swipes_count', newCount.toString());
+
+      if (direction === 'right' && swipedBook) {
+        try {
+          const existingLikesStr = localStorage.getItem('guest_pending_likes');
+          const existingLikes: string[] = existingLikesStr ? JSON.parse(existingLikesStr) : [];
+          if (!existingLikes.includes(swipedBook.id)) {
+            existingLikes.push(swipedBook.id);
+            localStorage.setItem('guest_pending_likes', JSON.stringify(existingLikes));
+          }
+        } catch (e) {
+          console.error('Error al guardar me gusta de invitado:', e);
+        }
+      }
+
+      setSwipeDirection(direction);
+
+      setTimeout(() => {
+        setSwipeDirection(null);
+        setCurrentBookIndex((prev) => prev + 1);
+        if (newCount >= 5) {
+          setShowGuestLimitModal(true);
+        }
+      }, 220);
+
       return;
     }
 
@@ -289,7 +326,6 @@ export const SwipePage: React.FC = () => {
       
       if (isLimitError) {
         setLimitReached(true);
-        navigate('/planes');
       } else {
         console.error('Error al registrar swipe:', err);
       }
@@ -314,7 +350,7 @@ export const SwipePage: React.FC = () => {
   return (
     <div className="swipe-page-container">
       <div className="swipe-header">
-        <h1>Explorar libros</h1>
+        <h1>Descubrir libros</h1>
         {isAuthenticated ? (
           <div className="user-auth-badge">
             <span>
@@ -324,7 +360,14 @@ export const SwipePage: React.FC = () => {
             {/* <button onClick={logout} className="logout-btn">Cerrar Sesión</button> */}
           </div>
         ) : (
-          <p>Mira este libro destacado. Regístrate para ver más recomendaciones afines a tus gustos.</p>
+          <div className="guest-home-banner" style={{ textAlign: 'center', marginTop: '4px' }}>
+            <p style={{ fontSize: '0.98rem', fontWeight: 600, color: '#2c3e50', margin: '0 0 6px 0', lineHeight: '1.4' }}>
+              Más de 100.000 libros para intercambiar, actualizados todos los días.
+            </p>
+            <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e67e22', margin: 0 }}>
+              Chile - Argentina - Perú - México - Ecuador - España
+            </p>
+          </div>
         )}
       </div>
 
@@ -394,19 +437,27 @@ export const SwipePage: React.FC = () => {
                   src={currentBook.imageUrl} 
                   alt={currentBook.title} 
                   className="swipe-card-img" 
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400';
+                  }}
                 />
               ) : (
                 <span className="book-fallback-icon"><i className="fa-solid fa-book"></i></span>
               )}
-              
-              {currentBook && (
-                <span className={`condition-badge condition-badge-absolute ${currentBook.condition.toLowerCase()}`}>
-                  Estado libro: {currentBook.condition}
-                </span>
-              )}
             </div>
             
             <div className="book-card-info">
+              {currentBook?.isFallbackCategory && (
+                <div style={{ backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', fontSize: '0.75rem', fontWeight: 600, padding: '4px 10px', borderRadius: '12px', marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <i className="fa-solid fa-compass"></i> Recomendación de otra sección (Has completado tus preferencias)
+                </div>
+              )}
+              {currentBook && (
+                <span className={`condition-badge ${currentBook.condition.toLowerCase()}`}>
+                  Estado libro: {currentBook.condition}
+                </span>
+              )}
               <h3>{currentBook?.title || 'Descubre Libros'}</h3>
               <span className="book-author">{currentBook?.author || 'Bookmachs'}</span>
               <p className={`book-desc ${isDescriptionExpanded ? 'expanded' : ''}`}>
@@ -433,43 +484,47 @@ export const SwipePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="swipe-controls">
-            <button 
-              className="control-btn dislike-btn" 
-              onClick={() => triggerSwipe('left')}
-              disabled={limitReached}
-              title="No me interesa"
-            >
-              <i className="fa-solid fa-xmark"></i>
-            </button>
-            <button 
-              className="control-btn like-btn" 
-              onClick={() => triggerSwipe('right')}
-              disabled={limitReached}
-              title="Me interesa"
-            >
-              <i className="fa-solid fa-heart"></i>
-            </button>
-          </div>
+          {!limitReached && (
+            <>
+              <div className="swipe-controls">
+                <button 
+                  className="control-btn dislike-btn" 
+                  onClick={() => triggerSwipe('left')}
+                  disabled={limitReached}
+                  title="No me interesa"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+                <button 
+                  className="control-btn like-btn" 
+                  onClick={() => triggerSwipe('right')}
+                  disabled={limitReached}
+                  title="Me interesa"
+                >
+                  <i className="fa-solid fa-heart"></i>
+                </button>
+              </div>
 
-          <div 
-            onClick={() => navigate('/libreta')}
-            className="notebook-banner-card"
-          >
-            <span className="notebook-banner-icon"><i className="fa-solid fa-book-bookmark icon-neon"></i></span>
-            <div className="notebook-banner-body">
-              <div className="notebook-banner-title">Intercambiálos en tu libreta</div>
-              <div className="notebook-banner-subtitle">Tus likes se guardan automáticamente</div>
-            </div>
-          </div>
+              <div 
+                onClick={() => navigate('/libreta')}
+                className="notebook-banner-card"
+              >
+                <span className="notebook-banner-icon"><i className="fa-solid fa-book-bookmark icon-neon"></i></span>
+                <div className="notebook-banner-body">
+                  <div className="notebook-banner-title">Intercambiálos en tu libreta</div>
+                  <div className="notebook-banner-subtitle">Tus likes se guardan automáticamente</div>
+                </div>
+              </div>
+            </>
+          )}
 
           {limitReached && (
             <div className="card-blur-overlay">
               <span className="lock-icon"><i className="fa-solid fa-lock"></i></span>
-              <h3>Límite mensual alcanzado</h3>
-              <p>Has consumido tu cuota mensual de swipes en el plan gratuito (1° al último día del mes). Tu saldo se renovará el 1° del próximo mes o pásate a Premium hoy mismo.</p>
+              <h3>Límite de swipes alcanzado</h3>
+              <p>Has consumido tu cuota de swipes del plan gratuito. Pásate a un plan Premium hoy mismo para continuar explorando sin límites.</p>
               <button className="upsell-trigger-btn font-heading" onClick={() => navigate('/planes')}>
-                Ver Planes Premium <i className="fa-solid fa-bolt"></i>
+                <i className="fa-solid fa-crown icon-gold"></i> Ver Planes Premium <i className="fa-solid fa-arrow-right-long"></i>
               </button>
             </div>
           )}
@@ -486,6 +541,38 @@ export const SwipePage: React.FC = () => {
           setMatchOpen(false);
         }}
       />
+
+      {showGuestLimitModal && (
+        <div className="modal-overlay">
+          <div className="modal-card match-modal-card text-center" style={{ maxWidth: '460px', padding: '2.2rem 1.8rem', borderRadius: '20px' }}>
+            <div style={{ fontSize: '3.2rem', marginBottom: '0.8rem', color: '#e67e22' }}>
+              <i className="fa-solid fa-fire-flame-curved"></i>
+            </div>
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 700, marginBottom: '0.8rem', color: '#2c3e50' }}>
+              ¡Alcanzaste el límite de 5 swipes como invitado!
+            </h2>
+            <p style={{ color: '#555', fontSize: '0.95rem', marginBottom: '1.6rem', lineHeight: '1.5' }}>
+              Has explorado 5 libros como invitado. Inicia sesión o regístrate en Bookmachs para conservar los libros que te gustaron en tu libreta y recibir propuestas de intercambio.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button 
+                className="pay-fee-btn font-heading" 
+                onClick={() => navigate('/auth')}
+                style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+              >
+                🚀 Registrarme / Iniciar Sesión
+              </button>
+              <button 
+                className="cancel-btn" 
+                onClick={() => setShowGuestLimitModal(false)}
+                style={{ width: '100%', padding: '10px', background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.9rem' }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

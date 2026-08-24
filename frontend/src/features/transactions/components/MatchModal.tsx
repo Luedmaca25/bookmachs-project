@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { apiClient } from '../../../lib/apiClient';
+import { getFileUrl } from '../../../lib/formatters';
 
 interface BookItem {
   id: string;
@@ -58,21 +59,16 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   // Carga del inventario del usuario para mostrar el libro entregado
   const [myBooks, setMyBooks] = useState<MyOfferedBook[]>([]);
   const [selectedOfferedBookId, setSelectedOfferedBookId] = useState<string>('');
+  
+  // Algoritmo de seguridad y tarifado dinámico al cambiar libros de picking
+  const [baseFee, setBaseFee] = useState<number | null>(null);
+  const [bookFeeMap, setBookFeeMap] = useState<Record<string, number>>({});
 
-  // Bloquear scroll de html y body mientras el modal de propuesta esté abierto
   useEffect(() => {
-    if (isOpen) {
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
+    if (!isOpen) {
+      setBaseFee(null);
+      setBookFeeMap({});
     }
-
-    return () => {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -102,6 +98,11 @@ export const MatchModal: React.FC<MatchModalProps> = ({
       try {
         const details = await apiClient.get<FeeEstimation>(`/transactions/estimate-fee/${book.id}`);
         setFeeDetails(details);
+        setBaseFee(details.finalFee);
+        if (myBooks.length > 0) {
+          const initialId = selectedOfferedBookId || myBooks[0].id;
+          setBookFeeMap({ [initialId]: details.finalFee });
+        }
       } catch (err: any) {
         console.error('Error fetching fee details:', err);
         setError('No se pudo cargar la estimación del costo de intercambio.');
@@ -111,7 +112,41 @@ export const MatchModal: React.FC<MatchModalProps> = ({
     };
 
     fetchFee();
-  }, [isOpen, book]);
+  }, [isOpen, book, myBooks]);
+
+  const handleBookChange = (newBookId: string) => {
+    setSelectedOfferedBookId(newBookId);
+
+    if (baseFee === null || !feeDetails) return;
+
+    // 1. Si el libro seleccionado ya fue elegido previamente en esta sesión de propuesta, revertir a la tarifa asignada inicialmente para dicho libro
+    if (bookFeeMap[newBookId] !== undefined) {
+      const existingFee = bookFeeMap[newBookId];
+      setFeeDetails((prev) => prev ? { ...prev, finalFee: existingFee } : null);
+      return;
+    }
+
+    // 2. Si es un nuevo libro distinto no seleccionado previamente en la propuesta:
+    const distinctCount = Object.keys(bookFeeMap).length; // 1 para el 2do libro, 2 para el 3ro...
+    
+    let multiplier = 1.0;
+    if (distinctCount < 7) {
+      // Incremento del 15% acumulativo por cada nuevo libro distinto seleccionado (hasta el libro 7)
+      multiplier = Math.pow(1.15, distinctCount);
+    } else {
+      // A partir del libro 8 en adelante, regla de variación aleatoria/determinista superior a la regla del 7mo libro
+      multiplier = Math.pow(1.15, 7) + ((distinctCount % 5) + 1) * 0.05;
+    }
+
+    const calculatedFee = Math.round(baseFee * multiplier);
+
+    setBookFeeMap((prev) => ({
+      ...prev,
+      [newBookId]: calculatedFee
+    }));
+
+    setFeeDetails((prev) => prev ? { ...prev, finalFee: calculatedFee } : null);
+  };
 
   if (!isOpen || !book) return null;
 
@@ -159,7 +194,11 @@ export const MatchModal: React.FC<MatchModalProps> = ({
             <span className="swap-card-tag receive">Libro que recibes</span>
             <div className="swap-cover-frame swap-cover-frame-fixed">
               {book.imageUrl ? (
-                <img src={book.imageUrl} alt={book.title} />
+                <img 
+                  src={getFileUrl(book.imageUrl)} 
+                  alt={book.title} 
+                  onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300'; }}
+                />
               ) : (
                 <div className="book-placeholder-icon">📖</div>
               )}
@@ -190,7 +229,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                   <div className="mb-04">
                     <select 
                       value={selectedOfferedBookId} 
-                      onChange={(e) => setSelectedOfferedBookId(e.target.value)}
+                      onChange={(e) => handleBookChange(e.target.value)}
                       className="select-offered-modal"
                     >
                       {myBooks.map((b) => (
@@ -204,9 +243,9 @@ export const MatchModal: React.FC<MatchModalProps> = ({
                   <div>
                     <div className="swap-cover-frame swap-cover-frame-fixed">
                       <img 
-                        src={currentOfferedBook.imageUrl} 
+                        src={getFileUrl(currentOfferedBook.imageUrl)} 
                         alt={currentOfferedBook.title}
-                        onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=150'; }} 
+                        onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300'; }} 
                       />
                     </div>
                     <div className="swap-book-title swap-book-title-sm">{currentOfferedBook.title}</div>

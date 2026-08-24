@@ -52,6 +52,7 @@ public class BookDto
     public decimal BaseValue { get; set; }
     public bool IsInternalStock { get; set; }
     public bool IsAvailable { get; set; }
+    public bool IsFallbackCategory { get; set; }
     public Guid? OwnerId { get; set; }
     public DateTime CreatedAt { get; set; }
 }
@@ -189,6 +190,7 @@ public class MatchTransactionDto
     public string LogisticsStatus { get; set; } = "Pending";
     public string? LogisticsMethod { get; set; }
     public bool IsCrossBorder { get; set; }
+    public bool IsAvailable { get; set; } = true;
     public DateTime CreatedAt { get; set; }
 }
 

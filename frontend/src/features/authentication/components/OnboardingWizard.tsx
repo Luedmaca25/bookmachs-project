@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../../../lib/apiClient';
-import { formatRut, formatPhoneByCountry, getPhonePlaceholder } from '../../../lib/formatters';
+import { formatRut, formatPhoneByCountry, getPhonePlaceholder, getPreferenceTagIcon } from '../../../lib/formatters';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -224,7 +224,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                       className={`wizard-tag-item ${isSelected ? 'selected' : ''}`}
                       onClick={() => handleTagToggle(tag.name)}
                     >
-                      <span className="tag-icon">{isSelected ? <i className="fa-solid fa-check"></i> : <i className="fa-solid fa-book"></i>}</span>
+                      <span className="tag-icon">{isSelected ? <i className="fa-solid fa-check"></i> : <i className={`fa-solid ${getPreferenceTagIcon(tag.name)}`}></i>}</span>
                       <span className="tag-label">{tag.name}</span>
                     </button>
                   );

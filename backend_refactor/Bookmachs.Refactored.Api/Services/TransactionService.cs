@@ -66,6 +66,7 @@ public class TransactionService : ITransactionService
             LogisticsStatus = t.LogisticsStatus,
             LogisticsMethod = t.LogisticsMethod,
             IsCrossBorder = t.IsCrossBorder,
+            IsAvailable = t.Book != null && t.Book.IsAvailable,
             CreatedAt = t.CreatedAt
         }).ToList();
     }
@@ -166,7 +167,9 @@ public class TransactionService : ITransactionService
 
     public async Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, CancellationToken cancellationToken = default)
     {
-        var transaction = await _dbContext.MatchTransactions.FirstOrDefaultAsync(t => t.Id == matchTransactionId, cancellationToken);
+        var transaction = await _dbContext.MatchTransactions
+            .Include(t => t.Book)
+            .FirstOrDefaultAsync(t => t.Id == matchTransactionId, cancellationToken);
         if (transaction == null)
         {
             throw new KeyNotFoundException($"La transacción de Match con ID {matchTransactionId} no existe.");
@@ -175,6 +178,16 @@ public class TransactionService : ITransactionService
         if (transaction.RequesterUserId != requesterUserId)
         {
             throw new UnauthorizedAccessException("No tienes permisos para pagar esta transacción.");
+        }
+
+        // Validar si el libro objetivo ya no está disponible
+        if (transaction.Book != null && !transaction.Book.IsAvailable)
+        {
+            return new WebpayStartResultDto
+            {
+                Success = false,
+                Message = "⚠️ Este libro ya no está disponible para intercambio porque fue tomado o reservado por otro usuario."
+            };
         }
 
         // Validar que el usuario tenga al menos un libro cargado en su libreta para ofrecer a cambio

@@ -98,6 +98,42 @@ public class LocalFileStorageService : IFileStorageService
         return files.FirstOrDefault();
     }
 
+    public async Task<string> SaveSecureUserBookImageAsync(Guid userId, Stream fileStream, string fileName)
+    {
+        // 1. Directorio privado en App_Data/books/{userId}
+        var appDataFolder = Path.Combine(_environment.ContentRootPath, "App_Data", "books", userId.ToString());
+
+        if (!Directory.Exists(appDataFolder))
+        {
+            Directory.CreateDirectory(appDataFolder);
+        }
+        // NOTA: Requisito explícito: NO eliminar imágenes previas del inventario de libros del usuario
+
+        // 2. Generar nombre de archivo único
+        var ext = Path.GetExtension(fileName);
+        if (string.IsNullOrEmpty(ext)) ext = ".png";
+        var uniqueFileName = $"{Guid.NewGuid()}{ext}";
+        var filePath = Path.Combine(appDataFolder, uniqueFileName);
+
+        using (var outputStream = new FileStream(filePath, FileMode.Create))
+        {
+            await fileStream.CopyToAsync(outputStream);
+        }
+
+        // Retorna la URL del controlador seguro que transmite la portada del libro
+        return $"/books/cover/{userId}/{uniqueFileName}";
+    }
+
+    public string? GetSecureUserBookImagePath(Guid userId, string fileName)
+    {
+        var filePath = Path.Combine(_environment.ContentRootPath, "App_Data", "books", userId.ToString(), fileName);
+        if (File.Exists(filePath))
+        {
+            return filePath;
+        }
+        return null;
+    }
+
     public void DeleteFile(string fileUrl)
     {
         if (string.IsNullOrEmpty(fileUrl)) return;
