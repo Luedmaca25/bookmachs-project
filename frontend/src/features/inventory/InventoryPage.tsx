@@ -231,7 +231,7 @@ export const InventoryPage: React.FC = () => {
             </div>
           ) : (
             <div className="matches-libreta-list">
-              {likedMatches.map((item, index) => (
+              {likedMatches.map((item) => (
                 <div 
                   key={item.id} 
                   className="libreta-match-card"
@@ -257,7 +257,7 @@ export const InventoryPage: React.FC = () => {
                       
                       <div className="match-card-meta">
                         <span className="match-card-match-count">
-                          <i className="fa-solid fa-arrows-rotate"></i> Match con {offeredBooks.length > 0 ? (index % 2 === 0 ? '2 tuyos' : '1 tuyo') : '0 libros tuyos'}
+                          <i className="fa-solid fa-arrows-rotate"></i> Match con {offeredBooks.length === 1 ? '1 tuyo' : `${offeredBooks.length} tuyos`}
                         </span>
                         <span>•</span>
                         <span className="match-card-fee">
