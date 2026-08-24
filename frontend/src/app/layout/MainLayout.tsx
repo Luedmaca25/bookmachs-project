@@ -74,7 +74,7 @@ export const MainLayout: React.FC = () => {
       <header className="app-header">
         <div className="header-logo">
           <Link to="/" className="header-logo-link">
-            <img src="/logo-verde.png" alt="Bookmachs" className="brand-logo-img" />
+            <img src="/logo-verde-alt.png" alt="Bookmachs" className="brand-logo-img" />
           </Link>
         </div>
 
@@ -134,7 +134,7 @@ export const MainLayout: React.FC = () => {
           <div className="offcanvas-panel" onClick={(e) => e.stopPropagation()}>
             <div className="offcanvas-header">
               <Link to="/" className="header-logo-link">
-                <img src="/logo-verde.png" alt="Bookmachs" className="brand-logo-img" />
+                <img src="/logo-verde-alt.png" alt="Bookmachs" className="brand-logo-img" />
               </Link>
               <button className="offcanvas-close-btn" onClick={() => setMobileMenuOpen(false)}>
                 <i className="fa-solid fa-xmark"></i>
