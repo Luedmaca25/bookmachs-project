@@ -49,26 +49,52 @@ public class TransactionService : ITransactionService
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return transactions.Select(t => new MatchTransactionDto
+        var resultList = new List<MatchTransactionDto>();
+
+        foreach (var t in transactions)
         {
-            Id = t.Id,
-            RequesterUserId = t.RequesterUserId,
-            RequesterName = t.RequesterUser?.Name ?? "Desconocido",
-            BookId = t.BookId,
-            BookTitle = t.Book?.Title ?? "Libro no disponible",
-            BookAuthor = t.Book?.Author ?? "Desconocido",
-            BookImageUrl = t.Book?.ImageUrl ?? string.Empty,
-            BookCondition = t.Book?.Condition ?? "Good",
-            OwnerUserId = t.OwnerUserId,
-            OwnerName = t.Book?.IsInternalStock == true ? "Bookmachs Store (Stock Interno)" : (t.OwnerUser?.Name ?? "Desconocido"),
-            FeeAmount = t.FeeAmount,
-            PaymentStatus = t.PaymentStatus,
-            LogisticsStatus = t.LogisticsStatus,
-            LogisticsMethod = t.LogisticsMethod,
-            IsCrossBorder = t.IsCrossBorder,
-            IsAvailable = t.Book != null && t.Book.IsAvailable,
-            CreatedAt = t.CreatedAt
-        }).ToList();
+            bool isAvailable = false;
+            if (t.Book != null)
+            {
+                if (t.Book.IsInternalStock)
+                {
+                    if (!t.Book.IsAvailable)
+                    {
+                        t.Book.IsAvailable = true;
+                        _dbContext.Books.Update(t.Book);
+                        await _dbContext.SaveChangesAsync(cancellationToken);
+                    }
+                    isAvailable = true;
+                }
+                else
+                {
+                    isAvailable = t.Book.IsAvailable || t.PaymentStatus == "Pending";
+                }
+            }
+
+            resultList.Add(new MatchTransactionDto
+            {
+                Id = t.Id,
+                RequesterUserId = t.RequesterUserId,
+                RequesterName = t.RequesterUser?.Name ?? "Desconocido",
+                BookId = t.BookId,
+                BookTitle = t.Book?.Title ?? "Libro no disponible",
+                BookAuthor = t.Book?.Author ?? "Desconocido",
+                BookImageUrl = t.Book?.ImageUrl ?? string.Empty,
+                BookCondition = t.Book?.Condition ?? "Bueno",
+                OwnerUserId = t.OwnerUserId,
+                OwnerName = t.Book?.IsInternalStock == true ? "Bookmachs Store (Stock Interno)" : (t.OwnerUser?.Name ?? "Desconocido"),
+                FeeAmount = t.FeeAmount,
+                PaymentStatus = t.PaymentStatus,
+                LogisticsStatus = t.LogisticsStatus,
+                LogisticsMethod = t.LogisticsMethod,
+                IsCrossBorder = t.IsCrossBorder,
+                IsAvailable = isAvailable,
+                CreatedAt = t.CreatedAt
+            });
+        }
+
+        return resultList;
     }
 
     public async Task<bool> DeleteMatchAsync(Guid matchTransactionId, Guid userId, CancellationToken cancellationToken = default)
@@ -181,13 +207,16 @@ public class TransactionService : ITransactionService
         }
 
         // Validar si el libro objetivo ya no está disponible
-        if (transaction.Book != null && !transaction.Book.IsAvailable)
+        if (transaction.Book != null)
         {
-            return new WebpayStartResultDto
+            if (!transaction.Book.IsInternalStock && !transaction.Book.IsAvailable && transaction.Book.OwnerId != requesterUserId)
             {
-                Success = false,
-                Message = "⚠️ Este libro ya no está disponible para intercambio porque fue tomado o reservado por otro usuario."
-            };
+                return new WebpayStartResultDto
+                {
+                    Success = false,
+                    Message = "⚠️ Este libro ya no está disponible para intercambio porque fue tomado o reservado por otro usuario."
+                };
+            }
         }
 
         // Validar que el usuario tenga al menos un libro cargado en su libreta para ofrecer a cambio

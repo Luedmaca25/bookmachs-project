@@ -432,9 +432,6 @@ public class BookService : IBookService
                     };
 
                     await _dbContext.MatchTransactions.AddAsync(transaction, cancellationToken);
-                    book.IsAvailable = false;
-                    _dbContext.Books.Update(book);
-
                     matchTransactionId = transaction.Id;
                 }
             }
