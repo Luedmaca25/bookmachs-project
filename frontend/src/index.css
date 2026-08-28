@@ -621,16 +621,87 @@ p {
   animation: fadeIn var(--transition-normal);
 }
 
+.guest-hero-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0;
+  max-width: 750px;
+  margin: 0 auto 0.5rem auto;
+}
+
+.guest-hero-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.7rem, 4.5vw, 2.4rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.15;
+  margin: 0 0 0.4rem 0;
+  letter-spacing: -0.01em;
+}
+
+.guest-hero-title-highlight {
+  display: block;
+  font-size: clamp(2.7rem, 7.5vw, 3.8rem);
+  font-weight: 800;
+  color: var(--accent-primary);
+  line-height: 1.05;
+  margin-top: 0.15rem;
+}
+
+.guest-hero-subtitle {
+  font-size: clamp(0.92rem, 2.2vw, 1.1rem);
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 12px 0 1.2rem 0;
+  max-width: 580px;
+}
+
+.guest-flags-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+}
+
+.guest-flag-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.guest-flag-img {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.18);
+}
+
+.guest-flag-dot {
+  color: var(--accent-primary);
+  font-size: 0.75rem;
+  margin: 0 0.1rem;
+  opacity: 0.7;
+}
+
 .swipe-header {
   text-align: center;
   width: 100%;
 }
-
+/* 
 .swipe-header h1 {
   font-size: 1.5rem;
   margin-bottom: 0.25rem;
   color: var(--accent-primary);
-}
+} */
 
 .swipe-header p {
   margin: 0 auto;
@@ -1763,6 +1834,9 @@ p {
   justify-content: center;
   position: relative;
   overflow: hidden;
+  background-image: url(/background.png);
+  background-position: center;
+  background-size: cover;
 }
 
 .swipe-card-img {
@@ -3306,6 +3380,7 @@ p {
   flex-direction: column;
   gap: 0.85rem;
   flex-grow: 1;
+  width: 100%;
 }
 
 .plan-features li {
@@ -5668,6 +5743,7 @@ p {
   font-size: 0.85rem;
   color: var(--text-secondary);
   line-height: 1.4;
+  margin-bottom: 0;
 }
 
 .radio-card-expand {
@@ -8040,6 +8116,15 @@ p {
   .radio-card-title,
   .radio-card-desc {
     word-break: break-word !important;
+  }
+
+  .radio-card-title {
+    align-items: start;
+    justify-content: start;
+  }
+
+  .radio-card-title i {
+    padding-top: 4px;
   }
 
   .fee-step-grid {

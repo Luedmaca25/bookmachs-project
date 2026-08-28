@@ -21,6 +21,8 @@ public interface ITransactionService
     Task<WebpayConfirmResultDto> WebpayConfirmAsync(string token, CancellationToken cancellationToken = default);
     Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, CancellationToken cancellationToken = default);
     Task<WebhookProcessResultDto> ProcessMercadoPagoWebhookAsync(string type, string action, string dataId, CancellationToken cancellationToken = default);
+    Task<LogisticsResultDto> ConfirmAdminBookReceiptAsync(Guid matchTransactionId, Guid adminUserId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<MatchTransactionDto>> GetPendingAdminLogisticsAsync(CancellationToken cancellationToken = default);
 }
 
 public class TransactionService : ITransactionService
@@ -146,6 +148,13 @@ public class TransactionService : ITransactionService
 
         finalFee = Math.Round(finalFee, 2);
         rawFee = Math.Round(rawFee, 2);
+
+        var existingTx = await _dbContext.MatchTransactions
+            .FirstOrDefaultAsync(t => t.BookId == bookId && t.RequesterUserId == requesterUserId, cancellationToken);
+        if (existingTx != null && existingTx.FeeAmount > 0)
+        {
+            finalFee = existingTx.FeeAmount;
+        }
 
         bool isCrossBorder = false;
         string ownerCountry = string.Empty;
@@ -306,6 +315,16 @@ public class TransactionService : ITransactionService
                 transaction.PaymentStatus = "Hold";
                 transaction.StatusUpdatedAt = DateTime.UtcNow;
 
+                var method = (transaction.LogisticsMethod ?? "Presencial").ToLowerInvariant();
+                if (method == "envio" || method == "bodega" || method == "p2p")
+                {
+                    transaction.LogisticsStatus = "Pendiente Comprobante";
+                }
+                else
+                {
+                    transaction.LogisticsStatus = "En Espera";
+                }
+
                 _dbContext.MatchTransactions.Update(transaction);
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -408,50 +427,97 @@ public class TransactionService : ITransactionService
         }
 
         transaction.LogisticsMethod = logisticsMethod;
-        transaction.LogisticsStatus = (method == "presencial" || method == "donacion") ? "Delivered" : "InTransit";
+        transaction.LogisticsStatus = "En Espera";
         transaction.StatusUpdatedAt = Bookmachs.Refactored.Api.Helpers.DateTimeHelper.GetSantiagoTime();
 
         _dbContext.MatchTransactions.Update(transaction);
-
-        if (transaction.LogisticsStatus == "Delivered" && transaction.IsPublic)
-        {
-            var requester = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == transaction.RequesterUserId, cancellationToken);
-            var owner = transaction.OwnerUserId.HasValue 
-                ? await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == transaction.OwnerUserId.Value, cancellationToken) 
-                : null;
-            var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == transaction.BookId, cancellationToken);
-
-            var requesterName = requester?.Name ?? "Lector Anónimo";
-            var ownerName = owner?.Name ?? (string.Equals(transaction.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase) 
-                ? "Bookmachs (Donación)" 
-                : "Bookmachs");
-
-            var timelineEvent = new TimelineEvent
-            {
-                Id = Guid.NewGuid(),
-                MatchTransactionId = transaction.Id,
-                EventType = string.Equals(transaction.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase) ? "Donation" : "Exchange",
-                Title = string.Equals(transaction.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase) 
-                    ? "¡Donación completada exitosamente!" 
-                    : "¡Libro intercambiado con éxito!",
-                Description = string.Equals(transaction.LogisticsMethod, "Donacion", StringComparison.OrdinalIgnoreCase)
-                    ? $"{requesterName} completó la donación del libro '{book?.Title}'."
-                    : $"{requesterName} recibió '{book?.Title}' de {ownerName}.",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _dbContext.TimelineEvents.AddAsync(timelineEvent, cancellationToken);
-        }
-
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return new LogisticsResultDto
         {
             Success = true,
             LogisticsStatus = transaction.LogisticsStatus,
-            LogisticsMethod = transaction.LogisticsMethod,
-            Message = "Método de entrega e información logística actualizada con éxito."
+            Message = "Comprobante e información logística registrada exitosamente. El intercambio se encuentra en estatus 'En Espera' hasta que un administrador confirme haber recibido el libro físico."
         };
+    }
+
+    public async Task<LogisticsResultDto> ConfirmAdminBookReceiptAsync(Guid matchTransactionId, Guid adminUserId, CancellationToken cancellationToken = default)
+    {
+        var adminUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == adminUserId, cancellationToken);
+        if (adminUser == null || adminUser.Role != "Admin")
+        {
+            throw new UnauthorizedAccessException("Solamente los administradores de Bookmachs pueden confirmar la recepción del libro.");
+        }
+
+        var transaction = await _dbContext.MatchTransactions
+            .Include(t => t.Book)
+            .FirstOrDefaultAsync(t => t.Id == matchTransactionId, cancellationToken);
+
+        if (transaction == null)
+        {
+            throw new KeyNotFoundException($"Transacción #{matchTransactionId} no encontrada.");
+        }
+
+        transaction.LogisticsStatus = "Delivered";
+        transaction.StatusUpdatedAt = DateTime.UtcNow;
+
+        _dbContext.MatchTransactions.Update(transaction);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        if (transaction.IsPublic && transaction.Book != null)
+        {
+            var requester = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == transaction.RequesterUserId, cancellationToken);
+            var timelineEvent = new TimelineEvent
+            {
+                Id = Guid.NewGuid(),
+                MatchTransactionId = transaction.Id,
+                EventType = "Exchange",
+                Title = "¡Intercambio completado!",
+                Description = $"¡Intercambio completado exitosamente! {requester?.Name ?? "Un lector"} recibió '{transaction.Book.Title}'.",
+                CreatedAt = DateTime.UtcNow
+            };
+            await _dbContext.TimelineEvents.AddAsync(timelineEvent, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return new LogisticsResultDto
+        {
+            Success = true,
+            LogisticsStatus = "Delivered",
+            Message = "Recepción del libro confirmada exitosamente por el administrador."
+        };
+    }
+
+    public async Task<IEnumerable<MatchTransactionDto>> GetPendingAdminLogisticsAsync(CancellationToken cancellationToken = default)
+    {
+        var transactions = await _dbContext.MatchTransactions
+            .Where(t => t.LogisticsStatus == "En Espera" || t.LogisticsStatus == "Pendiente Comprobante" || t.LogisticsStatus == "InTransit")
+            .Include(t => t.Book)
+            .Include(t => t.RequesterUser)
+            .Include(t => t.OwnerUser)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return transactions.Select(t => new MatchTransactionDto
+        {
+            Id = t.Id,
+            RequesterUserId = t.RequesterUserId,
+            RequesterName = t.RequesterUser?.Name ?? "Desconocido",
+            BookId = t.BookId,
+            BookTitle = t.Book?.Title ?? "Libro no disponible",
+            BookAuthor = t.Book?.Author ?? "Desconocido",
+            BookImageUrl = t.Book?.ImageUrl ?? string.Empty,
+            BookCondition = t.Book?.Condition ?? "Bueno",
+            OwnerUserId = t.OwnerUserId,
+            OwnerName = t.Book?.IsInternalStock == true ? "Bookmachs Store (Stock Interno)" : (t.OwnerUser?.Name ?? "Desconocido"),
+            FeeAmount = t.FeeAmount,
+            PaymentStatus = t.PaymentStatus,
+            LogisticsStatus = t.LogisticsStatus,
+            LogisticsMethod = t.LogisticsMethod,
+            IsCrossBorder = t.IsCrossBorder,
+            IsAvailable = t.Book?.IsAvailable ?? false,
+            CreatedAt = t.CreatedAt
+        });
     }
 
     public Task<WebhookProcessResultDto> ProcessMercadoPagoWebhookAsync(string type, string action, string dataId, CancellationToken cancellationToken = default)

@@ -62,8 +62,8 @@ export const TransactionsPage: React.FC = () => {
 
   // Selección Logística de la Pantalla 11 (Radio Cards)
   const [selectedMethod, setSelectedMethod] = useState<'Donacion' | 'Presencial' | 'Envio'>('Presencial');
-  const [trackingNumber, setTrackingNumber] = useState<string>('');
-  const [evidencePhoto, setEvidencePhoto] = useState<string>('');
+  // const [trackingNumber, setTrackingNumber] = useState<string>('');
+  // const [evidencePhoto, setEvidencePhoto] = useState<string>('');
 
   // Redirección de Webpay
   const [webpayRedirecting, setWebpayRedirecting] = useState(false);
@@ -217,6 +217,7 @@ export const TransactionsPage: React.FC = () => {
     }
   };
 
+  /*
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -227,6 +228,7 @@ export const TransactionsPage: React.FC = () => {
       reader.readAsDataURL(file);
     }
   };
+  */
 
   const currentOfferedBook = myOfferedBooks.find((b) => b.id === selectedOfferedBookId) || myOfferedBooks[0];
 
@@ -423,7 +425,7 @@ export const TransactionsPage: React.FC = () => {
                 </div>
 
                 <div className="logistics-radio-grid">
-                  {/* Opción 1: Donación Comunitaria */}
+                  {/* Opción 1: Donación Comunitaria (Desactivada temporalmente por requerimiento)
                   <div 
                     className={`logistics-radio-card ${selectedMethod === 'Donacion' ? 'selected' : ''}`}
                     onClick={() => setSelectedMethod('Donacion')}
@@ -473,6 +475,7 @@ export const TransactionsPage: React.FC = () => {
                       )}
                     </div>
                   </div>
+                  */}
 
                   {/* Opción 2: Entrega Presencial Santiago Chile */}
                   <div 
@@ -483,7 +486,7 @@ export const TransactionsPage: React.FC = () => {
                     <div className="radio-card-content">
                       <div className="radio-card-header">
                         <span className="radio-card-title">
-                          <i className="fa-solid fa-store"></i> 2. Entrega Presencial en Local Físico
+                          <i className="fa-solid fa-store"></i> 1. Entrega Presencial en Local Físico
                         </span>
                         <span className="radio-card-badge badge-free">Sin costo extra</span>
                       </div>
@@ -502,28 +505,13 @@ export const TransactionsPage: React.FC = () => {
                     <div className="radio-card-content">
                       <div className="radio-card-header">
                         <span className="radio-card-title">
-                          <i className="fa-solid fa-truck-fast"></i> 3. Envío por Encomienda a Local Físico
+                          <i className="fa-solid fa-truck-fast"></i> 2. Envío por Encomienda a Local Físico
                         </span>
                         <span className="radio-card-badge badge-courier">Pagas envío + comprobante</span>
                       </div>
                       <p className="radio-card-desc">
-                        Envía tu libro a la dirección física de Bookmachs en <strong>Patronato 447, Recoleta, Santiago, Chile</strong> vía Starken o Chilexpress. Debes asumir el costo del envío y subir tu comprobante (n° voucher o foto).
+                        Envía tu libro a la dirección física de Bookmachs en <strong>Patronato 447, Recoleta, Santiago, Chile</strong> vía Starken o Chilexpress. Podrás subir tu comprobante de envío o voucher una vez realizado el pago.
                       </p>
-
-                      {selectedMethod === 'Envio' && (
-                        <div className="radio-card-expand">
-                          <label className="evidence-label">
-                            N° de Comprobante / Tracking Voucher:
-                          </label>
-                          <input 
-                            type="text" 
-                            placeholder="Ej. STAR982374982" 
-                            value={trackingNumber} 
-                            onChange={(e) => setTrackingNumber(e.target.value)}
-                            className="tracking-input"
-                          />
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -553,9 +541,9 @@ export const TransactionsPage: React.FC = () => {
               <div>
                 <div className="checkout-step-header">
                   <h3 className="checkout-step-title">Paso 3: Pago Seguro del Fee de Intercambio</h3>
-                  <p className="checkout-step-subtitle">
+                  {/* <p className="checkout-step-subtitle">
                     La tarifa del servicio calculada por la IA se retiene temporalmente en modo Hold y solo se liquida al concretar la entrega.
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="fee-step-grid">
@@ -723,10 +711,26 @@ export const TransactionsPage: React.FC = () => {
               </div>
 
               <div className="match-card-actions">
-                <div className="fee-amount-display">
-                  <span>Fee de Intercambio:</span>
-                  <strong>${Math.round(tx.feeAmount).toLocaleString('es-CL')} CLP</strong>
-                </div>
+                {hasOfferedBooks ? (
+                  <div className="fee-amount-display">
+                    <span>Fee de Intercambio:</span>
+                    <strong>${Math.round(tx.feeAmount).toLocaleString('es-CL')} CLP</strong>
+                  </div>
+                ) : (
+                  <div className="fee-amount-display fee-not-calculated" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '240px', lineHeight: '1.3' }}>
+                      Sube un libro a Tu Libreta para calcular la tarifa de fee
+                    </span>
+                    <button
+                      type="button"
+                      className="pay-fee-btn font-heading"
+                      onClick={() => navigate('/libreta')}
+                      style={{ fontSize: '0.82rem', padding: '0.4rem 0.8rem' }}
+                    >
+                      ＋ Cargar mi libro en Tu Libreta
+                    </button>
+                  </div>
+                )}
 
                 {tx.isAvailable === false && tx.paymentStatus === 'Pending' ? (
                   <button
@@ -738,7 +742,7 @@ export const TransactionsPage: React.FC = () => {
                     ⚠️ No Disponible
                   </button>
                 ) : !hasOfferedBooks ? (
-                  <span></span>
+                  null
                 ) : tx.paymentStatus === 'Pending' || tx.paymentStatus === 'Hold' ? (
                   <button
                     className="pay-fee-btn font-heading"

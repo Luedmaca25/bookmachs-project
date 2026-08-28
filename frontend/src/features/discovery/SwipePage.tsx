@@ -6,6 +6,15 @@ import { OnboardingWizard } from '../authentication/components/OnboardingWizard'
 import { MatchModal } from '../transactions/components/MatchModal';
 import { apiClient } from '../../lib/apiClient';
 
+const COUNTRIES_LIST = [
+  { name: 'Chile', flag: '/flags/chile.png' },
+  { name: 'Argentina', flag: '/flags/argentina.png' },
+  { name: 'Perú', flag: '/flags/peru.png' },
+  { name: 'México', flag: '/flags/mexico.png' },
+  { name: 'Ecuador', flag: '/flags/ecuador.png' },
+  { name: 'España', flag: '/flags/espana.png' }
+];
+
 interface BookItem {
   id: string;
   title: string;
@@ -349,27 +358,41 @@ export const SwipePage: React.FC = () => {
 
   return (
     <div className="swipe-page-container">
-      <div className="swipe-header">
-        <h1>Descubrir libros</h1>
-        {isAuthenticated ? (
+      {!isAuthenticated ? (
+        <div className="guest-hero-container">
+          <h1 className="guest-hero-title">
+            ¡Intercambio de libros <br />
+            <span className="guest-hero-title-highlight">a un Mach!</span>
+          </h1>
+          <p className="guest-hero-subtitle">
+            Más de 100.000 libros para intercambiar, <br />
+            actualizados todos los días.
+          </p>
+          <div className="guest-flags-row">
+            {COUNTRIES_LIST.map((country, idx) => (
+              <React.Fragment key={country.name}>
+                <div className="guest-flag-item">
+                  <img src={country.flag} alt={country.name} className="guest-flag-img" />
+                  <span>{country.name}</span>
+                </div>
+                {idx < COUNTRIES_LIST.length - 1 && <span className="guest-flag-dot">&bull;</span>}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="swipe-header">
+          <h1 className="guest-hero-title">
+            ¡Intercambio de libros <br />
+            <span className="guest-hero-title-highlight">a un Mach!</span>
+          </h1>
           <div className="user-auth-badge">
             <span>
-              Hola, <strong>{user?.name}</strong> 
-              {/* ({user?.pais}) */}
+              Hola, <strong>{user?.name}</strong>
             </span>
-            {/* <button onClick={logout} className="logout-btn">Cerrar Sesión</button> */}
           </div>
-        ) : (
-          <div className="guest-home-banner" style={{ textAlign: 'center', marginTop: '4px' }}>
-            <p style={{ fontSize: '0.98rem', fontWeight: 600, color: '#2c3e50', margin: '0 0 6px 0', lineHeight: '1.4' }}>
-              Más de 100.000 libros para intercambiar, actualizados todos los días.
-            </p>
-            <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e67e22', margin: 0 }}>
-              Chile - Argentina - Perú - México - Ecuador - España
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Contador y Estado del Plan de Swipes */}
       {isAuthenticated && user && (

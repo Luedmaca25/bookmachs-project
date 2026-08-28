@@ -21,9 +21,20 @@ interface MasterPreferenceTag {
   createdAt: string;
 }
 
+interface PendingMatch {
+  id: string;
+  requesterName: string;
+  bookTitle: string;
+  bookAuthor: string;
+  bookImageUrl: string;
+  logisticsStatus: string;
+  logisticsMethod: string | null;
+  createdAt: string;
+}
+
 export const AdminSettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'global' | 'tags'>('global');
+  const [activeTab, setActiveTab] = useState<'global' | 'tags' | 'logistics'>('global');
   const [newTagName, setNewTagName] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -41,6 +52,22 @@ export const AdminSettingsPage: React.FC = () => {
   const { data: preferenceTags, isLoading: loadingTags, error: errorTags } = useQuery<MasterPreferenceTag[]>({
     queryKey: ['preferenceTags'],
     queryFn: () => apiClient.get<MasterPreferenceTag[]>('/masterpreferencetags'),
+  });
+
+  const { data: pendingLogistics, isLoading: loadingLogistics, error: errorLogistics } = useQuery<PendingMatch[]>({
+    queryKey: ['pendingLogistics'],
+    queryFn: () => apiClient.get<PendingMatch[]>('/transactions/pending-admin'),
+  });
+
+  const confirmReceiptMutation = useMutation({
+    mutationFn: (matchId: string) => apiClient.post<any>(`/transactions/confirm-receipt/${matchId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pendingLogistics'] });
+      showToast('Recepción del libro confirmada con éxito por el administrador.', 'success');
+    },
+    onError: (err: Error) => {
+      showToast(err.message || 'Error al confirmar la recepción.', 'error');
+    }
   });
 
   // Mutations
@@ -152,6 +179,12 @@ export const AdminSettingsPage: React.FC = () => {
           onClick={() => setActiveTab('tags')}
         >
           <i className="fa-solid fa-tags"></i> Catálogo de Gustos
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'logistics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('logistics')}
+        >
+          <i className="fa-solid fa-boxes-packing"></i> Intercambios en Espera
         </button>
       </div>
 
@@ -324,6 +357,52 @@ export const AdminSettingsPage: React.FC = () => {
                         <i className="fa-solid fa-trash-can"></i>
                       </button>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'logistics' && (
+          <div className="admin-settings-section">
+            <h3>Gestión de Recepción de Libros Físicos (Administración Bookmachs)</h3>
+            <p className="section-subtitle" style={{ marginBottom: '1.2rem' }}>
+              Revisa los intercambios que se encuentran en estatus <strong>"En Espera"</strong> por entrega presencial o envío por encomienda. Haz clic en "Confirmar Recepción" para marcar el libro como recibido.
+            </p>
+
+            {loadingLogistics ? (
+              <div className="loading-spinner">Cargando intercambios en espera...</div>
+            ) : errorLogistics ? (
+              <div className="error-box">Error al cargar intercambios: {errorLogistics.message}</div>
+            ) : !pendingLogistics || pendingLogistics.length === 0 ? (
+              <div className="warning-requirements-box" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+                ✓ No hay intercambios pendientes de confirmación en este momento.
+              </div>
+            ) : (
+              <div className="tags-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+                {pendingLogistics.map((item) => (
+                  <div key={item.id} className="tag-card active" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.6rem' }}>
+                    <div style={{ display: 'flex', gap: '0.8rem', width: '100%', alignItems: 'center' }}>
+                      <img src={item.bookImageUrl || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=100'} alt={item.bookTitle} style={{ width: '48px', height: '64px', objectFit: 'cover', borderRadius: '4px' }} />
+                      <div>
+                        <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{item.bookTitle}</strong>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Solicitado por: <strong>{item.requesterName}</strong></div>
+                        <div style={{ fontSize: '0.75rem', color: '#e67e22', fontWeight: 700, marginTop: '2px' }}>
+                          Estatus: {item.logisticsStatus} ({item.logisticsMethod || 'Presencial'})
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={confirmReceiptMutation.isPending}
+                      onClick={() => confirmReceiptMutation.mutate(item.id)}
+                      className="checkout-proceed-btn font-heading btn-accept-checkout"
+                      style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem', marginTop: '0.2rem' }}
+                    >
+                      {confirmReceiptMutation.isPending ? 'Confirmando...' : '✓ Confirmar Recepción de Libro'}
+                    </button>
                   </div>
                 ))}
               </div>

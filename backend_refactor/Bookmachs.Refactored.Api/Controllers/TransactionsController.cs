@@ -269,6 +269,46 @@ public class TransactionsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("confirm-receipt/{matchTransactionId}")]
+    public async Task<ActionResult<LogisticsResultDto>> ConfirmAdminReceipt(Guid matchTransactionId)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var adminUserId))
+        {
+            return Unauthorized("Administrador no identificado.");
+        }
+
+        try
+        {
+            var result = await _transactionService.ConfirmAdminBookReceiptAsync(matchTransactionId, adminUserId);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("pending-admin")]
+    public async Task<ActionResult<IEnumerable<MatchTransactionDto>>> GetPendingAdminLogistics()
+    {
+        try
+        {
+            var result = await _transactionService.GetPendingAdminLogisticsAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
 
 public class UpdateLogisticsRequest

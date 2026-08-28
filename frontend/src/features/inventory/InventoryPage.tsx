@@ -259,10 +259,14 @@ export const InventoryPage: React.FC = () => {
                         <span className="match-card-match-count">
                           <i className="fa-solid fa-arrows-rotate"></i> Match con {offeredBooks.length === 1 ? '1 tuyo' : `${offeredBooks.length} tuyos`}
                         </span>
-                        <span>•</span>
-                        <span className="match-card-fee">
-                          Costo de intercambio: ${Math.round(item.feeAmount).toLocaleString('es-CL')} CLP
-                        </span>
+                        {offeredBooks.length > 0 && (
+                          <>
+                            <span>•</span>
+                            <span className="match-card-fee">
+                              Costo de intercambio: ${Math.round(item.feeAmount).toLocaleString('es-CL')} CLP
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

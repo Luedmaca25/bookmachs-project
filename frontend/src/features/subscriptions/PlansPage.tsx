@@ -26,7 +26,7 @@ export const PlansPage: React.FC = () => {
       price: '$0 CLP',
       priceValue: 0,
       swipes: '100 Swipes mensuales (1° al último día del mes)',
-      matches: 'Máx. 2 intercambios al mes',
+      matches: '2 intercambios al mes',
       features: [
         'Exploración de libros básica',
         'Registro manual de libros',
@@ -39,7 +39,7 @@ export const PlansPage: React.FC = () => {
       price: '$9.990 CLP',
       priceValue: 9990,
       swipes: 'Swipes ilimitados',
-      matches: 'Máx. 10 intercambios al mes',
+      matches: '10 intercambios al mes',
       features: [
         'Escanear Portada IA (Autocompletado)',
         'Acceso a Catálogo Avanzado en Grilla',
@@ -50,21 +50,6 @@ export const PlansPage: React.FC = () => {
       ],
       recommended: true
     }
-    /*
-    {
-      id: 'infantil',
-      name: 'Plan Lector Infantil',
-      price: '$4.990 CLP',
-      priceValue: 4990,
-      swipes: '200 Swipes diarios',
-      matches: 'Máx. 4 intercambios al mes',
-      features: [
-        'Filtro exclusivo infantil (8 a 12 años)',
-        'Registro manual de libros',
-        'Insignias ecológicas coleccionables'
-      ]
-    }
-    */
   ];
 
   const handleSelectPlan = async (plan: Plan) => {

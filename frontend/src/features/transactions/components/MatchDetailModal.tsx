@@ -339,57 +339,99 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
           )}
 
           {currentMethod === 'Envio' && (
-            <form onSubmit={handleSubmitLogistics}>
-              <div className="mb-04">
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
-                  N° de Orden de Seguimiento / Voucher:
-                </label>
-                <input 
-                  type="text" 
-                  placeholder="Ej: CHI-998234812" 
-                  value={trackingNumberInput}
-                  onChange={(e) => setTrackingNumberInput(e.target.value)}
-                  className="offered-book-select"
-                />
-              </div>
-
-              <div className="mb-04">
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
-                  Adjuntar Comprobante (Opcional):
-                </label>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handlePhotoChange}
-                  style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}
-                />
-              </div>
-
-              {evidencePreview && (
-                <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
-                  <img src={evidencePreview} alt="Voucher" style={{ maxHeight: '120px', borderRadius: '6px' }} />
+            <div>
+              {transaction.logisticsStatus === 'En Espera' ? (
+                <div style={{ background: 'rgba(243, 156, 18, 0.1)', border: '1px solid #f39c12', borderRadius: '10px', padding: '1rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.98rem', fontWeight: '800', color: '#e67e22', marginBottom: '0.4rem' }}>
+                    ⏳ En Espera de Confirmación por Administrador
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)', margin: 0, lineHeight: '1.4' }}>
+                    Tu comprobante de envío ha sido registrado correctamente. El intercambio se mantendrá en estatus <strong>"En Espera"</strong> hasta que un administrador de Bookmachs confirme haber recibido el libro físico.
+                  </p>
                 </div>
-              )}
+              ) : transaction.logisticsStatus === 'Delivered' ? (
+                <div style={{ background: 'rgba(15, 157, 88, 0.1)', border: '1px solid #0F9D58', borderRadius: '10px', padding: '1rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.98rem', fontWeight: '800', color: '#0F9D58', marginBottom: '0.4rem' }}>
+                    ✅ Libro Recibido por Administrador
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)', margin: 0 }}>
+                    Un administrador de Bookmachs ha confirmado la recepción del libro físico. ¡Intercambio completado!
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitLogistics}>
+                  <div className="mb-04">
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
+                      N° de Orden de Seguimiento / Voucher de Envío:
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder="Ej: CHI-998234812" 
+                      value={trackingNumberInput}
+                      onChange={(e) => setTrackingNumberInput(e.target.value)}
+                      className="offered-book-select"
+                    />
+                  </div>
 
-              <button
-                type="submit"
-                disabled={uploading || (!trackingNumberInput && !evidencePhotoFile)}
-                className="checkout-proceed-btn font-heading btn-accept-checkout"
-                style={{ width: '100%', marginTop: '0.75rem', padding: '0.75rem', fontSize: '0.9rem' }}
-              >
-                {uploading ? 'Registrando...' : '📦 Registrar Comprobante de Envío'}
-              </button>
-            </form>
+                  <div className="mb-04">
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
+                      Adjuntar Foto de Comprobante / Voucher:
+                    </label>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handlePhotoChange}
+                      style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}
+                    />
+                  </div>
+
+                  {evidencePreview && (
+                    <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+                      <img src={evidencePreview} alt="Voucher" style={{ maxHeight: '120px', borderRadius: '6px' }} />
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={uploading || (!trackingNumberInput && !evidencePhotoFile)}
+                    className="checkout-proceed-btn font-heading btn-accept-checkout"
+                    style={{ width: '100%', marginTop: '0.75rem', padding: '0.75rem', fontSize: '0.9rem' }}
+                  >
+                    {uploading ? 'Registrando...' : '📦 Registrar Comprobante de Envío'}
+                  </button>
+                </form>
+              )}
+            </div>
           )}
 
           {currentMethod === 'Presencial' && (
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--neon)' }}>
-                Patronato 447, Recoleta, Santiago, Chile
+              <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--neon)', marginBottom: '0.3rem' }}>
+                📍 Patronato 447, Recoleta, Santiago, Chile
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0.4rem 0 0 0' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 0.8rem 0' }}>
                 Presenta el código <strong>#{transaction.id.substring(0, 8).toUpperCase()}</strong> al entregar tu ejemplar.
               </p>
+
+              {transaction.logisticsStatus === 'Delivered' ? (
+                <div style={{ background: 'rgba(15, 157, 88, 0.1)', border: '1px solid #0F9D58', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#0F9D58' }}>
+                    ✅ Libro Recibido por Administrador
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-primary)', margin: '0.2rem 0 0 0' }}>
+                    Un administrador de Bookmachs ha confirmado la recepción del libro presencialmente.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ background: 'rgba(243, 156, 18, 0.1)', border: '1px solid #f39c12', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#e67e22' }}>
+                    ⏳ En Espera de Entrega Presencial y Confirmación Admin
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-primary)', margin: '0.2rem 0 0 0', lineHeight: '1.4' }}>
+                    Lleva tu libro al local físico. El intercambio permanecerá en estatus <strong>"En Espera"</strong> hasta que entregues el libro y un administrador de Bookmachs confirme la recepción.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
