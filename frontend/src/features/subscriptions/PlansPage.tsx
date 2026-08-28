@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
 
@@ -19,13 +20,22 @@ export const PlansPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const { data: globalSettings } = useQuery<{ premiumPlanPriceUsd: number }>({
+    queryKey: ['globalSettings'],
+    queryFn: () => apiClient.get<any>('/globalsettings'),
+  });
+
+  const premiumPriceFormatted = globalSettings?.premiumPlanPriceUsd 
+    ? `$${Math.round(globalSettings.premiumPlanPriceUsd).toLocaleString('es-CL')} CLP` 
+    : '$9.990 CLP';
+
   const plans: Plan[] = [
     {
       id: 'free',
       name: 'Plan Gratuito',
       price: '$0 CLP',
       priceValue: 0,
-      swipes: '100 Swipes mensuales (1° al último día del mes)',
+      swipes: '40 Swipes mensuales (1° al último día del mes)',
       matches: '2 intercambios al mes',
       features: [
         'Exploración de libros básica',
@@ -36,12 +46,11 @@ export const PlansPage: React.FC = () => {
     {
       id: 'premium',
       name: 'Plan Premium',
-      price: '$9.990 CLP',
-      priceValue: 9990,
+      price: premiumPriceFormatted,
+      priceValue: globalSettings?.premiumPlanPriceUsd ?? 9990,
       swipes: 'Swipes ilimitados',
-      matches: '10 intercambios al mes',
+      matches: '5 intercambios al mes',
       features: [
-        'Escanear Portada IA (Autocompletado)',
         'Acceso a Catálogo Avanzado en Grilla',
         'Búsqueda directa por título, autor o palabras clave (hasta 10)',
         'Early Access a libros Recién Llegados',
@@ -51,6 +60,41 @@ export const PlansPage: React.FC = () => {
       recommended: true
     }
   ];
+
+  const processedTokenRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenWs = urlParams.get('token_ws');
+
+    if (tokenWs && processedTokenRef.current !== tokenWs) {
+      processedTokenRef.current = tokenWs;
+      window.history.replaceState({}, document.title, window.location.pathname);
+      handleConfirmWebpay(tokenWs);
+    }
+  }, []);
+
+  const handleConfirmWebpay = async (token: string) => {
+    setLoadingPlanId('premium');
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const response = await apiClient.post<any>(`/subscriptions/webpay-confirm?token_ws=${encodeURIComponent(token)}`);
+      if (response.success) {
+        const updatedProfile = await apiClient.get<any>('/auth/me');
+        const tokenStr = localStorage.getItem('token') || '';
+        login(updatedProfile, tokenStr);
+        setSuccessMessage('¡Pago de Membresía Premium $9.990 CLP confirmado por Transbank Webpay Plus! Tu cuenta ha sido activada a Plan Premium.');
+      } else {
+        setErrorMessage(response.message || 'Error al confirmar el pago en Transbank Webpay.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage('Error al confirmar la transacción de Webpay con Transbank.');
+    } finally {
+      setLoadingPlanId(null);
+    }
+  };
 
   const handleSelectPlan = async (plan: Plan) => {
     if (!isAuthenticated || !user) {
@@ -71,23 +115,27 @@ export const PlansPage: React.FC = () => {
 
     try {
       if (plan.id === 'premium') {
-        // Simular pago y webhook del lado de Mercado Pago
-        const response = await apiClient.post<any>('/webhooks/trigger-test', {
-          email: user.email,
-          action: 'created'
-        });
+        const returnUrl = `${window.location.origin}/planes`;
+        const response = await apiClient.post<{ success: boolean; token: string; redirectUrl: string; message?: string }>(
+          '/subscriptions/webpay-start',
+          { returnUrl }
+        );
 
-        if (response.success) {
-          // Obtener el perfil actualizado desde el endpoint me
-          const updatedProfile = await apiClient.get<any>('/auth/me');
-          
-          // Actualizar el store local de Zustand
-          const token = localStorage.getItem('token') || '';
-          login(updatedProfile, token);
+        if (response.success && response.redirectUrl && response.token) {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = response.redirectUrl;
 
-           setSuccessMessage('¡Pago Procesado con Éxito! Tu cuenta ha sido actualizada a Plan Premium.');
+          const tokenInput = document.createElement('input');
+          tokenInput.type = 'hidden';
+          tokenInput.name = 'token_ws';
+          tokenInput.value = response.token;
+          form.appendChild(tokenInput);
+
+          document.body.appendChild(form);
+          form.submit();
         } else {
-          setErrorMessage(response.message || 'Error al procesar la simulación de suscripción.');
+          setErrorMessage(response.message || 'No se pudo iniciar la transacción en Transbank Webpay Plus.');
         }
       } else if (plan.id === 'free' && user.isPremium) {
         // Simular cancelación
@@ -106,8 +154,7 @@ export const PlansPage: React.FC = () => {
           setErrorMessage(response.message || 'Error al cancelar la suscripción.');
         }
       } else {
-        // Plan infantil u otro mock
-        setSuccessMessage(`Has seleccionado el ${plan.name}. En este demo, puedes activar el Plan Premium para probar las funciones de IA.`);
+        setSuccessMessage(`Has seleccionado el ${plan.name}.`);
       }
     } catch (err: any) {
       console.error(err);

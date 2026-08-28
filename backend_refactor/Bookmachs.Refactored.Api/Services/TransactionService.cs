@@ -294,11 +294,18 @@ public class TransactionService : ITransactionService
         };
     }
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, WebpayConfirmResultDto> _matchTokenConfirmCache = new();
+
     public async Task<WebpayConfirmResultDto> WebpayConfirmAsync(string token, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(token))
         {
             throw new ArgumentException("El token de Webpay Plus es requerido.");
+        }
+
+        if (_matchTokenConfirmCache.TryGetValue(token, out var cachedResult))
+        {
+            return cachedResult;
         }
 
         var tbResult = await _paymentService.CommitTransbankHoldAsync(token);
@@ -331,20 +338,24 @@ public class TransactionService : ITransactionService
                 // Descontar stock y registrar el ajuste en Ecolectura
                 await DeductStockAndLogAdjustmentAsync(transaction.BookId, transaction.Id, transaction.RequesterUserId, cancellationToken);
 
-                return new WebpayConfirmResultDto
+                var successRes = new WebpayConfirmResultDto
                 {
                     Success = true,
                     MatchTransactionId = transaction.Id.ToString(),
                     PaymentStatus = "Hold",
                     Message = "Transacción Webpay Plus confirmada y retenida con éxito."
                 };
+                _matchTokenConfirmCache[token] = successRes;
+                return successRes;
             }
 
-            return new WebpayConfirmResultDto
+            var invalidRes = new WebpayConfirmResultDto
             {
                 Success = false,
                 Message = $"La orden de compra {tbResult.BuyOrder} devuelta por Webpay no corresponde a ninguna transacción válida."
             };
+            _matchTokenConfirmCache[token] = invalidRes;
+            return invalidRes;
         }
 
         if (!string.IsNullOrEmpty(tbResult.BuyOrder))
@@ -359,21 +370,26 @@ public class TransactionService : ITransactionService
                 _dbContext.MatchTransactions.Update(transaction);
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
-                return new WebpayConfirmResultDto
+                var failRes = new WebpayConfirmResultDto
                 {
                     Success = false,
                     MatchTransactionId = transaction.Id.ToString(),
                     PaymentStatus = "Failed",
                     Message = $"Transacción fallida o rechazada en Webpay. Estado Transbank: {tbResult.Status}. Detalle: {tbResult.ErrorMessage}"
                 };
+                _matchTokenConfirmCache[token] = failRes;
+                return failRes;
             }
         }
 
-        return new WebpayConfirmResultDto
+        var defaultFailRes = new WebpayConfirmResultDto
         {
             Success = false,
-            Message = $"Error al confirmar pago con Transbank: {tbResult.ErrorMessage}"
+            PaymentStatus = "Failed",
+            Message = $"Error al confirmar transacción en Webpay Plus: {tbResult.ErrorMessage}"
         };
+        _matchTokenConfirmCache[token] = defaultFailRes;
+        return defaultFailRes;
     }
 
     public async Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, CancellationToken cancellationToken = default)

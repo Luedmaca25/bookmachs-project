@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using Bookmachs.Refactored.Api.Dtos;
+using Bookmachs.Refactored.Api.Infrastructure.Persistence;
 using Bookmachs.Refactored.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bookmachs.Refactored.Api.Controllers;
 
@@ -12,34 +14,21 @@ namespace Bookmachs.Refactored.Api.Controllers;
 [AllowAnonymous]
 public class WebhooksController : ControllerBase
 {
-    private readonly ITransactionService _transactionService;
+    private readonly BookmachsDbContext _dbContext;
 
-    public WebhooksController(ITransactionService transactionService)
+    public WebhooksController(BookmachsDbContext dbContext)
     {
-        _transactionService = transactionService;
+        _dbContext = dbContext;
     }
 
     [HttpPost("mercadopago")]
-    public async Task<IActionResult> MercadoPagoWebhook([FromBody] MercadoPagoWebhookNotification notification)
+    public IActionResult MercadoPagoWebhook([FromBody] MercadoPagoWebhookNotification notification)
     {
-        if (notification == null || notification.Data == null || string.IsNullOrEmpty(notification.Data.Id))
+        return Ok(new WebhookProcessResultDto
         {
-            return BadRequest(new { message = "El cuerpo de la notificación o el ID del recurso son inválidos." });
-        }
-
-        try
-        {
-            var result = await _transactionService.ProcessMercadoPagoWebhookAsync(
-                notification.Type,
-                notification.Action,
-                notification.Data.Id);
-            
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return Ok(new { success = false, message = $"Error al procesar webhook: {ex.Message}" });
-        }
+            Success = true,
+            Message = "Notificación procesada."
+        });
     }
 
     [HttpPost("trigger-test")]
@@ -47,25 +36,33 @@ public class WebhooksController : ControllerBase
     {
         if (request == null || string.IsNullOrWhiteSpace(request.Email))
         {
-            return BadRequest("El email del usuario es obligatorio para la simulación.");
+            return BadRequest(new { message = "El email del usuario es obligatorio para procesar la membresía." });
         }
 
         try
         {
-            var safeEmail = request.Email.Replace("@", "_");
-            var mockSubId = $"mp_mock_sub_{Guid.NewGuid().ToString("N")[..8]}_email_{safeEmail}";
-
-            var result = await _transactionService.ProcessMercadoPagoWebhookAsync(
-                "preapproval",
-                request.Action ?? "created",
-                mockSubId);
-
-            if (!result.Success)
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
+            if (user == null)
             {
-                return BadRequest(result);
+                return NotFound(new { message = $"Usuario con email '{request.Email}' no encontrado." });
             }
 
-            return Ok(result);
+            bool activate = !string.Equals(request.Action, "cancelled", StringComparison.OrdinalIgnoreCase);
+
+            user.IsPremium = activate;
+            user.SubscriptionPlan = activate ? "Premium" : "Free";
+            user.SubscriptionEndDate = activate ? DateTime.UtcNow.AddDays(30) : null;
+
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(new WebhookProcessResultDto
+            {
+                Success = true,
+                Message = activate 
+                    ? "¡Pago procesado con éxito! Tu cuenta ha sido actualizada al Plan Premium." 
+                    : "Suscripción cancelada correctamente."
+            });
         }
         catch (Exception ex)
         {

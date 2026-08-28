@@ -297,7 +297,7 @@ export const InventoryPage: React.FC = () => {
                 </div>
               ))}
 
-              <div className="matches-libreta-footer">
+              {/* <div className="matches-libreta-footer">
                 <button 
                   className={`add-book-trigger-btn font-heading ${offeredBooks.length === 0 ? 'disabled' : ''}`}
                   disabled={offeredBooks.length === 0}
@@ -312,7 +312,7 @@ export const InventoryPage: React.FC = () => {
                 >
                   ★ Ver propuestas de intercambio
                 </button>
-              </div>
+              </div> */}
             </div>
           )}
         </div>

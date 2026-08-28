@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
 import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
 import { MatchModal } from '../transactions/components/MatchModal';
+import { BookCard } from './components/BookCard';
 import { apiClient } from '../../lib/apiClient';
 
 const COUNTRIES_LIST = [
@@ -61,17 +62,11 @@ export const SwipePage: React.FC = () => {
   const books = queryBooks || [];
   const error = queryError ? 'Ocurrió un error al cargar las recomendaciones de libros.' : null;
   const [currentBookIndex, setCurrentBookIndex] = useState(0);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-  // Reiniciar el índice de libro actual y expansión de descripción cuando cambia la lista o el libro
+  // Reiniciar el índice de libro actual cuando cambia la lista
   useEffect(() => {
     setCurrentBookIndex(0);
-    setIsDescriptionExpanded(false);
   }, [queryBooks]);
-
-  useEffect(() => {
-    setIsDescriptionExpanded(false);
-  }, [currentBookIndex]);
 
   // Estados de animación y arrastre (Drag / Slide Gesture)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -82,7 +77,7 @@ export const SwipePage: React.FC = () => {
 
   // Control de cuota y contador de swipes persisitido en base de datos
   const [swipesConsumed, setSwipesConsumed] = useState(user?.dailySwipesConsumed ?? 0);
-  const [swipeLimit, setSwipeLimit] = useState(user?.dailySwipeLimit ?? (user?.isPremium ? 1000 : 100));
+  const [swipeLimit, setSwipeLimit] = useState(user?.dailySwipeLimit ?? (user?.isPremium ? 1000 : 40));
 
   // Cargar estado real de swipes consumidos en el día directamente desde la Base de Datos al entrar
   useEffect(() => {
@@ -362,7 +357,7 @@ export const SwipePage: React.FC = () => {
         <div className="guest-hero-container">
           <h1 className="guest-hero-title">
             ¡Intercambio de libros <br />
-            <span className="guest-hero-title-highlight">a un Mach!</span>
+            <span className="guest-hero-title-highlight">a un Match!</span>
           </h1>
           <p className="guest-hero-subtitle">
             Más de 100.000 libros para intercambiar, <br />
@@ -384,7 +379,7 @@ export const SwipePage: React.FC = () => {
         <div className="swipe-header">
           <h1 className="guest-hero-title">
             ¡Intercambio de libros <br />
-            <span className="guest-hero-title-highlight">a un Mach!</span>
+            <span className="guest-hero-title-highlight">a un Match!</span>
           </h1>
           <div className="user-auth-badge">
             <span>
@@ -404,7 +399,7 @@ export const SwipePage: React.FC = () => {
                 <>Plan Premium &bull; Swipes <strong>Ilimitados</strong> ♾️</>
               ) : (
                 <>
-                  Swipes restantes hoy: <strong>{Math.max(0, swipeLimit - swipesConsumed)}</strong> / {swipeLimit}
+                  Swipes restantes este mes: <strong>{Math.max(0, swipeLimit - swipesConsumed)}</strong> / {swipeLimit}
                 </>
               )}
             </span>
@@ -429,83 +424,33 @@ export const SwipePage: React.FC = () => {
         </div>
       ) : (
         <div className="swipe-card-wrapper">
-          <div 
-            key={currentBook?.id || currentBookIndex}
-            className={`book-swipe-card ${
-              swipeDirection === 'right' ? 'swiped-right' : 
-              swipeDirection === 'left' ? 'swiped-left' : ''
-            } ${limitReached ? 'blurred-card' : ''}`}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            style={
-              isDragging
-                ? {
-                    transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${dragOffset.x * 0.08}deg)`,
-                    transition: 'none',
-                    cursor: 'grabbing',
-                    userSelect: 'none'
-                  }
-                : undefined
-            }
-          >
-            <div className="book-card-image-placeholder">
-              {currentBook?.imageUrl ? (
-                <img 
-                  key={currentBook.id} 
-                  src={currentBook.imageUrl} 
-                  alt={currentBook.title} 
-                  className="swipe-card-img" 
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400';
-                  }}
-                />
-              ) : (
-                <span className="book-fallback-icon"><i className="fa-solid fa-book"></i></span>
-              )}
-            </div>
-            
-            <div className="book-card-info">
-              {currentBook?.isFallbackCategory && (
-                <div style={{ backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', fontSize: '0.75rem', fontWeight: 600, padding: '4px 10px', borderRadius: '12px', marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                  <i className="fa-solid fa-compass"></i> Recomendación de otra sección (Has completado tus preferencias)
-                </div>
-              )}
-              {currentBook && (
-                <span className={`condition-badge ${currentBook.condition.toLowerCase()}`}>
-                  Estado libro: {currentBook.condition}
-                </span>
-              )}
-              <h3>{currentBook?.title || 'Descubre Libros'}</h3>
-              <span className="book-author">{currentBook?.author || 'Bookmachs'}</span>
-              <p className={`book-desc ${isDescriptionExpanded ? 'expanded' : ''}`}>
-                {currentBook?.description || 'Encuentra tu próximo match.'}
-              </p>
-              {currentBook?.description && currentBook.description.length > 80 && (
-                <button
-                  type="button"
-                  className="see-more-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDescriptionExpanded(!isDescriptionExpanded);
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                >
-                  {isDescriptionExpanded ? (
-                    <>Ver menos <i className="fa-solid fa-chevron-up"></i></>
-                  ) : (
-                    <>Ver más <i className="fa-solid fa-chevron-down"></i></>
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
+          {currentBook && (
+            <BookCard
+              key={currentBook.id}
+              book={currentBook}
+              className={`${
+                swipeDirection === 'right' ? 'swiped-right' : 
+                swipeDirection === 'left' ? 'swiped-left' : ''
+              } ${limitReached ? 'blurred-card' : ''}`}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              style={
+                isDragging
+                  ? {
+                      transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${dragOffset.x * 0.08}deg)`,
+                      transition: 'none',
+                      cursor: 'grabbing',
+                      userSelect: 'none'
+                    }
+                  : undefined
+              }
+            />
+          )}
 
           {!limitReached && (
             <>

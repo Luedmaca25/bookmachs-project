@@ -227,7 +227,10 @@ public class AuthService : IAuthService
         }
 
         var now = DateTime.UtcNow;
-        if (now.Date > user.LastSwipeResetDate.Date)
+        bool isNewMonth = (now.Year > user.LastSwipeResetDate.Year) || 
+                          (now.Year == user.LastSwipeResetDate.Year && now.Month > user.LastSwipeResetDate.Month);
+
+        if (isNewMonth)
         {
             user.DailySwipesConsumed = 0;
             user.LastSwipeResetDate = now;
@@ -236,7 +239,7 @@ public class AuthService : IAuthService
         }
 
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int swipeLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 100);
+        int swipeLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 40);
 
         return new UserProfileDto
         {

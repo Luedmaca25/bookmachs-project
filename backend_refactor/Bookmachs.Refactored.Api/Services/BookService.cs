@@ -24,6 +24,7 @@ public interface IBookService
     Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> ReserveBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> CancelReservationAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<BookDto>> GetMyReservationsAsync(Guid userId, CancellationToken cancellationToken = default);
 }
 
 public class BookService : IBookService
@@ -282,7 +283,7 @@ public class BookService : IBookService
         }
 
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int swipeLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 100);
+        int swipeLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 40);
 
         var cacheKey = $"swipes_consumed_{user.Id}";
         int consumed = 0;
@@ -330,7 +331,7 @@ public class BookService : IBookService
         }
 
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int swipeLimit = 100;
+        int swipeLimit = user.IsPremium ? 1000 : 40;
         if (settings != null)
         {
             swipeLimit = user.IsPremium ? settings.DailySwipeLimitPremium : settings.DailySwipeLimitFree;
@@ -378,7 +379,7 @@ public class BookService : IBookService
         }
 
         consumed++;
-        _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(1));
+        _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
         user.DailySwipesConsumed = consumed;
         _dbContext.Users.Update(user);
 
@@ -395,44 +396,59 @@ public class BookService : IBookService
 
                 if (isMatch)
                 {
-                    decimal feePercentage = settings?.FeePercentage ?? 0.30m;
-                    decimal minFee = settings?.MinFeeAmount ?? 1000.0m;
-                    decimal maxFee = settings?.MaxFeeAmount ?? 9000.0m;
+                    // Verificar límite mensual de intercambios (2 para Plan Gratuito, 5 para Plan Premium)
+                    var firstDayOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+                    int currentMonthMatches = await _dbContext.MatchTransactions
+                        .CountAsync(t => t.RequesterUserId == user.Id && t.CreatedAt >= firstDayOfMonth, cancellationToken);
+                    int maxMatchesAllowed = user.IsPremium 
+                        ? (settings?.MonthlyMatchLimitPremium ?? 5) 
+                        : (settings?.MonthlyMatchLimitFree ?? 2);
 
-                    decimal rawFee = book.BaseValue * feePercentage;
-                    decimal finalFee = rawFee;
-
-                    if (finalFee < minFee) finalFee = minFee;
-                    else if (finalFee > maxFee) finalFee = maxFee;
-
-                    finalFee = Math.Round(finalFee, 2);
-
-                    bool isCrossBorder = false;
-                    if (!book.IsInternalStock && book.OwnerId.HasValue)
+                    if (currentMonthMatches >= maxMatchesAllowed)
                     {
-                        var owner = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == book.OwnerId.Value, cancellationToken);
-                        if (owner != null && !string.IsNullOrEmpty(user.Pais) && !string.IsNullOrEmpty(owner.Pais))
-                        {
-                            isCrossBorder = !string.Equals(user.Pais, owner.Pais, StringComparison.OrdinalIgnoreCase);
-                        }
+                        isMatch = false;
                     }
-
-                    var transaction = new MatchTransaction
+                    else
                     {
-                        Id = Guid.NewGuid(),
-                        RequesterUserId = user.Id,
-                        BookId = book.Id,
-                        OwnerUserId = book.IsInternalStock ? null : book.OwnerId,
-                        FeeAmount = finalFee,
-                        PaymentStatus = "Pending",
-                        LogisticsStatus = "Pending",
-                        IsCrossBorder = isCrossBorder,
-                        CreatedAt = DateTime.UtcNow,
-                        StatusUpdatedAt = DateTime.UtcNow
-                    };
+                        decimal feePercentage = settings?.FeePercentage ?? 0.30m;
+                        decimal minFee = settings?.MinFeeAmount ?? 1000.0m;
+                        decimal maxFee = settings?.MaxFeeAmount ?? 9000.0m;
 
-                    await _dbContext.MatchTransactions.AddAsync(transaction, cancellationToken);
-                    matchTransactionId = transaction.Id;
+                        decimal rawFee = book.BaseValue * feePercentage;
+                        decimal finalFee = rawFee;
+
+                        if (finalFee < minFee) finalFee = minFee;
+                        else if (finalFee > maxFee) finalFee = maxFee;
+
+                        finalFee = Math.Round(finalFee, 2);
+
+                        bool isCrossBorder = false;
+                        if (!book.IsInternalStock && book.OwnerId.HasValue)
+                        {
+                            var owner = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == book.OwnerId.Value, cancellationToken);
+                            if (owner != null && !string.IsNullOrEmpty(user.Pais) && !string.IsNullOrEmpty(owner.Pais))
+                            {
+                                isCrossBorder = !string.Equals(user.Pais, owner.Pais, StringComparison.OrdinalIgnoreCase);
+                            }
+                        }
+
+                        var transaction = new MatchTransaction
+                        {
+                            Id = Guid.NewGuid(),
+                            RequesterUserId = user.Id,
+                            BookId = book.Id,
+                            OwnerUserId = book.IsInternalStock ? null : book.OwnerId,
+                            FeeAmount = finalFee,
+                            PaymentStatus = "Pending",
+                            LogisticsStatus = "Pending",
+                            IsCrossBorder = isCrossBorder,
+                            CreatedAt = DateTime.UtcNow,
+                            StatusUpdatedAt = DateTime.UtcNow
+                        };
+
+                        await _dbContext.MatchTransactions.AddAsync(transaction, cancellationToken);
+                        matchTransactionId = transaction.Id;
+                    }
                 }
             }
         }
@@ -641,6 +657,16 @@ public class BookService : IBookService
             Success = true,
             Message = "Reserva cancelada y libro liberado exitosamente."
         };
+    }
+
+    public async Task<IEnumerable<BookDto>> GetMyReservationsAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var activeReservations = await _dbContext.Books
+            .Where(b => b.IsReserved && b.ReservedByUserId == userId && b.ReservedUntil > DateTime.UtcNow)
+            .OrderByDescending(b => b.ReservedUntil)
+            .ToListAsync(cancellationToken);
+
+        return activeReservations.Select(MapToBookDto);
     }
 
     private static BookDto MapToBookDto(Book b)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
@@ -116,14 +116,23 @@ export const TransactionsPage: React.FC = () => {
   const [selectedDetailTx, setSelectedDetailTx] = useState<MatchTransaction | null>(null);
   const [isThankYouMode, setIsThankYouMode] = useState(false);
 
-  // Manejar el retorno simulado de Webpay Plus
+  // Manejar el retorno de Webpay Plus
+  const processedWebpayTokenRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (webpayTokenWs) {
+    if (webpayTokenWs && processedWebpayTokenRef.current !== webpayTokenWs) {
+      processedWebpayTokenRef.current = webpayTokenWs;
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('token_ws');
+        return next;
+      }, { replace: true });
+
       const confirmWebpay = async () => {
         setCheckoutLoading(true);
         setCheckoutError(null);
         try {
-          const response = await apiClient.post<any>(`/transactions/webpay-confirm?token_ws=${webpayTokenWs}`);
+          const response = await apiClient.post<any>(`/transactions/webpay-confirm?token_ws=${encodeURIComponent(webpayTokenWs)}`);
           if (response.success) {
             setCheckoutSuccess(true);
             const updatedList = await apiClient.get<MatchTransaction[]>('/transactions/my-matches');

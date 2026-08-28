@@ -125,7 +125,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
         {/* Insignia de Encabezado Neón */}
         <div className="checkout-step-header">
           <div className="neon-badge-pill">
-            ✨ ¡Propuesta de Match IA! ✨
+            ✨ ¡Propuesta de Match! ✨
           </div>
           
           <h3 className="match-modal-title">

@@ -38,8 +38,24 @@ public class SettingsService : ISettingsService
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
         if (settings == null)
         {
-            settings = new GlobalSettings();
+            settings = new GlobalSettings { DailySwipeLimitFree = 40 };
             await _dbContext.GlobalSettings.AddAsync(settings, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        bool updated = false;
+        if (settings.DailySwipeLimitFree == 100)
+        {
+            settings.DailySwipeLimitFree = 40;
+            updated = true;
+        }
+        if (settings.PremiumPlanPriceUsd < 100.0m)
+        {
+            settings.PremiumPlanPriceUsd = 9990.0m;
+            updated = true;
+        }
+        if (updated)
+        {
+            _dbContext.GlobalSettings.Update(settings);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -57,8 +73,11 @@ public class SettingsService : ISettingsService
 
         settings.DailySwipeLimitFree = updateDto.DailySwipeLimitFree;
         settings.DailySwipeLimitPremium = updateDto.DailySwipeLimitPremium;
+        settings.MonthlyMatchLimitFree = updateDto.MonthlyMatchLimitFree;
+        settings.MonthlyMatchLimitPremium = updateDto.MonthlyMatchLimitPremium;
         settings.BasicPlanPriceUsd = updateDto.BasicPlanPriceUsd;
         settings.PremiumPlanPriceUsd = updateDto.PremiumPlanPriceUsd;
+        settings.SearchKeywordsLimitPremium = updateDto.SearchKeywordsLimitPremium > 0 ? updateDto.SearchKeywordsLimitPremium : 10;
         settings.FeePercentage = updateDto.FeePercentage;
         settings.MinFeeAmount = updateDto.MinFeeAmount;
         settings.MaxFeeAmount = updateDto.MaxFeeAmount;
@@ -151,8 +170,11 @@ public class SettingsService : ISettingsService
             Id = g.Id,
             DailySwipeLimitFree = g.DailySwipeLimitFree,
             DailySwipeLimitPremium = g.DailySwipeLimitPremium,
+            MonthlyMatchLimitFree = g.MonthlyMatchLimitFree,
+            MonthlyMatchLimitPremium = g.MonthlyMatchLimitPremium,
             BasicPlanPriceUsd = g.BasicPlanPriceUsd,
             PremiumPlanPriceUsd = g.PremiumPlanPriceUsd,
+            SearchKeywordsLimitPremium = g.SearchKeywordsLimitPremium > 0 ? g.SearchKeywordsLimitPremium : 10,
             FeePercentage = g.FeePercentage,
             MinFeeAmount = g.MinFeeAmount,
             MaxFeeAmount = g.MaxFeeAmount,

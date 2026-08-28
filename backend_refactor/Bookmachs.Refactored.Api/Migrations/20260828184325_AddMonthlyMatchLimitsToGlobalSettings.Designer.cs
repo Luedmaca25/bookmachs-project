@@ -4,6 +4,7 @@ using Bookmachs.Refactored.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bookmachs.Refactored.Api.Migrations
 {
     [DbContext(typeof(BookmachsDbContext))]
-    partial class BookmachsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260828184325_AddMonthlyMatchLimitsToGlobalSettings")]
+    partial class AddMonthlyMatchLimitsToGlobalSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -129,9 +132,6 @@ namespace Bookmachs.Refactored.Api.Migrations
                     b.Property<decimal>("PremiumPlanPriceUsd")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("SearchKeywordsLimitPremium")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

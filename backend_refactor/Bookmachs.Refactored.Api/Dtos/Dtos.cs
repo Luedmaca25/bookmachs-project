@@ -62,8 +62,11 @@ public class GlobalSettingsDto
     public int Id { get; set; }
     public int DailySwipeLimitFree { get; set; }
     public int DailySwipeLimitPremium { get; set; }
+    public int MonthlyMatchLimitFree { get; set; } = 2;
+    public int MonthlyMatchLimitPremium { get; set; } = 5;
     public decimal BasicPlanPriceUsd { get; set; }
     public decimal PremiumPlanPriceUsd { get; set; }
+    public int SearchKeywordsLimitPremium { get; set; } = 10;
     public decimal FeePercentage { get; set; }
     public decimal MinFeeAmount { get; set; }
     public decimal MaxFeeAmount { get; set; }

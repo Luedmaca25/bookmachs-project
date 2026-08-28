@@ -6,8 +6,11 @@ interface GlobalSettings {
   id: number;
   dailySwipeLimitFree: number;
   dailySwipeLimitPremium: number;
+  monthlyMatchLimitFree: number;
+  monthlyMatchLimitPremium: number;
   basicPlanPriceUsd: number;
   premiumPlanPriceUsd: number;
+  searchKeywordsLimitPremium: number;
   feePercentage: number;
   minFeeAmount: number;
   maxFeeAmount: number;
@@ -124,6 +127,8 @@ export const AdminSettingsPage: React.FC = () => {
     const updated: Partial<GlobalSettings> = {
       dailySwipeLimitFree: parseInt(formData.get('dailySwipeLimitFree') as string, 10),
       dailySwipeLimitPremium: parseInt(formData.get('dailySwipeLimitPremium') as string, 10),
+      monthlyMatchLimitFree: parseInt(formData.get('monthlyMatchLimitFree') as string, 10),
+      monthlyMatchLimitPremium: parseInt(formData.get('monthlyMatchLimitPremium') as string, 10),
       basicPlanPriceUsd: parseFloat(formData.get('basicPlanPriceUsd') as string),
       premiumPlanPriceUsd: parseFloat(formData.get('premiumPlanPriceUsd') as string),
       feePercentage: parseFloat(formData.get('feePercentage') as string) / 100, // guardar como fraccion (ej: 0.30)
@@ -226,6 +231,32 @@ export const AdminSettingsPage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
+                    <label htmlFor="monthlyMatchLimitFree">Límite Mensual Intercambios (Plan Gratuito)</label>
+                    <input 
+                      type="number" 
+                      id="monthlyMatchLimitFree" 
+                      name="monthlyMatchLimitFree" 
+                      defaultValue={globalSettings?.monthlyMatchLimitFree ?? 2} 
+                      min="0"
+                      required 
+                    />
+                    <small className="form-help-text">Cantidad máxima de trueques creados por mes.</small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="monthlyMatchLimitPremium">Límite Mensual Intercambios (Plan Premium)</label>
+                    <input 
+                      type="number" 
+                      id="monthlyMatchLimitPremium" 
+                      name="monthlyMatchLimitPremium" 
+                      defaultValue={globalSettings?.monthlyMatchLimitPremium ?? 5} 
+                      min="0"
+                      required 
+                    />
+                    <small className="form-help-text">Cantidad máxima de trueques creados por mes.</small>
+                  </div>
+
+                  <div className="form-group">
                     <label htmlFor="basicPlanPriceUsd">Precio Plan Básico (USD)</label>
                     <input 
                       type="number" 
@@ -239,16 +270,30 @@ export const AdminSettingsPage: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="premiumPlanPriceUsd">Precio Plan Full (USD)</label>
+                    <label htmlFor="premiumPlanPriceUsd">Precio Plan Premium (CLP)</label>
                     <input 
                       type="number" 
-                      step="0.01" 
+                      step="1" 
                       id="premiumPlanPriceUsd" 
                       name="premiumPlanPriceUsd" 
                       defaultValue={globalSettings?.premiumPlanPriceUsd} 
                       min="0"
                       required 
                     />
+                    <small className="form-help-text">Monto cobrado en Webpay Plus para activar la membresía Premium.</small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="searchKeywordsLimitPremium">Límite Palabras Clave por Búsqueda (Premium)</label>
+                    <input 
+                      type="number" 
+                      id="searchKeywordsLimitPremium" 
+                      name="searchKeywordsLimitPremium" 
+                      defaultValue={globalSettings?.searchKeywordsLimitPremium ?? 10} 
+                      min="1"
+                      required 
+                    />
+                    <small className="form-help-text">Máximo de palabras clave / términos permitidos en las búsquedas del catálogo avanzado.</small>
                   </div>
 
                   <div className="form-group">

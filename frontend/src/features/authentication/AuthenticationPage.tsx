@@ -422,7 +422,7 @@ export const AuthenticationPage: React.FC = () => {
                     <span>Plan Gratuito (Free)</span>
                   </div>
                   <p className="profile-plan-desc">
-                    Tu plan actual está limitado a 100 swipes por día.
+                    Tu plan actual está limitado a 40 swipes mensuales (1° al último día del mes).
                   </p>
                   <Link to="/planes" className="profile-plan-upgrade-link">
                     Ver Planes y Convertirme en Premium <i className="fa-solid fa-arrow-right-long icon-arrow-right"></i>

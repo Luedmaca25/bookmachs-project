@@ -322,6 +322,19 @@ public class BooksController : ControllerBase
         }
     }
 
+    [HttpGet("my-reservations")]
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetMyReservations()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        var result = await _bookService.GetMyReservationsAsync(userId);
+        return Ok(result);
+    }
+
     [AllowAnonymous]
     [HttpGet("cover/{userId}/{fileName}")]
     public IActionResult GetBookCover(Guid userId, string fileName)
