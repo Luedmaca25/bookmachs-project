@@ -474,7 +474,13 @@ export const SwipePage: React.FC = () => {
               </div>
 
               <div 
-                onClick={() => navigate('/libreta')}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    navigate('/auth');
+                  } else {
+                    navigate('/libreta');
+                  }
+                }}
                 className="notebook-banner-card"
               >
                 <span className="notebook-banner-icon"><i className="fa-solid fa-book-bookmark icon-neon"></i></span>

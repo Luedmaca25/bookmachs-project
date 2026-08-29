@@ -682,7 +682,7 @@ p {
   height: 14px;
   object-fit: cover;
   border-radius: 2px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.18);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 
 .guest-flag-dot {
@@ -696,6 +696,7 @@ p {
   text-align: center;
   width: 100%;
 }
+
 /* 
 .swipe-header h1 {
   font-size: 1.5rem;
@@ -1395,7 +1396,7 @@ p {
 
 .inventory-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 1.5rem;
@@ -1739,18 +1740,17 @@ p {
 }
 
 .condition-badge {
-  background: var(--gradient-accent);
-  color: #ffffff;
-  border: none;
+  background: rgba(15, 157, 88, 0.12);
+  color: var(--neon);
+  border: 1px solid rgba(15, 157, 88, 0.3);
   font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 700;
   padding: 0.35rem 0.85rem;
   border-radius: var(--radius-full);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  box-shadow: 0 4px 15px rgba(182, 255, 0, 0.25);
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
   z-index: 1;
   display: inline-flex;
   align-items: center;
@@ -3558,14 +3558,14 @@ p {
 }
 
 .paywall-benefits-list li .benefit-bullet {
-  color: var(--accent-warning);
+  color: var(--accent-primary);
   font-weight: bold;
   font-size: 1.1rem;
 }
 
 .paywall-cta-btn {
-  background: linear-gradient(135deg, #ffd166 0%, #f7b267 100%);
-  color: #070a13;
+  background: var(--gradient-accent);
+  color: #fff;
   font-weight: 700;
   padding: 0.9rem 2.5rem;
   border-radius: var(--radius-full);
@@ -3573,7 +3573,7 @@ p {
   cursor: pointer;
   font-size: 1.05rem;
   transition: all var(--transition-fast);
-  box-shadow: 0 4px 15px rgba(255, 209, 102, 0.35);
+  /* box-shadow: 0 4px 15px rgba(255, 209, 102, 0.35); */
   font-family: var(--font-heading);
 }
 
@@ -6332,10 +6332,12 @@ p {
 .notebook-banner-card {
   margin: 1.25rem auto 0 auto;
   max-width: 360px;
-  padding: 0.8rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  padding: 0.8rem 1.25rem;
+  background: var(--gradient-accent);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 15px rgba(15, 157, 88, 0.25);
   text-align: center;
   cursor: pointer;
   display: flex;
@@ -6345,8 +6347,18 @@ p {
   transition: all 0.2s ease;
 }
 
+.notebook-banner-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15, 157, 88, 0.4);
+}
+
 .notebook-banner-icon {
   font-size: 1.3rem;
+  color: #ffffff;
+}
+
+.notebook-banner-icon .icon-neon {
+  color: #ffffff;
 }
 
 .notebook-banner-body {
@@ -6356,12 +6368,12 @@ p {
 .notebook-banner-title {
   font-weight: 700;
   font-size: 0.9rem;
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .notebook-banner-subtitle {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* Inventory / Libreta Page */
