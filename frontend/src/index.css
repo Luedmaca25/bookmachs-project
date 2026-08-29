@@ -1166,7 +1166,8 @@ p {
    ========================================================================== */
 .onboarding-wizard-container {
   width: 100%;
-  max-width: 680px;
+  max-width: 560px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -1199,8 +1200,8 @@ p {
 .wizard-step-card {
   background: var(--gradient-card);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 3rem;
+  border-radius: var(--radius-card);
+  padding: 2.5rem;
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
@@ -1208,16 +1209,18 @@ p {
 }
 
 .wizard-step-card h2 {
-  font-size: 1.8rem;
-  background: var(--text-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.2rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
 }
 
 .wizard-step-card p {
   color: var(--text-secondary);
-  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  margin: 0;
 }
 
 .wizard-error {
@@ -1736,15 +1739,18 @@ p {
 }
 
 .condition-badge {
+  background: var(--gradient-accent);
+  color: #ffffff;
+  border: none;
+  font-family: var(--font-sans);
   font-size: 0.75rem;
-  font-weight: 700;
-  padding: 0.25rem 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
   border-radius: var(--radius-full);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border: 1px solid transparent;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(182, 255, 0, 0.25);
+  transition: all var(--transition-fast);
   z-index: 1;
   display: inline-flex;
   align-items: center;
@@ -1755,35 +1761,6 @@ p {
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
-}
-
-.condition-badge.excelente,
-.condition-badge.likenew,
-.condition-badge.new {
-  background-color: var(--badge-excelente-bg);
-  color: var(--accent-success);
-  border-color: var(--badge-excelente-border);
-}
-
-.condition-badge.bueno,
-.condition-badge.good {
-  background-color: var(--badge-bueno-bg);
-  color: var(--accent-info);
-  border-color: var(--badge-bueno-border);
-}
-
-.condition-badge.aceptable,
-.condition-badge.fair {
-  background-color: var(--badge-aceptable-bg);
-  color: var(--accent-warning);
-  border-color: var(--badge-aceptable-border);
-}
-
-.condition-badge.desgastado,
-.condition-badge.poor {
-  background-color: var(--badge-desgastado-bg);
-  color: var(--accent-danger);
-  border-color: var(--badge-desgastado-border);
 }
 
 .inventory-card-body {
@@ -6331,9 +6308,9 @@ p {
 }
 
 .upgrade-pill-btn {
-  background: rgba(255, 183, 3, 0.12);
-  color: #ffb703;
-  border: 1px solid rgba(255, 183, 3, 0.3);
+  background: rgba(15, 157, 88, 0.12);
+  color: var(--neon);
+  border: 1px solid rgba(15, 157, 88, 0.3);
   padding: 0.35rem 0.85rem;
   border-radius: var(--radius-full);
   font-size: 0.78rem;
@@ -6344,8 +6321,12 @@ p {
 }
 
 .upgrade-pill-btn:hover {
-  background: #ffb703;
-  color: #000;
+  background: var(--neon);
+  color: #ffffff;
+}
+
+.upgrade-pill-btn:hover .icon-gold {
+  color: #ffffff;
 }
 
 .notebook-banner-card {
@@ -7851,11 +7832,29 @@ p {
 
   .profile-tags-grid,
   .wizard-tags-grid {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
     padding-right: 0 !important;
+  }
+
+  .profile-tag-item,
+  .wizard-tag-item {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .profile-tag-item .tag-label,
+  .wizard-tag-item .tag-label {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    word-break: break-word !important;
   }
 
   .detail-modal-overlay-bootstrap {

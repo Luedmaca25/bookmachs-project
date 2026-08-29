@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { OnboardingWizard } from './components/OnboardingWizard';
+import { PreferencesCard } from './components/PreferencesCard';
 import { apiClient } from '../../lib/apiClient';
-import { formatRut, formatPhoneByCountry, getPhonePlaceholder, getFileUrl, getPreferenceTagIcon } from '../../lib/formatters';
+import { formatRut, formatPhoneByCountry, getPhonePlaceholder, getFileUrl } from '../../lib/formatters';
 
 export const AuthenticationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -440,57 +441,17 @@ export const AuthenticationPage: React.FC = () => {
           </div>
 
           {/* Preferences / Tags Card */}
-          <div className="profile-card">
-            <h2>
-              Intereses y Preferencias
-            </h2>
-            <p className="profile-subtitle">
-              Selecciona tus categorías literarias de preferencia. El algoritmo de IA priorizará los libros que coincidan con estos intereses.
-            </p>
-
-            {prefError && <div className="wizard-error">{prefError}</div>}
-            {prefSuccess && (
-              <div className="pref-success-alert">
-                <i className="fa-solid fa-circle-check"></i> ¡Preferencias de lectura actualizadas con éxito!
-              </div>
-            )}
-
-            {loadingTags ? (
-              <div className="wizard-loading wizard-loading-padded">Cargando tus gustos de lectura...</div>
-            ) : (
-              <>
-                <div className="profile-tags-grid">
-                  {tags.map((tag) => {
-                    const isSelected = selectedTags.includes(tag.name);
-                    return (
-                      <button
-                        key={tag.id}
-                        type="button"
-                        className={`wizard-tag-item profile-tag-item ${isSelected ? 'selected' : ''}`}
-                        onClick={() => handleTagToggle(tag.name)}
-                      >
-                        <span className="tag-icon">
-                          {isSelected ? <i className="fa-solid fa-check"></i> : <i className={`fa-solid ${getPreferenceTagIcon(tag.name)}`}></i>}
-                        </span>
-                        <span className="tag-label">
-                          {tag.name}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleSavePreferences}
-                  className="modal-submit-btn profile-save-prefs-btn"
-                  disabled={savingPrefs || selectedTags.length === 0}
-                >
-                  {savingPrefs ? 'Guardando...' : 'Guardar Preferencias'}
-                </button>
-              </>
-            )}
-          </div>
+          <PreferencesCard
+            tags={tags}
+            selectedTags={selectedTags}
+            onTagToggle={handleTagToggle}
+            onSave={handleSavePreferences}
+            loadingTags={loadingTags}
+            saving={savingPrefs}
+            error={prefError}
+            successMessage={prefSuccess ? '¡Preferencias de lectura actualizadas con éxito!' : null}
+            submitButtonText="Guardar Preferencias"
+          />
         </div>
       </div>
     );
