@@ -79,6 +79,11 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Credenciales de inicio de sesión incorrectas.");
         }
 
+        if (user.IsBlocked)
+        {
+            throw new InvalidOperationException("Tu cuenta ha sido bloqueada debido a políticas de uso de la plataforma. Si crees que se trata de un error, por favor ponte en contacto con nuestro equipo de soporte.");
+        }
+
         var isPasswordValid = _passwordHasher.VerifyPassword(password, user.PasswordHash);
         if (!isPasswordValid)
         {
@@ -98,10 +103,18 @@ public class AuthService : IAuthService
         }
 
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.GoogleSub == googleSub, cancellationToken);
+        if (user != null && user.IsBlocked)
+        {
+            throw new InvalidOperationException("Tu cuenta ha sido bloqueada debido a políticas de uso de la plataforma. Si crees que se trata de un error, por favor ponte en contacto con nuestro equipo de soporte.");
+        }
 
         if (user == null)
         {
             user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+            if (user != null && user.IsBlocked)
+            {
+                throw new InvalidOperationException("Tu cuenta ha sido bloqueada debido a políticas de uso de la plataforma. Si crees que se trata de un error, por favor ponte en contacto con nuestro equipo de soporte.");
+            }
 
             if (user != null)
             {

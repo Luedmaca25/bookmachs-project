@@ -4,6 +4,7 @@ using Bookmachs.Refactored.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bookmachs.Refactored.Api.Migrations
 {
     [DbContext(typeof(BookmachsDbContext))]
-    partial class BookmachsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260829161325_AddPreferenceCategoryMappings")]
+    partial class AddPreferenceCategoryMappings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -377,9 +380,6 @@ namespace Bookmachs.Refactored.Api.Migrations
 
                     b.Property<string>("GoogleSub")
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("IsBlocked")
-                        .HasColumnType("bit");
 
                     b.Property<bool>("IsPremium")
                         .HasColumnType("bit");

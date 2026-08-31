@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Bookmachs.Refactored.Api.Dtos;
+using Bookmachs.Refactored.Api.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Bookmachs.Refactored.Api.Services;
 
@@ -32,7 +34,129 @@ public interface ICategoryHomologationService
 
 public class CategoryHomologationService : ICategoryHomologationService
 {
-    private static readonly List<ConceptHomologation> Concepts = new()
+    private readonly BookmachsDbContext _dbContext;
+
+    public CategoryHomologationService(BookmachsDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public IReadOnlyList<ConceptHomologation> GetAllConcepts()
+    {
+        var dbTags = _dbContext.MasterPreferenceTags
+            .Include(t => t.MappedCategories)
+            .ToList();
+
+        if (dbTags.Count > 0)
+        {
+            return dbTags.Select(t => new ConceptHomologation
+            {
+                Id = t.Id,
+                ConceptName = t.Name,
+                Description = t.Description,
+                MappedItems = t.MappedCategories.Select(m => new RawCategoryItem
+                {
+                    CategoryId = m.CategoryId,
+                    CategoryName = m.CategoryName,
+                    SubcategoryId = m.SubcategoryId,
+                    SubcategoryName = m.SubcategoryName
+                }).ToList()
+            }).ToList();
+        }
+
+        return DefaultConcepts;
+    }
+
+    public IEnumerable<MasterPreferenceTagDto> GetPreferenceTagDtos()
+    {
+        var concepts = GetAllConcepts();
+        return concepts.Select(c => new MasterPreferenceTagDto
+        {
+            Id = c.Id,
+            Name = c.ConceptName,
+            Description = c.Description,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            MappedCategories = c.MappedItems.Select(m => new PreferenceCategoryMappingDto
+            {
+                CategoryId = m.CategoryId,
+                CategoryName = m.CategoryName,
+                SubcategoryId = m.SubcategoryId,
+                SubcategoryName = m.SubcategoryName
+            }).ToList()
+        });
+    }
+
+    public List<RawCategoryItem> GetMappedItemsForConcepts(IEnumerable<string> concepts)
+    {
+        var conceptSet = concepts.Select(c => c.Trim().ToLowerInvariant()).ToHashSet();
+        var allConcepts = GetAllConcepts();
+        var result = new List<RawCategoryItem>();
+
+        foreach (var concept in allConcepts)
+        {
+            if (conceptSet.Contains(concept.ConceptName.ToLowerInvariant()))
+            {
+                result.AddRange(concept.MappedItems);
+            }
+        }
+
+        return result;
+    }
+
+    public bool MatchesConcept(string conceptName, int? categoryId, int? subcategoryId)
+    {
+        if (string.IsNullOrWhiteSpace(conceptName) || !categoryId.HasValue)
+            return false;
+
+        var allConcepts = GetAllConcepts();
+        var concept = allConcepts.FirstOrDefault(c => string.Equals(c.ConceptName, conceptName, StringComparison.OrdinalIgnoreCase));
+        if (concept == null)
+            return false;
+
+        foreach (var item in concept.MappedItems)
+        {
+            if (item.CategoryId == categoryId.Value)
+            {
+                if (item.SubcategoryId == null) return true;
+                if (subcategoryId.HasValue && item.SubcategoryId.Value == subcategoryId.Value) return true;
+            }
+        }
+
+        return false;
+    }
+
+    public string? GetConceptNameForProduct(int? categoryId, int? subcategoryId)
+    {
+        if (!categoryId.HasValue) return null;
+
+        var allConcepts = GetAllConcepts();
+
+        // 1. Coincidencia exacta con SubcategoryId
+        if (subcategoryId.HasValue)
+        {
+            var matchWithSubcategory = allConcepts.FirstOrDefault(c =>
+                c.MappedItems.Any(i => i.CategoryId == categoryId.Value && i.SubcategoryId == subcategoryId.Value)
+            );
+            if (matchWithSubcategory != null)
+            {
+                return matchWithSubcategory.ConceptName;
+            }
+        }
+
+        // 2. Coincidencia por solo CategoryId
+        var matchWithCategoryOnly = allConcepts.FirstOrDefault(c =>
+            c.MappedItems.Any(i => i.CategoryId == categoryId.Value && i.SubcategoryId == null)
+        );
+        if (matchWithCategoryOnly != null)
+        {
+            return matchWithCategoryOnly.ConceptName;
+        }
+
+        return null;
+    }
+
+    private static readonly List<ConceptHomologation> DefaultConcepts = new()
     {
         new ConceptHomologation
         {
@@ -164,8 +288,8 @@ public class CategoryHomologationService : ICategoryHomologationService
             MappedItems = new()
             {
                 new RawCategoryItem { CategoryId = 1, CategoryName = "Adulto", SubcategoryId = 7, SubcategoryName = "Economía, Contabilidad y Administración" },
-                new RawCategoryItem { CategoryId = 1, CategoryName = "Adulto", SubcategoryId = 47, SubcategoryName = "Negocios e Inversiones" },
                 new RawCategoryItem { CategoryId = 1, CategoryName = "Adulto", SubcategoryId = 46, SubcategoryName = "Marketing y Publicidad" },
+                new RawCategoryItem { CategoryId = 1, CategoryName = "Adulto", SubcategoryId = 47, SubcategoryName = "Negocios e Inversiones" },
                 new RawCategoryItem { CategoryId = 1, CategoryName = "Adulto", SubcategoryId = 11, SubcategoryName = "Leyes" },
                 new RawCategoryItem { CategoryId = 24, CategoryName = "Derecho y Leyes", SubcategoryId = null, SubcategoryName = null },
                 new RawCategoryItem { CategoryId = 22, CategoryName = "Economía, Contabilidad y Administración", SubcategoryId = null, SubcategoryName = null }
@@ -183,82 +307,4 @@ public class CategoryHomologationService : ICategoryHomologationService
             }
         }
     };
-
-    public IReadOnlyList<ConceptHomologation> GetAllConcepts() => Concepts;
-
-    public IEnumerable<MasterPreferenceTagDto> GetPreferenceTagDtos()
-    {
-        return Concepts.Select(c => new MasterPreferenceTagDto
-        {
-            Id = c.Id,
-            Name = c.ConceptName,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        });
-    }
-
-    public List<RawCategoryItem> GetMappedItemsForConcepts(IEnumerable<string> concepts)
-    {
-        var conceptSet = concepts.Select(c => c.Trim().ToLowerInvariant()).ToHashSet();
-        var result = new List<RawCategoryItem>();
-
-        foreach (var concept in Concepts)
-        {
-            if (conceptSet.Contains(concept.ConceptName.ToLowerInvariant()))
-            {
-                result.AddRange(concept.MappedItems);
-            }
-        }
-
-        return result;
-    }
-
-    public bool MatchesConcept(string conceptName, int? categoryId, int? subcategoryId)
-    {
-        if (string.IsNullOrWhiteSpace(conceptName) || !categoryId.HasValue)
-            return false;
-
-        var concept = Concepts.FirstOrDefault(c => string.Equals(c.ConceptName, conceptName, StringComparison.OrdinalIgnoreCase));
-        if (concept == null)
-            return false;
-
-        foreach (var item in concept.MappedItems)
-        {
-            if (item.CategoryId == categoryId.Value)
-            {
-                if (item.SubcategoryId == null) return true;
-                if (subcategoryId.HasValue && item.SubcategoryId.Value == subcategoryId.Value) return true;
-            }
-        }
-
-        return false;
-    }
-
-    public string? GetConceptNameForProduct(int? categoryId, int? subcategoryId)
-    {
-        if (!categoryId.HasValue) return null;
-
-        // 1. Coincidencia exacta con SubcategoryId
-        if (subcategoryId.HasValue)
-        {
-            var matchWithSubcategory = Concepts.FirstOrDefault(c =>
-                c.MappedItems.Any(i => i.CategoryId == categoryId.Value && i.SubcategoryId == subcategoryId.Value)
-            );
-            if (matchWithSubcategory != null)
-            {
-                return matchWithSubcategory.ConceptName;
-            }
-        }
-
-        // 2. Coincidencia por solo CategoryId
-        var matchWithCategoryOnly = Concepts.FirstOrDefault(c =>
-            c.MappedItems.Any(i => i.CategoryId == categoryId.Value && i.SubcategoryId == null)
-        );
-        if (matchWithCategoryOnly != null)
-        {
-            return matchWithCategoryOnly.ConceptName;
-        }
-
-        return null;
-    }
 }

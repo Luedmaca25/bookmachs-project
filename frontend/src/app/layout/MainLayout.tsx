@@ -96,7 +96,7 @@ export const MainLayout: React.FC = () => {
             <>
               <Link to="/social" className="nav-link">Impacto</Link>
               {user.role === 'Admin' && (
-                <Link to="/admin" className="nav-link">CMS</Link>
+                <Link to="/admin" className="nav-link">Configuración</Link>
               )}
             </>
           )}
@@ -158,7 +158,7 @@ export const MainLayout: React.FC = () => {
                 <>
                   <Link to="/social" className="offcanvas-link"><i className="fa-solid fa-earth-americas"></i> Impacto</Link>
                   {user.role === 'Admin' && (
-                    <Link to="/admin" className="offcanvas-link"><i className="fa-solid fa-sliders"></i> CMS Admin</Link>
+                    <Link to="/admin" className="offcanvas-link"><i className="fa-solid fa-sliders"></i> Configuración</Link>
                   )}
                 </>
               )}

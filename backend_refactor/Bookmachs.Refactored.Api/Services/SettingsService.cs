@@ -15,9 +15,11 @@ public interface ISettingsService
     Task<GlobalSettingsDto> GetGlobalSettingsAsync(CancellationToken cancellationToken = default);
     Task<GlobalSettingsDto> UpdateGlobalSettingsAsync(GlobalSettingsDto updateDto, CancellationToken cancellationToken = default);
     Task<IEnumerable<MasterPreferenceTagDto>> GetMasterPreferenceTagsAsync(bool onlyActive, CancellationToken cancellationToken = default);
-    Task<MasterPreferenceTagDto> CreateMasterPreferenceTagAsync(string name, bool isActive, CancellationToken cancellationToken = default);
-    Task<MasterPreferenceTagDto> UpdateMasterPreferenceTagAsync(int id, string name, bool isActive, CancellationToken cancellationToken = default);
+    Task<MasterPreferenceTagDto> CreateMasterPreferenceTagAsync(CreatePreferenceTagRequest request, CancellationToken cancellationToken = default);
+    Task<MasterPreferenceTagDto> UpdateMasterPreferenceTagAsync(int id, UpdatePreferenceTagRequest request, CancellationToken cancellationToken = default);
     Task<bool> DeleteMasterPreferenceTagAsync(int id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<EcolecturaCategoryTreeDto>> GetEcolecturaCategoryTreeAsync(CancellationToken cancellationToken = default);
+    Task SeedDefaultTagsAndMappingsAsync(CancellationToken cancellationToken = default);
 }
 
 public class SettingsService : ISettingsService
@@ -38,24 +40,21 @@ public class SettingsService : ISettingsService
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
         if (settings == null)
         {
-            settings = new GlobalSettings { DailySwipeLimitFree = 40 };
+            settings = new GlobalSettings
+            {
+                DailySwipeLimitFree = 40,
+                DailySwipeLimitPremium = 1000,
+                MonthlyMatchLimitFree = 2,
+                MonthlyMatchLimitPremium = 5,
+                BasicPlanPriceUsd = 4.99m,
+                PremiumPlanPriceUsd = 9.99m,
+                SearchKeywordsLimitPremium = 10,
+                FeePercentage = 0.30m,
+                MinFeeAmount = 1000m,
+                MaxFeeAmount = 9000m,
+                LastUpdatedAt = DateTime.UtcNow
+            };
             await _dbContext.GlobalSettings.AddAsync(settings, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-        bool updated = false;
-        if (settings.DailySwipeLimitFree == 100)
-        {
-            settings.DailySwipeLimitFree = 40;
-            updated = true;
-        }
-        if (settings.PremiumPlanPriceUsd < 100.0m)
-        {
-            settings.PremiumPlanPriceUsd = 9990.0m;
-            updated = true;
-        }
-        if (updated)
-        {
-            _dbContext.GlobalSettings.Update(settings);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -91,76 +90,158 @@ public class SettingsService : ISettingsService
 
     public async Task<IEnumerable<MasterPreferenceTagDto>> GetMasterPreferenceTagsAsync(bool onlyActive, CancellationToken cancellationToken = default)
     {
-        var tags = _homologationService.GetPreferenceTagDtos();
-        return await Task.FromResult(tags);
+        await SeedDefaultTagsAndMappingsAsync(cancellationToken);
+
+        var query = _dbContext.MasterPreferenceTags
+            .Include(t => t.MappedCategories)
+            .AsQueryable();
+
+        if (onlyActive)
+        {
+            query = query.Where(t => t.IsActive);
+        }
+
+        var tags = await query.OrderBy(t => t.Id).ToListAsync(cancellationToken);
+        return tags.Select(MapToMasterPreferenceTagDto);
     }
 
-    public async Task<MasterPreferenceTagDto> CreateMasterPreferenceTagAsync(string name, bool isActive, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<EcolecturaCategoryTreeDto>> GetEcolecturaCategoryTreeAsync(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        var categories = await _ecolecturaDbContext.CategoriaProductos
+            .Where(c => c.Activo)
+            .OrderBy(c => c.NombreCategoria)
+            .ToListAsync(cancellationToken);
+
+        var subcategories = await _ecolecturaDbContext.SubcategoriaProductos
+            .Where(s => s.Activo)
+            .OrderBy(s => s.NombreSubcategoria)
+            .ToListAsync(cancellationToken);
+
+        var result = categories.Select(c => new EcolecturaCategoryTreeDto
+        {
+            CategoryId = c.IdCategoriaProducto,
+            CategoryName = c.NombreCategoria,
+            Activo = c.Activo,
+            Subcategories = subcategories
+                .Where(s => s.IdCategoria == c.IdCategoriaProducto)
+                .Select(s => new EcolecturaSubcategoryDto
+                {
+                    SubcategoryId = s.IdSubcategoria,
+                    SubcategoryName = s.NombreSubcategoria,
+                    Activo = s.Activo
+                }).ToList()
+        }).ToList();
+
+        return result;
+    }
+
+    public async Task<MasterPreferenceTagDto> CreateMasterPreferenceTagAsync(CreatePreferenceTagRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
         {
             throw new ArgumentException("El nombre de la etiqueta es requerido.");
         }
 
-        var tag = new EcolecturaCategoria
+        var tag = new MasterPreferenceTag
         {
-            NombreCategoria = name.Trim(),
-            Activo = isActive,
-            Orden = 0
+            Name = request.Name.Trim(),
+            Description = request.Description?.Trim() ?? string.Empty,
+            IsActive = request.IsActive,
+            CreatedAt = DateTime.UtcNow,
+            MappedCategories = request.MappedCategories.Select(m => new PreferenceCategoryMapping
+            {
+                CategoryId = m.CategoryId,
+                CategoryName = m.CategoryName,
+                SubcategoryId = m.SubcategoryId,
+                SubcategoryName = m.SubcategoryName
+            }).ToList()
         };
 
-        await _ecolecturaDbContext.CategoriaProductos.AddAsync(tag, cancellationToken);
-        await _ecolecturaDbContext.SaveChangesAsync(cancellationToken);
+        await _dbContext.MasterPreferenceTags.AddAsync(tag, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return new MasterPreferenceTagDto
-        {
-            Id = tag.IdCategoriaProducto,
-            Name = tag.NombreCategoria,
-            IsActive = tag.Activo,
-            CreatedAt = DateTime.UtcNow
-        };
+        return MapToMasterPreferenceTagDto(tag);
     }
 
-    public async Task<MasterPreferenceTagDto> UpdateMasterPreferenceTagAsync(int id, string name, bool isActive, CancellationToken cancellationToken = default)
+    public async Task<MasterPreferenceTagDto> UpdateMasterPreferenceTagAsync(int id, UpdatePreferenceTagRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        if (string.IsNullOrWhiteSpace(request.Name))
         {
             throw new ArgumentException("El nombre de la etiqueta es requerido.");
         }
 
-        var tag = await _ecolecturaDbContext.CategoriaProductos.FirstOrDefaultAsync(t => t.IdCategoriaProducto == id, cancellationToken);
+        var tag = await _dbContext.MasterPreferenceTags
+            .Include(t => t.MappedCategories)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
         if (tag == null)
         {
             throw new KeyNotFoundException($"No se encontró la etiqueta con Id {id}");
         }
 
-        tag.NombreCategoria = name.Trim();
-        tag.Activo = isActive;
+        tag.Name = request.Name.Trim();
+        tag.Description = request.Description?.Trim() ?? string.Empty;
+        tag.IsActive = request.IsActive;
 
-        _ecolecturaDbContext.CategoriaProductos.Update(tag);
-        await _ecolecturaDbContext.SaveChangesAsync(cancellationToken);
-
-        return new MasterPreferenceTagDto
+        // Eliminar mapeos antiguos y agregar los nuevos
+        _dbContext.PreferenceCategoryMappings.RemoveRange(tag.MappedCategories);
+        tag.MappedCategories = request.MappedCategories.Select(m => new PreferenceCategoryMapping
         {
-            Id = tag.IdCategoriaProducto,
-            Name = tag.NombreCategoria,
-            IsActive = tag.Activo,
-            CreatedAt = DateTime.UtcNow
-        };
+            MasterPreferenceTagId = id,
+            CategoryId = m.CategoryId,
+            CategoryName = m.CategoryName,
+            SubcategoryId = m.SubcategoryId,
+            SubcategoryName = m.SubcategoryName
+        }).ToList();
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapToMasterPreferenceTagDto(tag);
     }
 
     public async Task<bool> DeleteMasterPreferenceTagAsync(int id, CancellationToken cancellationToken = default)
     {
-        var tag = await _ecolecturaDbContext.CategoriaProductos.FirstOrDefaultAsync(t => t.IdCategoriaProducto == id, cancellationToken);
+        var tag = await _dbContext.MasterPreferenceTags
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
         if (tag == null)
         {
             throw new KeyNotFoundException($"No se encontró la etiqueta con Id {id}");
         }
 
-        _ecolecturaDbContext.CategoriaProductos.Remove(tag);
-        await _ecolecturaDbContext.SaveChangesAsync(cancellationToken);
+        _dbContext.MasterPreferenceTags.Remove(tag);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return true;
+    }
+
+    public async Task SeedDefaultTagsAndMappingsAsync(CancellationToken cancellationToken = default)
+    {
+        if (await _dbContext.MasterPreferenceTags.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var defaultConcepts = _homologationService.GetAllConcepts();
+        foreach (var c in defaultConcepts)
+        {
+            var tag = new MasterPreferenceTag
+            {
+                Name = c.ConceptName,
+                Description = c.Description,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                MappedCategories = c.MappedItems.Select(m => new PreferenceCategoryMapping
+                {
+                    CategoryId = m.CategoryId,
+                    CategoryName = m.CategoryName,
+                    SubcategoryId = m.SubcategoryId,
+                    SubcategoryName = m.SubcategoryName
+                }).ToList()
+            };
+            await _dbContext.MasterPreferenceTags.AddAsync(tag, cancellationToken);
+        }
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private static GlobalSettingsDto MapToGlobalSettingsDto(GlobalSettings g)
@@ -188,8 +269,17 @@ public class SettingsService : ISettingsService
         {
             Id = t.Id,
             Name = t.Name,
+            Description = t.Description,
             IsActive = t.IsActive,
-            CreatedAt = t.CreatedAt
+            CreatedAt = t.CreatedAt,
+            MappedCategories = t.MappedCategories.Select(m => new PreferenceCategoryMappingDto
+            {
+                Id = m.Id,
+                CategoryId = m.CategoryId,
+                CategoryName = m.CategoryName,
+                SubcategoryId = m.SubcategoryId,
+                SubcategoryName = m.SubcategoryName
+            }).ToList()
         };
     }
 }

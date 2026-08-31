@@ -31,6 +31,7 @@ public class User
     public string? PasswordHash { get; set; }
     
     public string Role { get; set; } = "User"; // User, Admin
+    public bool IsBlocked { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Relaciones

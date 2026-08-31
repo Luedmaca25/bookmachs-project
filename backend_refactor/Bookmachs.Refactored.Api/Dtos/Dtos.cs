@@ -33,6 +33,24 @@ public class UserProfileDto
     public int DailySwipeLimit { get; set; }
 }
 
+public class AdminUserDetailDto
+{
+    public Guid Id { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string DocumentoIdentidad { get; set; } = string.Empty;
+    public string Pais { get; set; } = string.Empty;
+    public string Telefono { get; set; } = string.Empty;
+    public string? ProfileImageUrl { get; set; }
+    public bool IsPremium { get; set; }
+    public string SubscriptionPlan { get; set; } = "Free";
+    public string Role { get; set; } = "User";
+    public bool IsBlocked { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int BooksCount { get; set; }
+    public System.Collections.Generic.List<string> Preferences { get; set; } = new System.Collections.Generic.List<string>();
+}
+
 public class SwipeStatusDto
 {
     public int SwipesConsumed { get; set; }
@@ -73,12 +91,62 @@ public class GlobalSettingsDto
     public DateTime LastUpdatedAt { get; set; }
 }
 
+public class PreferenceCategoryMappingDto
+{
+    public int Id { get; set; }
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public int? SubcategoryId { get; set; }
+    public string? SubcategoryName { get; set; }
+}
+
+public class CreatePreferenceMappingRequest
+{
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public int? SubcategoryId { get; set; }
+    public string? SubcategoryName { get; set; }
+}
+
 public class MasterPreferenceTagDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
+    public List<PreferenceCategoryMappingDto> MappedCategories { get; set; } = new();
+}
+
+public class CreatePreferenceTagRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public List<CreatePreferenceMappingRequest> MappedCategories { get; set; } = new();
+}
+
+public class UpdatePreferenceTagRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public List<CreatePreferenceMappingRequest> MappedCategories { get; set; } = new();
+}
+
+public class EcolecturaSubcategoryDto
+{
+    public int SubcategoryId { get; set; }
+    public string SubcategoryName { get; set; } = string.Empty;
+    public bool Activo { get; set; }
+}
+
+public class EcolecturaCategoryTreeDto
+{
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public bool Activo { get; set; }
+    public List<EcolecturaSubcategoryDto> Subcategories { get; set; } = new();
 }
 
 public class GlobalExchangeHistoryDto

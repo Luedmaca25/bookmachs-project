@@ -17,6 +17,7 @@ public class BookmachsDbContext : DbContext
     public DbSet<UserBookInteraction> UserBookInteractions { get; set; } = null!;
     public DbSet<GlobalSettings> GlobalSettings { get; set; } = null!;
     public DbSet<MasterPreferenceTag> MasterPreferenceTags { get; set; } = null!;
+    public DbSet<PreferenceCategoryMapping> PreferenceCategoryMappings { get; set; } = null!;
     public DbSet<TimelineEvent> TimelineEvents { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -136,8 +137,22 @@ public class BookmachsDbContext : DbContext
         modelBuilder.Entity<MasterPreferenceTag>(entity =>
         {
             entity.HasKey(m => m.Id);
-            entity.Property(m => m.Name).IsRequired().HasMaxLength(50);
+            entity.Property(m => m.Name).IsRequired().HasMaxLength(150);
+            entity.Property(m => m.Description).HasMaxLength(500);
             entity.HasIndex(m => m.Name).IsUnique();
+
+            entity.HasMany(m => m.MappedCategories)
+                .WithOne(c => c.MasterPreferenceTag)
+                .HasForeignKey(c => c.MasterPreferenceTagId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // --- Configuración de PreferenceCategoryMapping ---
+        modelBuilder.Entity<PreferenceCategoryMapping>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.CategoryName).IsRequired().HasMaxLength(250);
+            entity.Property(c => c.SubcategoryName).HasMaxLength(250);
         });
 
         // --- Configuración de TimelineEvent ---

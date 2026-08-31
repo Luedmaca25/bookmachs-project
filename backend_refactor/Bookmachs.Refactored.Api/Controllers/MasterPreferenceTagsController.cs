@@ -25,6 +25,13 @@ public class MasterPreferenceTagsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("ecolectura-categories")]
+    public async Task<ActionResult<IEnumerable<EcolecturaCategoryTreeDto>>> GetEcolecturaCategories()
+    {
+        var result = await _settingsService.GetEcolecturaCategoryTreeAsync();
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<MasterPreferenceTagDto>> Create([FromBody] CreatePreferenceTagRequest request)
     {
@@ -33,7 +40,7 @@ public class MasterPreferenceTagsController : ControllerBase
             return BadRequest("Los datos proporcionados para la creación de la etiqueta no son válidos.");
         }
 
-        var result = await _settingsService.CreateMasterPreferenceTagAsync(request.Name, request.IsActive);
+        var result = await _settingsService.CreateMasterPreferenceTagAsync(request);
         return CreatedAtAction(nameof(GetAll), new { id = result.Id }, result);
     }
 
@@ -47,7 +54,7 @@ public class MasterPreferenceTagsController : ControllerBase
 
         try
         {
-            var result = await _settingsService.UpdateMasterPreferenceTagAsync(id, request.Name, request.IsActive);
+            var result = await _settingsService.UpdateMasterPreferenceTagAsync(id, request);
             return Ok(result);
         }
         catch (KeyNotFoundException ex)
@@ -69,16 +76,4 @@ public class MasterPreferenceTagsController : ControllerBase
             return NotFound(new { message = ex.Message });
         }
     }
-}
-
-public class CreatePreferenceTagRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public bool IsActive { get; set; } = true;
-}
-
-public class UpdatePreferenceTagRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public bool IsActive { get; set; }
 }
