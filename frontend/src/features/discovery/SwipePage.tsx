@@ -5,6 +5,7 @@ import { useAuthStore } from '../authentication/store/authStore';
 import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
 import { MatchModal } from '../transactions/components/MatchModal';
 import { BookCard } from './components/BookCard';
+import { StepByStepTutorialModal } from './components/StepByStepTutorialModal';
 import { apiClient } from '../../lib/apiClient';
 
 const COUNTRIES_LIST = [
@@ -32,6 +33,11 @@ export const SwipePage: React.FC = () => {
   
   // Control de Onboarding
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+
+  // Control del Tutorial Paso a Paso (Solo se abre al presionar el botón)
+  const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
+
+
 
   const needsOnboarding = isAuthenticated && (
     !user?.pais || 
@@ -238,6 +244,8 @@ export const SwipePage: React.FC = () => {
   const triggerSwipe = async (direction: 'left' | 'right') => {
     if (limitReached || !currentBook) return;
 
+
+
     if (!isAuthenticated) {
       if (guestSwipesCount >= 5) {
         setShowGuestLimitModal(true);
@@ -363,6 +371,14 @@ export const SwipePage: React.FC = () => {
             Más de 100.000 libros para intercambiar, <br />
             actualizados todos los días.
           </p>
+
+          <button
+            onClick={() => setIsTutorialOpen(true)}
+            className="guest-tutorial-trigger-btn font-heading"
+          >
+            <i className="fa-solid fa-circle-play icon-neon"></i> Ver paso a paso cómo funciona 📖
+          </button>
+
           <div className="guest-flags-row">
             {COUNTRIES_LIST.map((country, idx) => (
               <React.Fragment key={country.name}>
@@ -381,7 +397,14 @@ export const SwipePage: React.FC = () => {
             ¡Intercambio de libros <br />
             <span className="guest-hero-title-highlight">a un Machs!</span>
           </h1>
-          <div className="user-auth-badge">
+          <div className="user-auth-badge" style={{ gap: '10px' }}>
+            <button
+              onClick={() => setIsTutorialOpen(true)}
+              className="header-tutorial-btn font-heading"
+              title="Ver guía paso a paso"
+            >
+              <i className="fa-solid fa-circle-question icon-neon"></i> ¿Cómo funciona?
+            </button>
             <span>
               Hola, <strong>{user?.name}</strong>
             </span>
@@ -424,6 +447,8 @@ export const SwipePage: React.FC = () => {
         </div>
       ) : (
         <div className="swipe-card-wrapper">
+
+
           {currentBook && (
             <BookCard
               key={currentBook.id}
@@ -504,6 +529,15 @@ export const SwipePage: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Modal de Tutorial Paso a Paso */}
+      <StepByStepTutorialModal
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
+        onStartSwiping={() => {
+          setIsTutorialOpen(false);
+        }}
+      />
 
       <MatchModal
         isOpen={matchOpen}
