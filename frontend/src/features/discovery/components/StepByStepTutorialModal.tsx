@@ -97,7 +97,7 @@ export const StepByStepTutorialModal: React.FC<StepByStepTutorialModalProps> = (
               <div className="tutorial-simulation-deck">
                 <div className="simulation-card sim-card-left">
                   <div className="sim-badge badge-dislike font-heading">❌ Izquierda</div>
-                  <span className="sim-book-title">Libro no deseado</span>
+                  <span className="sim-book-title">No es para mí:</span>
                   <p className="sim-hint">Desliza a la izquierda para descartar</p>
                 </div>
 

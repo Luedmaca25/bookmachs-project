@@ -8,6 +8,7 @@ export interface BookCardData {
   description?: string;
   imageUrl?: string;
   baseValue?: number;
+  isInternalStock?: boolean;
   createdAt?: string;
   isFallbackCategory?: boolean;
 }
@@ -21,6 +22,9 @@ interface BookCardProps {
   showReserveButton?: boolean;
   onInterest?: (id: string, title: string) => void;
   showInterestButton?: boolean;
+  showUndoButton?: boolean;
+  canUndo?: boolean;
+  onUndo?: () => void;
   onTouchStart?: (e: React.TouchEvent) => void;
   onTouchMove?: (e: React.TouchEvent) => void;
   onTouchEnd?: () => void;
@@ -39,6 +43,9 @@ export const BookCard: React.FC<BookCardProps> = ({
   showReserveButton = false,
   onInterest,
   showInterestButton = true,
+  showUndoButton = false,
+  canUndo = false,
+  onUndo,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -61,6 +68,24 @@ export const BookCard: React.FC<BookCardProps> = ({
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseLeave}
     >
+      {/* Botón de Retroceder al libro anterior (Arriba a la derecha) */}
+      {showUndoButton && onUndo && (
+        <button
+          type="button"
+          className={`swipe-undo-btn ${!canUndo ? 'disabled' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (canUndo) onUndo();
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          title={canUndo ? "Retroceder al libro anterior" : "No hay libro anterior"}
+          disabled={!canUndo}
+        >
+          <i className="fa-solid fa-rotate-left"></i>
+        </button>
+      )}
+
       {isNewlyArrived && (
         <span className="new-arrival-badge">
           <i className="fa-solid fa-star star-gold"></i> Recién Llegado
@@ -83,6 +108,17 @@ export const BookCard: React.FC<BookCardProps> = ({
             <i className="fa-solid fa-book"></i>
           </span>
         )}
+
+        {/* Etiqueta de referencia de stock posicionada abajo a la izquierda dentro del contenedor de imagen */}
+        {book.isInternalStock !== false ? (
+          <span className="stock-type-badge internal">
+            <i className="fa-solid fa-shield-halved"></i> Bookmachs
+          </span>
+        ) : (
+          <span className="stock-type-badge external">
+            <i className="fa-solid fa-user"></i> Externo
+          </span>
+        )}
       </div>
 
       <div className="book-card-info">
@@ -92,14 +128,8 @@ export const BookCard: React.FC<BookCardProps> = ({
           </div>
         )}
 
-        {book.condition && (
-          <span className={`condition-badge ${book.condition.toLowerCase()}`}>
-            Estado libro: {book.condition}
-          </span>
-        )}
-
         <h3>{book.title || 'Descubre Libros'}</h3>
-        <span className="book-author">por {book.author || 'Bookmachs'}</span>
+        <span className="book-author">Autor: {book.author || 'Desconocido'}</span>
 
         <p className={`book-desc ${isDescriptionExpanded ? 'expanded' : ''}`}>
           {book.description || 'Encuentra tu próximo match.'}
@@ -128,22 +158,17 @@ export const BookCard: React.FC<BookCardProps> = ({
           </button>
         )}
 
+        {/* Filas de etiquetas de estado */}
+        {book.condition && (
+          <div className="book-card-badges-row">
+            <span className={`condition-badge ${book.condition.toLowerCase()}`}>
+              Estado: {book.condition}
+            </span>
+          </div>
+        )}
+
         {(showInterestButton || showReserveButton) && (
           <div className="catalog-card-footer">
-            {/* Botón de Reserva Comentado Temporalmente por Solicitud del Usuario */}
-            {/* {showReserveButton && onReserve && (
-              <button
-                type="button"
-                className="catalog-reserve-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReserve(book.id, book.title);
-                }}
-              >
-                Reservar por 48h <i className="fa-solid fa-lock"></i>
-              </button>
-            )} */}
-
             {/* Botón Me Interesa (Intercambio / Swipe Like) */}
             {showInterestButton && onInterest && (
               <button

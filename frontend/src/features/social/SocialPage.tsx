@@ -270,7 +270,7 @@ export const SocialPage: React.FC = () => {
                     </div>
                     <div className="timeline-book-details">
                       <strong className="timeline-book-title">{item.bookTitle}</strong>
-                      <span className="timeline-book-author">de {item.bookAuthor}</span>
+                      <span className="timeline-book-author">Autor: {item.bookAuthor || 'Desconocido'}</span>
                     </div>
 
                     {/* Mostrar calificación y comentario si existe (Tarea 42) */}

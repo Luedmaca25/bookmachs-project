@@ -190,6 +190,54 @@ public class BooksController : ControllerBase
         }
     }
 
+    [HttpPost("{id}/undo-swipe")]
+    public async Task<ActionResult<SwipeStatusDto>> UndoSwipe(Guid id)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            var result = await _bookService.UndoSwipeAsync(userId, id);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("undo-swipe")]
+    public async Task<ActionResult<SwipeStatusDto>> UndoLastSwipe()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            var result = await _bookService.UndoSwipeAsync(userId, null);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("sync-guest-likes")]
     public async Task<ActionResult> SyncGuestLikes([FromBody] List<Guid> bookIds)
     {

@@ -24,6 +24,7 @@ interface BookItem {
   condition: string;
   description: string;
   imageUrl: string;
+  isInternalStock?: boolean;
   isFallbackCategory?: boolean;
 }
 
@@ -65,14 +66,60 @@ export const SwipePage: React.FC = () => {
     staleTime: 5000, // Evitar refetches inmediatos en transiciones rápidas
   });
 
-  const books = queryBooks || [];
+  const rawBooks = queryBooks || [];
   const error = queryError ? 'Ocurrió un error al cargar las recomendaciones de libros.' : null;
+  const [booksList, setBooksList] = useState<BookItem[]>([]);
   const [currentBookIndex, setCurrentBookIndex] = useState(0);
+  const [swipedHistory, setSwipedHistory] = useState<number[]>([]);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
-  // Reiniciar el índice de libro actual cuando cambia la lista
+  // Control de límites diarios (Fase 6)
+  const [limitReached, setLimitReached] = useState(false);
+
+  // Inicializar la lista de libros cuando se recibe la respuesta inicial de React Query
   useEffect(() => {
-    setCurrentBookIndex(0);
+    if (rawBooks && rawBooks.length > 0) {
+      setBooksList(rawBooks);
+      setCurrentBookIndex(0);
+      setSwipedHistory([]);
+    }
   }, [queryBooks]);
+
+  // Cargar automáticamente los siguientes 100 libros cuando el usuario se aproxima al final de la lista actual
+  const fetchMoreBooks = async () => {
+    if (isFetchingMore) return;
+    setIsFetchingMore(true);
+    try {
+      const endpoint = isAuthenticated
+        ? '/books/recommendations?limit=100'
+        : '/books/guest-random?count=20';
+      const newBooks = await apiClient.get<BookItem[]>(endpoint);
+      if (newBooks && newBooks.length > 0) {
+        setBooksList((prev) => {
+          const existingIds = new Set(prev.map((b) => b.id));
+          const filteredNew = newBooks.filter((b) => !existingIds.has(b.id));
+          return [...prev, ...filteredNew];
+        });
+      }
+    } catch (err) {
+      console.error('Error al cargar más recomendaciones de libros:', err);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      booksList.length > 0 &&
+      currentBookIndex >= booksList.length - 5 &&
+      !isFetchingMore &&
+      !limitReached
+    ) {
+      fetchMoreBooks();
+    }
+  }, [currentBookIndex, booksList.length, isFetchingMore, limitReached]);
+
+  const books = booksList;
 
   // Estados de animación y arrastre (Drag / Slide Gesture)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -134,9 +181,6 @@ export const SwipePage: React.FC = () => {
       }
     }
   }, [books, currentBookIndex]);
-
-  // Control de límites diarios (Fase 6)
-  const [limitReached, setLimitReached] = useState(false);
 
   // Control de Match (Fase 7)
   const [matchOpen, setMatchOpen] = useState(false);
@@ -241,32 +285,100 @@ export const SwipePage: React.FC = () => {
     }
   };
 
-  const triggerSwipe = async (direction: 'left' | 'right') => {
-    if (limitReached || !currentBook) return;
-
-
-
-    if (!isAuthenticated) {
-      if (guestSwipesCount >= 5) {
-        setShowGuestLimitModal(true);
-        return;
+  const handleUndoSwipe = async () => {
+    if (currentBookIndex > 0 || swipedHistory.length > 0) {
+      let targetIndex = currentBookIndex - 1;
+      if (swipedHistory.length > 0) {
+        targetIndex = swipedHistory[swipedHistory.length - 1];
+        setSwipedHistory((prev) => prev.slice(0, -1));
       }
 
-      const swipedBook = currentBook;
-      const newCount = guestSwipesCount + 1;
-      setGuestSwipesCount(newCount);
-      localStorage.setItem('guest_swipes_count', newCount.toString());
+      const undoneBook = booksList[targetIndex];
+      setCurrentBookIndex(Math.max(0, targetIndex));
+      setSwipeDirection(null);
 
-      if (direction === 'right' && swipedBook) {
+      if (isAuthenticated) {
         try {
-          const existingLikesStr = localStorage.getItem('guest_pending_likes');
-          const existingLikes: string[] = existingLikesStr ? JSON.parse(existingLikesStr) : [];
-          if (!existingLikes.includes(swipedBook.id)) {
-            existingLikes.push(swipedBook.id);
-            localStorage.setItem('guest_pending_likes', JSON.stringify(existingLikes));
+          interface SwipeStatusResponse {
+            swipesConsumed: number;
+            swipeLimit: number;
+            limitReached: boolean;
           }
-        } catch (e) {
-          console.error('Error al guardar me gusta de invitado:', e);
+          const endpoint = undoneBook ? `/books/${undoneBook.id}/undo-swipe` : '/books/undo-swipe';
+          const response = await apiClient.post<SwipeStatusResponse>(endpoint);
+
+          if (response) {
+            if (typeof response.swipesConsumed === 'number') {
+              setSwipesConsumed(response.swipesConsumed);
+            }
+            if (typeof response.swipeLimit === 'number') {
+              setSwipeLimit(response.swipeLimit);
+            }
+            setLimitReached(!!response.limitReached);
+          }
+        } catch (err) {
+          console.error('Error al sincronizar deshacer swipe con el servidor:', err);
+          if (!user?.isPremium) {
+            setSwipesConsumed((prev) => Math.max(0, prev - 1));
+          }
+          setLimitReached(false);
+        }
+      } else {
+        if (guestSwipesCount > 0) {
+          const newCount = guestSwipesCount - 1;
+          setGuestSwipesCount(newCount);
+          localStorage.setItem('guest_swipes_count', newCount.toString());
+        }
+        if (undoneBook) {
+          try {
+            const existingLikesStr = localStorage.getItem('guest_pending_likes');
+            if (existingLikesStr) {
+              const existingLikes: string[] = JSON.parse(existingLikesStr);
+              const updatedLikes = existingLikes.filter((id) => id !== undoneBook.id);
+              localStorage.setItem('guest_pending_likes', JSON.stringify(updatedLikes));
+            }
+          } catch (e) {
+            console.error('Error al actualizar me gusta de invitado:', e);
+          }
+        }
+        setLimitReached(false);
+      }
+    }
+  };
+
+  const triggerSwipe = async (direction: 'left' | 'right') => {
+    // Si la acción es "like" (derecha) y ya se alcanzó el límite de likes, no permitir más likes
+    if (direction === 'right' && limitReached) return;
+    if (!currentBook) return;
+
+    // Guardar el índice del libro actual en el historial antes de avanzar
+    setSwipedHistory((prev) => [...prev, currentBookIndex]);
+
+    if (!isAuthenticated) {
+      const swipedBook = currentBook;
+      let newCount = guestSwipesCount;
+
+      // Los invitados solo consumen su cuota de 5 swipes al dar LIKE a la derecha
+      if (direction === 'right') {
+        if (guestSwipesCount >= 5) {
+          setShowGuestLimitModal(true);
+          return;
+        }
+        newCount = guestSwipesCount + 1;
+        setGuestSwipesCount(newCount);
+        localStorage.setItem('guest_swipes_count', newCount.toString());
+
+        if (swipedBook) {
+          try {
+            const existingLikesStr = localStorage.getItem('guest_pending_likes');
+            const existingLikes: string[] = existingLikesStr ? JSON.parse(existingLikesStr) : [];
+            if (!existingLikes.includes(swipedBook.id)) {
+              existingLikes.push(swipedBook.id);
+              localStorage.setItem('guest_pending_likes', JSON.stringify(existingLikes));
+            }
+          } catch (e) {
+            console.error('Error al guardar me gusta de invitado:', e);
+          }
         }
       }
 
@@ -275,7 +387,7 @@ export const SwipePage: React.FC = () => {
       setTimeout(() => {
         setSwipeDirection(null);
         setCurrentBookIndex((prev) => prev + 1);
-        if (newCount >= 5) {
+        if (direction === 'right' && newCount >= 5) {
           setShowGuestLimitModal(true);
         }
       }, 220);
@@ -288,8 +400,8 @@ export const SwipePage: React.FC = () => {
     // 1. Iniciar animación de deslizamiento de forma optimista
     setSwipeDirection(direction);
 
-    // 2. Incrementar el contador local de swipes optimistamente para respuesta UI instantánea
-    if (!user?.isPremium) {
+    // 2. Incrementar el contador local de swipes únicamente al dar "like" (derecha)
+    if (direction === 'right' && !user?.isPremium) {
       setSwipesConsumed((prev) => prev + 1);
     }
 
@@ -376,7 +488,7 @@ export const SwipePage: React.FC = () => {
             onClick={() => setIsTutorialOpen(true)}
             className="guest-tutorial-trigger-btn font-heading"
           >
-            <i className="fa-solid fa-circle-play icon-neon"></i> Ver paso a paso cómo funciona 📖
+            <i className="fa-solid fa-circle-play icon-neon"></i> Ver cómo funciona
           </button>
 
           <div className="guest-flags-row">
@@ -453,6 +565,9 @@ export const SwipePage: React.FC = () => {
             <BookCard
               key={currentBook.id}
               book={currentBook}
+              showUndoButton={true}
+              canUndo={currentBookIndex > 0 || swipedHistory.length > 0}
+              onUndo={handleUndoSwipe}
               className={`${
                 swipeDirection === 'right' ? 'swiped-right' : 
                 swipeDirection === 'left' ? 'swiped-left' : ''
@@ -477,45 +592,41 @@ export const SwipePage: React.FC = () => {
             />
           )}
 
-          {!limitReached && (
-            <>
-              <div className="swipe-controls">
-                <button 
-                  className="control-btn dislike-btn" 
-                  onClick={() => triggerSwipe('left')}
-                  disabled={limitReached}
-                  title="No me interesa"
-                >
-                  <i className="fa-solid fa-xmark"></i>
-                </button>
-                <button 
-                  className="control-btn like-btn" 
-                  onClick={() => triggerSwipe('right')}
-                  disabled={limitReached}
-                  title="Me interesa"
-                >
-                  <i className="fa-solid fa-heart"></i>
-                </button>
-              </div>
+          <div className="swipe-controls">
+            <button 
+              className="control-btn dislike-btn" 
+              onClick={() => triggerSwipe('left')}
+              disabled={!currentBook}
+              title="No me interesa (Infinito)"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+            <button 
+              className="control-btn like-btn" 
+              onClick={() => triggerSwipe('right')}
+              disabled={limitReached}
+              title={limitReached ? "Límite de me gusta alcanzado" : "Me interesa"}
+            >
+              <i className="fa-solid fa-heart"></i>
+            </button>
+          </div>
 
-              <div 
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    navigate('/auth');
-                  } else {
-                    navigate('/libreta');
-                  }
-                }}
-                className="notebook-banner-card"
-              >
-                <span className="notebook-banner-icon"><i className="fa-solid fa-book-bookmark icon-neon"></i></span>
-                <div className="notebook-banner-body">
-                  <div className="notebook-banner-title">Intercambiálos en tu libreta</div>
-                  <div className="notebook-banner-subtitle">Tus likes se guardan automáticamente</div>
-                </div>
-              </div>
-            </>
-          )}
+          <div 
+            onClick={() => {
+              if (!isAuthenticated) {
+                navigate('/auth');
+              } else {
+                navigate('/libreta');
+              }
+            }}
+            className="notebook-banner-card"
+          >
+            <span className="notebook-banner-icon"><i className="fa-solid fa-book-bookmark icon-neon"></i></span>
+            <div className="notebook-banner-body">
+              <div className="notebook-banner-title">Intercambiálos en tu libreta</div>
+              <div className="notebook-banner-subtitle">Tus likes se guardan automáticamente</div>
+            </div>
+          </div>
 
           {limitReached && (
             <div className="card-blur-overlay">

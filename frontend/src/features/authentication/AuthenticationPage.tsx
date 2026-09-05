@@ -460,6 +460,19 @@ export const AuthenticationPage: React.FC = () => {
   // Render Login/Registration Form when NOT authenticated
   return (
     <div className="auth-page-container">
+      <div className="modal-footer">
+          <button 
+            type="button" 
+            className="toggle-auth-btn"
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError(null);
+            }}
+          >
+            {isLogin ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Inicia sesión aquí'}
+          </button>
+        </div>
+        
       <div className="modal-card modal-card-no-anim">
         <div className="modal-header">
           <h2>{isLogin ? 'Iniciar sesión' : 'Únete a Bookmachs'}</h2>
@@ -567,19 +580,6 @@ export const AuthenticationPage: React.FC = () => {
 
         <div className="google-sso-wrapper">
           <div id="google-btn-container" className="google-btn-flex-center"></div>
-        </div>
-
-        <div className="modal-footer">
-          <button 
-            type="button" 
-            className="toggle-auth-btn"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError(null);
-            }}
-          >
-            {isLogin ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Inicia sesión aquí'}
-          </button>
         </div>
       </div>
     </div>

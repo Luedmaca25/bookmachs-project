@@ -218,7 +218,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               />
             </div>
             <div className="swap-book-title swap-book-title-sm">{transaction.bookTitle}</div>
-            <div className="swap-book-author swap-book-author-sm">por {transaction.bookAuthor}</div>
+            <div className="swap-book-author swap-book-author-sm">Autor: {transaction.bookAuthor || 'Desconocido'}</div>
             <div className="mt-04">
               <span className={`condition-badge ${(transaction.bookCondition || 'Excelente').toLowerCase()}`}>
                 Estado libro: {transaction.bookCondition || 'Excelente'}
@@ -245,7 +245,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               />
             </div>
             <div className="swap-book-title swap-book-title-sm">{offerTitle}</div>
-            <div className="swap-book-author swap-book-author-sm">por {offerAuthor}</div>
+            <div className="swap-book-author swap-book-author-sm">Autor: {offerAuthor || 'Desconocido'}</div>
             <div className="mt-04">
               <span className={`condition-badge ${(offerCondition || 'Excelente').toLowerCase()}`}>
                 Estado libro: {offerCondition}

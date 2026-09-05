@@ -457,7 +457,7 @@ export const InventoryPage: React.FC = () => {
                         Estado libro: {book.condition}
                       </span>
                       <h3>{book.title}</h3>
-                      <span className="book-author">{book.author}</span>
+                      <span className="book-author">Autor: {book.author || 'Desconocido'}</span>
                       <p className={`book-desc ${isExpanded ? 'expanded' : ''}`}>
                         {book.description}
                       </p>

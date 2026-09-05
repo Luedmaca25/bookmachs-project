@@ -341,7 +341,7 @@ export const TransactionsPage: React.FC = () => {
                       )}
                     </div>
                     <div className="swap-book-title">{selectedTx.bookTitle}</div>
-                    <div className="swap-book-author">por {selectedTx.bookAuthor}</div>
+                    <div className="swap-book-author">Autor: {selectedTx.bookAuthor || 'Desconocido'}</div>
                     <div className="offered-select-wrapper">
                       <span className={`condition-badge ${selectedTx.bookCondition.toLowerCase()}`}>
                         Estado libro: {selectedTx.bookCondition}
@@ -384,7 +384,7 @@ export const TransactionsPage: React.FC = () => {
                               />
                             </div>
                             <div className="swap-book-title">{currentOfferedBook.title}</div>
-                            <div className="swap-book-author">por {currentOfferedBook.author}</div>
+                            <div className="swap-book-author">Autor: {currentOfferedBook.author || 'Desconocido'}</div>
                             <div className="offered-select-wrapper">
                               <span className={`condition-badge ${(currentOfferedBook.condition || 'Excelente').toLowerCase()}`}>
                                 Estado libro: {currentOfferedBook.condition || 'Excelente'}

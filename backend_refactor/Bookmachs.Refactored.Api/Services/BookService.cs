@@ -21,6 +21,7 @@ public interface IBookService
     Task<IEnumerable<BookDto>> GetRecommendationsAsync(Guid userId, int limit, CancellationToken cancellationToken = default);
     Task<SwipeStatusDto> GetSwipeStatusAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<SwipeResultDto> SwipeBookAsync(Guid bookId, Guid userId, string action, CancellationToken cancellationToken = default);
+    Task<SwipeStatusDto> UndoSwipeAsync(Guid userId, Guid? bookId = null, CancellationToken cancellationToken = default);
     Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> ReserveBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> CancelReservationAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
@@ -366,27 +367,34 @@ public class BookService : IBookService
             }
         }
 
-        if (consumed >= swipeLimit)
-        {
-            return new SwipeResultDto
-            {
-                Success = false,
-                SwipesConsumed = consumed,
-                SwipeLimit = swipeLimit,
-                ErrorCode = "MonthlyLimitExceeded",
-                Message = $"Has alcanzado tu límite mensual de {swipeLimit} swipes en el plan gratuito (1° al último día del mes). Pásate a Premium para deslizar sin límites."
-            };
-        }
+        bool isLikeAction = action.Equals("like", StringComparison.OrdinalIgnoreCase);
 
-        consumed++;
-        _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
-        user.DailySwipesConsumed = consumed;
-        _dbContext.Users.Update(user);
+        // Los swipes se descuentan únicamente cuando el usuario da "like" (me gusta a la derecha).
+        // Los swipes a la izquierda (dislike) son infinitos en todos los planes.
+        if (isLikeAction)
+        {
+            if (consumed >= swipeLimit)
+            {
+                return new SwipeResultDto
+                {
+                    Success = false,
+                    SwipesConsumed = consumed,
+                    SwipeLimit = swipeLimit,
+                    ErrorCode = "MonthlyLimitExceeded",
+                    Message = $"Has alcanzado tu límite de {swipeLimit} me gusta (likes) en el plan gratuito. Pásate a Premium para dar me gusta sin límites."
+                };
+            }
+
+            consumed++;
+            _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
+            user.DailySwipesConsumed = consumed;
+            _dbContext.Users.Update(user);
+        }
 
         bool isMatch = false;
         Guid? matchTransactionId = null;
 
-        if (action.Equals("like", StringComparison.OrdinalIgnoreCase))
+        if (isLikeAction)
         {
             var book = await EnsureBookExistsLocallyAsync(bookId, cancellationToken);
 
@@ -480,6 +488,81 @@ public class BookService : IBookService
             Message = isMatch ? "¡Match logrado!" : "Swipe registrado con éxito.",
             IsMatch = isMatch,
             MatchTransactionId = matchTransactionId
+        };
+    }
+
+    public async Task<SwipeStatusDto> UndoSwipeAsync(Guid userId, Guid? bookId = null, CancellationToken cancellationToken = default)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("Usuario no encontrado.");
+        }
+
+        var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
+        int swipeLimit = user.IsPremium ? 1000 : 40;
+        if (settings != null)
+        {
+            swipeLimit = user.IsPremium ? settings.DailySwipeLimitPremium : settings.DailySwipeLimitFree;
+        }
+
+        // Buscar la interacción correspondiente
+        UserBookInteraction? interaction = null;
+        if (bookId.HasValue && bookId.Value != Guid.Empty)
+        {
+            string bookIdStr = bookId.Value.ToString();
+            interaction = await _dbContext.UserBookInteractions
+                .FirstOrDefaultAsync(i => i.UserId == userId && i.BookId == bookIdStr, cancellationToken);
+        }
+
+        if (interaction == null)
+        {
+            interaction = await _dbContext.UserBookInteractions
+                .Where(i => i.UserId == userId)
+                .OrderByDescending(i => i.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        int consumed = user.DailySwipesConsumed;
+        var cacheKey = $"swipes_consumed_{user.Id}";
+        var cachedSwipes = _cacheService.Get<int?>(cacheKey);
+        if (cachedSwipes.HasValue)
+        {
+            consumed = cachedSwipes.Value;
+        }
+
+        if (interaction != null)
+        {
+            // Si la acción deshecha fue "like", decrementar el contador de swipes consumidos
+            if (string.Equals(interaction.Action, "like", StringComparison.OrdinalIgnoreCase))
+            {
+                consumed = Math.Max(0, consumed - 1);
+                user.DailySwipesConsumed = Math.Max(0, user.DailySwipesConsumed - 1);
+                _dbContext.Users.Update(user);
+                _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
+
+                // Cancelar/Eliminar transacción de match en estado pendiente si existía
+                if (Guid.TryParse(interaction.BookId, out var targetBookId))
+                {
+                    var pendingMatch = await _dbContext.MatchTransactions
+                        .FirstOrDefaultAsync(t => t.RequesterUserId == userId && t.BookId == targetBookId && t.PaymentStatus == "Pending", cancellationToken);
+                    if (pendingMatch != null)
+                    {
+                        _dbContext.MatchTransactions.Remove(pendingMatch);
+                    }
+                }
+            }
+
+            // Eliminar la interacción de la BD para habilitar de nuevo el libro
+            _dbContext.UserBookInteractions.Remove(interaction);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return new SwipeStatusDto
+        {
+            SwipesConsumed = consumed,
+            SwipeLimit = swipeLimit,
+            LimitReached = consumed >= swipeLimit
         };
     }
 
