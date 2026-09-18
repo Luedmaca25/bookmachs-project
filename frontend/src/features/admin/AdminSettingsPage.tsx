@@ -922,7 +922,7 @@ export const AdminSettingsPage: React.FC = () => {
 
         {activeTab === 'logistics' && (
           <div className="admin-settings-section">
-            <h3>Gestión de Recepción de Libros Físicos (Administración Bookmachs)</h3>
+            <h3>Gestión de Recepción de Libros Físicos (Administración Intercambialibros)</h3>
             <p className="section-subtitle admin-section-subtitle">
               Revisa los intercambios que se encuentran en estatus <strong>"En Espera"</strong> por entrega presencial o envío por encomienda. Haz clic en "Confirmar Recepción" para marcar el libro como recibido.
             </p>

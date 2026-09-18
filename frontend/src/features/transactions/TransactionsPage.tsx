@@ -519,7 +519,7 @@ export const TransactionsPage: React.FC = () => {
                         <span className="radio-card-badge badge-courier">Pagas envío + comprobante</span>
                       </div>
                       <p className="radio-card-desc">
-                        Envía tu libro a la dirección física de Bookmachs en <strong>Patronato 447, Recoleta, Santiago, Chile</strong> vía Starken o Chilexpress. Podrás subir tu comprobante de envío o voucher una vez realizado el pago.
+                        Envía tu libro a la dirección física de Intercambialibros en <strong>Patronato 447, Recoleta, Santiago, Chile</strong> vía Starken o Chilexpress. Podrás subir tu comprobante de envío o voucher una vez realizado el pago.
                       </p>
                     </div>
                   </div>

@@ -152,10 +152,10 @@ app.UseSwaggerUI();
 
 app.UseCors("AllowFrontend");
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+//if (!app.Environment.IsDevelopment())
+//{
+//    app.UseHttpsRedirection();
+//}
 
 app.UseStaticFiles();
 

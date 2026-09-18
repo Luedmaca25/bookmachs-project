@@ -148,7 +148,7 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
     <div className="modal-overlay">
       <div className="modal-card">
         <div className="modal-header">
-          <h2>📚 Únete a Bookmachs</h2>
+          <h2>📚 Únete a Intercambialibros</h2>
           <p>Para deslizar libros y empezar a intercambiar, debes tener una cuenta activa.</p>
         </div>
 

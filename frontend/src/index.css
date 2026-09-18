@@ -4,7 +4,7 @@
   --font-sans: 'Poppins', sans-serif;
   --font-heading: 'Poppins', sans-serif;
 
-  /* Paleta Oficial Bookmachs (Emerald Forest & Botanical Clean Theme de pantallas-cliente.jpeg) */
+  /* Paleta Oficial Intercambialibros (Emerald Forest & Botanical Clean Theme de pantallas-cliente.jpeg) */
   --neon: #0F9D58;
   /* Verde Esmeralda Botánico Principal */
   --neon-dark: #0B7A44;
@@ -2042,7 +2042,7 @@ p {
   transform: none !important;
 }
 
-/* Fila de etiquetas de referencia (Abajo): Libro Bookmachs vs Libro externo */
+/* Fila de etiquetas de referencia (Abajo): Libro Intercambialibros vs Libro externo */
 .book-card-badges-row {
   display: flex;
   align-items: center;
@@ -6604,7 +6604,7 @@ p {
 }
 
 /* ==========================================================================
-   Bookmachs Design System V2 Utility Classes & Additions
+   Intercambialibros Design System V2 Utility Classes & Additions
    ========================================================================== */
 
 /* Neon Text effect */

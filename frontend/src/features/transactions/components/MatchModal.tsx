@@ -129,7 +129,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
           </div>
           
           <h3 className="match-modal-title">
-            Bookmachs quiere intercambiar contigo
+            Intercambialibros quiere intercambiar contigo
           </h3>
           <p className="match-modal-subtitle">
             Nuestra inteligencia artificial analizó la compatibilidad entre tus lecturas deseadas y los libros físicos que tienes disponibles para ofrecer.

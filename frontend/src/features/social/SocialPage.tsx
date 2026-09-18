@@ -187,7 +187,7 @@ export const SocialPage: React.FC = () => {
           )}
         </div>
         <p className="forest-congrats-text">
-          <i className="fa-solid fa-tree"></i> Has cultivado <strong>{treesCount}</strong> {treesCount === 1 ? 'árbol' : 'árboles'} en tu bosque Bookmachs. ¡Sigue así!
+          <i className="fa-solid fa-tree"></i> Has cultivado <strong>{treesCount}</strong> {treesCount === 1 ? 'árbol' : 'árboles'} en tu bosque Intercambialibros. ¡Sigue así!
         </p>
       </div>
     );
@@ -322,7 +322,7 @@ export const SocialPage: React.FC = () => {
            <div className="guest-badge-env"><i className="fa-solid fa-leaf"></i> RED CULTURAL ECO-AMIGABLE</div>
           <h1>Únete al Impacto Colectivo</h1>
           <p className="guest-description">
-            En Bookmachs cada libro intercambiado o donado disminuye la huella de carbono, evita la tala de árboles
+            En Intercambialibros cada libro intercambiado o donado disminuye la huella de carbono, evita la tala de árboles
             y fomenta la economía circular de la lectura. Registra tu cuenta para ver tu aporte personal.
           </p>
           <button className="guest-action-btn" onClick={() => navigate('/auth')}>
@@ -553,7 +553,7 @@ export const SocialPage: React.FC = () => {
                 <i className="fa-solid fa-calculator"></i> Transparencia Total del Cálculo Ecológico
               </div>
               <h3>¿Cómo calculamos tu huella ecológica?</h3>
-              <p>En Bookmachs nos regimos por factores de emisión físicos internacionales para garantizar 100% de transparencia en cada métrica.</p>
+              <p>En Intercambialibros nos regimos por factores de emisión físicos internacionales para garantizar 100% de transparencia en cada métrica.</p>
             </div>
 
             <div className="transparency-grid">
@@ -596,7 +596,7 @@ export const SocialPage: React.FC = () => {
           <div className="community-global-impact-card">
             <div className="community-glow"></div>
             <div className="community-impact-header">
-               <h2><i className="fa-solid fa-earth-americas"></i> El Aporte Global de Bookmachs</h2>
+               <h2><i className="fa-solid fa-earth-americas"></i> El Aporte Global de Intercambialibros</h2>
               <p>Métricas consolidadas de la comunidad total de lectores ecológicos en la plataforma.</p>
             </div>
             <div className="community-stats-row">

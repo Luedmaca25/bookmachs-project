@@ -112,7 +112,7 @@ export const BookCard: React.FC<BookCardProps> = ({
         {/* Etiqueta de referencia de stock posicionada abajo a la izquierda dentro del contenedor de imagen */}
         {book.isInternalStock !== false ? (
           <span className="stock-type-badge internal">
-            <i className="fa-solid fa-shield-halved"></i> Bookmachs
+            <i className="fa-solid fa-shield-halved"></i> Intercambialibros
           </span>
         ) : (
           <span className="stock-type-badge external">

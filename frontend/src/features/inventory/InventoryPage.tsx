@@ -142,7 +142,7 @@ export const InventoryPage: React.FC = () => {
 
       await apiClient.post<MyBookItem>('/books/upload', formData);
 
-      setFormSuccess('¡Libro agregado a tu libreta con éxito! Ahora está disponible para recibir intercambios y ofrecerlo para intercambiar con Bookmachs u otros usuarios.');
+      setFormSuccess('¡Libro agregado a tu libreta con éxito! Ahora está disponible para recibir intercambios y ofrecerlo para intercambiar con Intercambialibros u otros usuarios.');
       setTitle('');
       setAuthor('');
       setDescription('');
@@ -165,7 +165,7 @@ export const InventoryPage: React.FC = () => {
       <div className="inventory-header">
         <div>
           <h1>Tu libreta</h1>
-          <p>Bookmachs cruza tus intereses con los libros que tienes disponibles y calcula el costo de intercambio según las reglas del sistema.</p>
+          <p>Intercambialibros cruza tus intereses con los libros que tienes disponibles y calcula el costo de intercambio según las reglas del sistema.</p>
         </div>
       </div>
 
@@ -334,7 +334,7 @@ export const InventoryPage: React.FC = () => {
             <div className="inventory-form-card">
               <h2><i className="fa-solid fa-book-open"></i> Detalles del Libro a Ofrecer</h2>
               <p className="inventory-form-desc">
-                Bookmachs es una red exclusiva de intercambio. Recuerda que no asignas ningún precio en dinero a tu libro.
+                Intercambialibros es una red exclusiva de intercambio. Recuerda que no asignas ningún precio en dinero a tu libro.
               </p>
 
               <form onSubmit={handleFormSubmit} className="inventory-form">

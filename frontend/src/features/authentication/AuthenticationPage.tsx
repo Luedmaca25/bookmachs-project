@@ -475,7 +475,7 @@ export const AuthenticationPage: React.FC = () => {
         
       <div className="modal-card modal-card-no-anim">
         <div className="modal-header">
-          <h2>{isLogin ? 'Iniciar sesión' : 'Únete a Bookmachs'}</h2>
+          <h2>{isLogin ? 'Iniciar sesión' : 'Únete a Intercambialibros'}</h2>
           <p>
             {isLogin 
               ? 'Ingresa a tu cuenta para continuar intercambiando libros.' 

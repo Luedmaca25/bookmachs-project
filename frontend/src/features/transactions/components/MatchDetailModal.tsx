@@ -196,7 +196,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
           </div>
           
           <h3 className="match-modal-title">
-            {isThankYouPage ? '¡Gracias por tu Intercambio en Bookmachs!' : `Intercambio #${transaction.id.substring(0, 8).toUpperCase()}`}
+            {isThankYouPage ? '¡Gracias por tu Intercambio en Intercambialibros!' : `Intercambio #${transaction.id.substring(0, 8).toUpperCase()}`}
           </h3>
           <p className="match-modal-subtitle">
             {isThankYouPage 
@@ -346,7 +346,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                     ⏳ En Espera de Confirmación por Administrador
                   </div>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)', margin: 0, lineHeight: '1.4' }}>
-                    Tu comprobante de envío ha sido registrado correctamente. El intercambio se mantendrá en estatus <strong>"En Espera"</strong> hasta que un administrador de Bookmachs confirme haber recibido el libro físico.
+                    Tu comprobante de envío ha sido registrado correctamente. El intercambio se mantendrá en estatus <strong>"En Espera"</strong> hasta que un administrador de Intercambialibros confirme haber recibido el libro físico.
                   </p>
                 </div>
               ) : transaction.logisticsStatus === 'Delivered' ? (
@@ -355,7 +355,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                     ✅ Libro Recibido por Administrador
                   </div>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-primary)', margin: 0 }}>
-                    Un administrador de Bookmachs ha confirmado la recepción del libro físico. ¡Intercambio completado!
+                    Un administrador de Intercambialibros ha confirmado la recepción del libro físico. ¡Intercambio completado!
                   </p>
                 </div>
               ) : (
@@ -419,7 +419,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                     ✅ Libro Recibido por Administrador
                   </div>
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-primary)', margin: '0.2rem 0 0 0' }}>
-                    Un administrador de Bookmachs ha confirmado la recepción del libro presencialmente.
+                    Un administrador de Intercambialibros ha confirmado la recepción del libro presencialmente.
                   </p>
                 </div>
               ) : (
@@ -428,7 +428,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                     ⏳ En Espera de Entrega Presencial y Confirmación Admin
                   </div>
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-primary)', margin: '0.2rem 0 0 0', lineHeight: '1.4' }}>
-                    Lleva tu libro al local físico. El intercambio permanecerá en estatus <strong>"En Espera"</strong> hasta que entregues el libro y un administrador de Bookmachs confirme la recepción.
+                    Lleva tu libro al local físico. El intercambio permanecerá en estatus <strong>"En Espera"</strong> hasta que entregues el libro y un administrador de Intercambialibros confirme la recepción.
                   </p>
                 </div>
               )}

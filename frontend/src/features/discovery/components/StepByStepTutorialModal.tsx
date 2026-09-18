@@ -67,7 +67,7 @@ export const StepByStepTutorialModal: React.FC<StepByStepTutorialModalProps> = (
           <div className="tutorial-image-container">
             <img
               src="/home.jpeg"
-              alt="Bookmachs Intercambio"
+              alt="Intercambialibros Intercambio"
               className="tutorial-hero-img"
             />
             <div className="tutorial-header-overlay">
@@ -153,7 +153,7 @@ export const StepByStepTutorialModal: React.FC<StepByStepTutorialModalProps> = (
                 <h2>Paso 3: Propuestas de Match e Intercambio</h2>
               </div>
               <p className="tutorial-description">
-                Bookmachs cruza tus libros disponibles con el catálogo de otros lectores para encontrar la coincidencia perfecta.
+                Intercambialibros cruza tus libros disponibles con el catálogo de otros lectores para encontrar la coincidencia perfecta.
               </p>
 
               <div className="tutorial-match-preview-box">

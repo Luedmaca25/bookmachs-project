@@ -477,7 +477,7 @@ export const SwipePage: React.FC = () => {
         <div className="guest-hero-container">
           <h1 className="guest-hero-title">
             ¡Intercambio de libros <br />
-            <span className="guest-hero-title-highlight">a un Machs!</span>
+            <span className="guest-hero-title-highlight">a un Match!</span>
           </h1>
           <p className="guest-hero-subtitle">
             Más de 100.000 libros para intercambiar, <br />
@@ -507,7 +507,7 @@ export const SwipePage: React.FC = () => {
         <div className="swipe-header">
           <h1 className="guest-hero-title">
             ¡Intercambio de libros <br />
-            <span className="guest-hero-title-highlight">a un Machs!</span>
+            <span className="guest-hero-title-highlight">a un Match!</span>
           </h1>
           <div className="user-auth-badge" style={{ gap: '10px' }}>
             <button
@@ -671,7 +671,7 @@ export const SwipePage: React.FC = () => {
               ¡Alcanzaste el límite de 5 swipes como invitado!
             </h2>
             <p style={{ color: '#555', fontSize: '0.95rem', marginBottom: '1.6rem', lineHeight: '1.5' }}>
-              Has explorado 5 libros como invitado. Inicia sesión o regístrate en Bookmachs para conservar los libros que te gustaron en tu libreta y recibir propuestas de intercambio.
+              Has explorado 5 libros como invitado. Inicia sesión o regístrate en Intercambialibros para conservar los libros que te gustaron en tu libreta y recibir propuestas de intercambio.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button 

@@ -74,7 +74,7 @@ export const MainLayout: React.FC = () => {
       <header className="app-header">
         <div className="header-logo">
           <Link to="/" className="header-logo-link">
-            <img src="/logo-verde-alt.png" alt="Bookmachs" className="brand-logo-img" />
+            <img src="/logo-verde-alt.png" alt="Intercambialibros" className="brand-logo-img" />
           </Link>
         </div>
 
@@ -134,7 +134,7 @@ export const MainLayout: React.FC = () => {
           <div className="offcanvas-panel" onClick={(e) => e.stopPropagation()}>
             <div className="offcanvas-header">
               <Link to="/" className="header-logo-link">
-                <img src="/logo-verde-alt.png" alt="Bookmachs" className="brand-logo-img" />
+                <img src="/logo-verde-alt.png" alt="Intercambialibros" className="brand-logo-img" />
               </Link>
               <button className="offcanvas-close-btn" onClick={() => setMobileMenuOpen(false)}>
                 <i className="fa-solid fa-xmark"></i>
@@ -182,7 +182,7 @@ export const MainLayout: React.FC = () => {
                 </div>
               ) : (
                 <Link to="/auth" className="offcanvas-login-btn">
-                  <i className="fa-solid fa-right-to-bracket"></i> Ingresar a Bookmachs
+                  <i className="fa-solid fa-right-to-bracket"></i> Ingresar a Intercambialibros
                 </Link>
               )}
             </div>
@@ -195,7 +195,7 @@ export const MainLayout: React.FC = () => {
       </main>
 
       <footer className="app-footer">
-        <p>&copy; {new Date().getFullYear()} Bookmachs - Red Social Cultural y Ambiental. Todos los derechos reservados.</p>
+        <p>&copy; {new Date().getFullYear()} Intercambialibros - Red Social Cultural y Ambiental. Todos los derechos reservados.</p>
       </footer>
     </div>
   );
