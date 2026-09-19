@@ -11,6 +11,10 @@ export interface BookCardData {
   isInternalStock?: boolean;
   createdAt?: string;
   isFallbackCategory?: boolean;
+  stockBadgeLabel?: string;
+  stockBadgeIcon?: string;
+  stockBadgeClass?: string;
+  exchangeStatus?: 'Available' | 'InExchange' | 'Exchanged' | 'Reserved' | string;
 }
 
 interface BookCardProps {
@@ -164,7 +168,11 @@ export const BookCard: React.FC<BookCardProps> = ({
       <div className="book-card-floating-wrapper">
         <div className='badges'>
           {/* Etiqueta de referencia de stock */}
-          {book.isInternalStock !== false ? (
+          {book.stockBadgeLabel ? (
+            <span className={`stock-type-badge ${book.stockBadgeClass || 'internal'}`}>
+              <i className={book.stockBadgeIcon || "fa-solid fa-book-bookmark"}></i> {book.stockBadgeLabel}
+            </span>
+          ) : book.isInternalStock !== false ? (
             <span className="stock-type-badge internal">
               <i className="fa-solid fa-shield-halved"></i> Intercambia libros
             </span>

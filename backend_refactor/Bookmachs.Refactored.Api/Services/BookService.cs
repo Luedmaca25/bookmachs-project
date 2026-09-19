@@ -93,9 +93,55 @@ public class BookService : IBookService
     {
         var books = await _dbContext.Books
             .Where(b => b.OwnerId == userId)
+            .OrderByDescending(b => b.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return books.Select(MapToBookDto);
+        if (!books.Any())
+        {
+            return Enumerable.Empty<BookDto>();
+        }
+
+        var bookIds = books.Select(b => b.Id).ToList();
+
+        // Buscar transacciones activas o finalizadas asociadas a estos libros
+        var transactions = await _dbContext.MatchTransactions
+            .Where(t => bookIds.Contains(t.BookId) && (t.PaymentStatus == "Captured" || t.PaymentStatus == "Hold" || t.LogisticsStatus == "Delivered" || t.LogisticsStatus == "Completed"))
+            .ToListAsync(cancellationToken);
+
+        var result = new List<BookDto>();
+
+        foreach (var book in books)
+        {
+            var dto = MapToBookDto(book);
+
+            var bookTx = transactions.FirstOrDefault(t => t.BookId == book.Id);
+            if (bookTx != null)
+            {
+                if (bookTx.LogisticsStatus == "Delivered" || bookTx.LogisticsStatus == "Completed")
+                {
+                    dto.ExchangeStatus = "Exchanged";
+                    dto.IsAvailable = false;
+                }
+                else if (bookTx.LogisticsStatus != "Cancelled" && bookTx.LogisticsStatus != "Expired")
+                {
+                    dto.ExchangeStatus = "InExchange";
+                    dto.IsAvailable = false;
+                }
+            }
+            else if (book.IsReserved && book.ReservedUntil > DateTime.UtcNow)
+            {
+                dto.ExchangeStatus = "Reserved";
+                dto.IsAvailable = false;
+            }
+            else
+            {
+                dto.ExchangeStatus = book.IsAvailable ? "Available" : "Unavailable";
+            }
+
+            result.Add(dto);
+        }
+
+        return result;
     }
 
     public async Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, string? category, decimal baseValue, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
@@ -163,11 +209,23 @@ public class BookService : IBookService
             .Select(b => b.Id)
             .ToListAsync(cancellationToken);
 
+        // Excluir libros que estén en proceso de intercambio o ya hayan sido intercambiados
+        var unavailableBookIds = await _dbContext.MatchTransactions
+            .AsNoTracking()
+            .Where(t => (t.PaymentStatus == "Captured" || t.PaymentStatus == "Hold" || t.LogisticsStatus == "Delivered" || t.LogisticsStatus == "Completed")
+                        && t.LogisticsStatus != "Cancelled" && t.LogisticsStatus != "Expired")
+            .Select(t => t.BookId.ToString())
+            .ToListAsync(cancellationToken);
+
         // Conjunto de IDs en formato string para rápida exclusión
         var excludedIds = new HashSet<string>(swipedBookGuids, StringComparer.OrdinalIgnoreCase);
         foreach (var myGuid in myBookGuids)
         {
             excludedIds.Add(myGuid.ToString("D"));
+        }
+        foreach (var unavId in unavailableBookIds)
+        {
+            excludedIds.Add(unavId);
         }
 
         var resultList = new List<BookDto>();
@@ -328,7 +386,7 @@ public class BookService : IBookService
 
             var localUserBooks = await _dbContext.Books
                 .AsNoTracking()
-                .Where(b => b.IsAvailable && b.OwnerId != userId)
+                .Where(b => b.IsAvailable && b.OwnerId != userId && (!b.IsReserved || b.ReservedUntil < DateTime.UtcNow))
                 .Take(Math.Max(remaining * 2, 20))
                 .ToListAsync(cancellationToken);
 
@@ -941,6 +999,7 @@ public class BookService : IBookService
             IsInternalStock = b.IsInternalStock,
             IsAvailable = b.IsAvailable,
             OwnerId = b.OwnerId,
+            ExchangeStatus = b.IsAvailable ? "Available" : "Unavailable",
             CreatedAt = b.CreatedAt
         };
     }
@@ -1032,6 +1091,7 @@ public class BookService : IBookService
             BaseValue = product.Precio ?? 0.00m,
             IsInternalStock = true,
             IsAvailable = product.Activo && (product.Stock > 0),
+            ExchangeStatus = (product.Activo && (product.Stock > 0)) ? "Available" : "Unavailable",
             CreatedAt = product.FechaRegistro ?? DateTime.UtcNow
         };
     }

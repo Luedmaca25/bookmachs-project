@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
 import { MatchModal } from '../transactions/components/MatchModal';
+import { BookCard } from '../discovery/components/BookCard';
 
 interface MyBookItem {
   id: string;
@@ -11,6 +12,8 @@ interface MyBookItem {
   condition: string;
   description: string;
   imageUrl: string;
+  isAvailable?: boolean;
+  exchangeStatus?: string;
 }
 
 interface MatchTransaction {
@@ -57,20 +60,6 @@ export const InventoryPage: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
-  // Estado de expansión de descripción para los libros de la libreta
-  const [expandedBookIds, setExpandedBookIds] = useState<Set<string>>(new Set());
-
-  const toggleExpandBook = (bookId: string) => {
-    setExpandedBookIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(bookId)) {
-        next.delete(bookId);
-      } else {
-        next.add(bookId);
-      }
-      return next;
-    });
-  };
 
   useEffect(() => {
     fetchLikedMatches();
@@ -473,40 +462,43 @@ export const InventoryPage: React.FC = () => {
           ) : (
             <div className="inventory-grid">
               {offeredBooks.map((book) => {
-                const isExpanded = expandedBookIds.has(book.id);
+                let badgeLabel = 'En tu libreta';
+                let badgeIcon = 'fa-solid fa-book-bookmark';
+                let badgeClass = 'internal';
+
+                if (book.exchangeStatus === 'Exchanged') {
+                  badgeLabel = 'Intercambiado con éxito';
+                  badgeIcon = 'fa-solid fa-circle-check';
+                  badgeClass = 'badge-status-exchanged';
+                } else if (book.exchangeStatus === 'InExchange') {
+                  badgeLabel = 'En proceso de intercambio';
+                  badgeIcon = 'fa-solid fa-box-open';
+                  badgeClass = 'badge-status-inexchange';
+                } else if (book.exchangeStatus === 'Reserved') {
+                  badgeLabel = 'Reservado por 48h';
+                  badgeIcon = 'fa-solid fa-clock';
+                  badgeClass = 'badge-status-reserved';
+                }
+
                 return (
-                  <div key={book.id} className="book-swipe-card libreta-swipe-card">
-                    <div className="book-card-image-placeholder">
-                      {book.imageUrl ? (
-                        <img src={getFileUrl(book.imageUrl)} alt={book.title} className="swipe-card-img" />
-                      ) : (
-                        <span className="book-fallback-icon"><i className="fa-solid fa-book"></i></span>
-                      )}
-                    </div>
-                    <div className="book-card-info">
-                      <span className={`condition-badge ${book.condition.toLowerCase()}`}>
-                        Estado libro: {book.condition}
-                      </span>
-                      <h3>{book.title}</h3>
-                      <span className="book-author">Autor: {book.author || 'Desconocido'}</span>
-                      <p className={`book-desc ${isExpanded ? 'expanded' : ''}`}>
-                        {book.description}
-                      </p>
-                      {book.description && book.description.length > 80 && (
-                        <button
-                          type="button"
-                          className="see-more-btn"
-                          onClick={() => toggleExpandBook(book.id)}
-                        >
-                          {isExpanded ? (
-                            <>Ver menos <i className="fa-solid fa-chevron-up"></i></>
-                          ) : (
-                            <>Ver más <i className="fa-solid fa-chevron-down"></i></>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  <BookCard
+                    key={book.id}
+                    book={{
+                      id: book.id,
+                      title: book.title,
+                      author: book.author,
+                      condition: book.condition,
+                      description: book.description,
+                      imageUrl: getFileUrl(book.imageUrl),
+                      stockBadgeLabel: badgeLabel,
+                      stockBadgeIcon: badgeIcon,
+                      stockBadgeClass: badgeClass,
+                      exchangeStatus: book.exchangeStatus,
+                    }}
+                    className="libreta-swipe-card"
+                    showInterestButton={false}
+                    showUndoButton={false}
+                  />
                 );
               })}
             </div>

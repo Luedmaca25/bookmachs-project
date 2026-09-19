@@ -2153,6 +2153,24 @@ body.swipe-page-active .app-footer {
   border: 1px solid rgba(78, 168, 222, 0.4);
 }
 
+.stock-type-badge.badge-status-exchanged {
+  color: #0F9D58;
+  background-color: rgba(255, 255, 255, 0.96);
+  border: 1.5px solid #0F9D58;
+}
+
+.stock-type-badge.badge-status-inexchange {
+  color: #d97706;
+  background-color: rgba(255, 255, 255, 0.96);
+  border: 1.5px solid #d97706;
+}
+
+.stock-type-badge.badge-status-reserved {
+  color: #6366f1;
+  background-color: rgba(255, 255, 255, 0.96);
+  border: 1.5px solid #6366f1;
+}
+
 .book-swipe-card.swiped-right,
 .book-card-image-placeholder.swiped-right,
 .swipe-card-img.swiped-right,
@@ -3157,27 +3175,41 @@ body.swipe-page-active .app-footer {
 
 .inventory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 360px));
   gap: 2rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  justify-content: center;
 }
 
 .libreta-swipe-card {
-  position: relative;
-  background: var(--gradient-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-  display: flex;
-  flex-direction: column;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  width: 100%;
+  max-width: 360px;
+  height: 520px !important;
+  min-height: 520px !important;
+  max-height: 520px !important;
+  position: relative !important;
+  background: #FFFFFF !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  cursor: default !important;
+  touch-action: auto !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast) !important;
 }
 
 .libreta-swipe-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--border-hover);
+  transform: translateY(-4px) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+.libreta-swipe-card .swipe-card-img,
+.libreta-swipe-card .book-fallback-icon-wrapper {
+  cursor: default !important;
 }
 
 .inventory-card {

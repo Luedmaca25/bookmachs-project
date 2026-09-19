@@ -72,6 +72,7 @@ public class BookDto
     public bool IsAvailable { get; set; }
     public bool IsFallbackCategory { get; set; }
     public Guid? OwnerId { get; set; }
+    public string ExchangeStatus { get; set; } = "Available";
     public DateTime CreatedAt { get; set; }
 }
 

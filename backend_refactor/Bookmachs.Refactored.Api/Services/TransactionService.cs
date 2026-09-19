@@ -143,7 +143,10 @@ public class TransactionService : ITransactionService
                 }
                 else
                 {
-                    isAvailable = t.Book.IsAvailable || t.PaymentStatus == "Pending";
+                    bool isTakenByOther = await _dbContext.MatchTransactions
+                        .AnyAsync(other => other.Id != t.Id && other.BookId == t.BookId && (other.PaymentStatus == "Captured" || other.PaymentStatus == "Hold" || other.LogisticsStatus == "Delivered") && other.LogisticsStatus != "Cancelled" && other.LogisticsStatus != "Expired", cancellationToken);
+
+                    isAvailable = t.Book.IsAvailable && !isTakenByOther;
                 }
             }
 
@@ -302,12 +305,15 @@ public class TransactionService : ITransactionService
         // Validar si el libro objetivo ya no está disponible
         if (transaction.Book != null)
         {
-            if (!transaction.Book.IsInternalStock && !transaction.Book.IsAvailable && transaction.Book.OwnerId != requesterUserId)
+            bool isTakenByAnotherTx = await _dbContext.MatchTransactions
+                .AnyAsync(t => t.Id != matchTransactionId && t.BookId == transaction.BookId && (t.PaymentStatus == "Captured" || t.PaymentStatus == "Hold" || t.LogisticsStatus == "Delivered") && t.LogisticsStatus != "Cancelled" && t.LogisticsStatus != "Expired", cancellationToken);
+
+            if ((!transaction.Book.IsInternalStock && !transaction.Book.IsAvailable) || isTakenByAnotherTx)
             {
                 return new WebpayStartResultDto
                 {
                     Success = false,
-                    Message = "⚠️ Este libro ya no está disponible para intercambio porque fue tomado o reservado por otro usuario."
+                    Message = "⚠️ Este libro ya no está disponible para intercambio porque fue tomado o ya se encuentra intercambiado por otro usuario."
                 };
             }
         }
@@ -414,6 +420,13 @@ public class TransactionService : ITransactionService
                 else
                 {
                     transaction.LogisticsStatus = "En Espera";
+                }
+
+                var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == transaction.BookId, cancellationToken);
+                if (book != null)
+                {
+                    book.IsAvailable = false;
+                    _dbContext.Books.Update(book);
                 }
 
                 _dbContext.MatchTransactions.Update(transaction);
@@ -560,6 +573,12 @@ public class TransactionService : ITransactionService
 
         transaction.LogisticsStatus = "Delivered";
         transaction.StatusUpdatedAt = DateTime.UtcNow;
+
+        if (transaction.Book != null)
+        {
+            transaction.Book.IsAvailable = false;
+            _dbContext.Books.Update(transaction.Book);
+        }
 
         _dbContext.MatchTransactions.Update(transaction);
         await _dbContext.SaveChangesAsync(cancellationToken);

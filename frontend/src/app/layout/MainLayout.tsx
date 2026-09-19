@@ -142,7 +142,7 @@ export const MainLayout: React.FC = () => {
             </div>
 
             <div className="offcanvas-body">
-              <Link to="/" className="offcanvas-link"><i className="fa-solid fa-compass"></i> Descubrir</Link>
+              <Link to="/" className="offcanvas-link"><i className="fa-solid fa-fire"></i> Descubrir</Link>
 
               {isAuthenticated && user && (
                 <>
@@ -230,7 +230,7 @@ export const MainLayout: React.FC = () => {
           to={isAuthenticated ? "/libreta" : "/auth"} 
           className={`bottom-nav-item ${(location.pathname === '/libreta' && !location.search.includes('add')) || location.pathname === '/transacciones' ? 'active' : ''}`}
         >
-          <i className="fa-solid fa-book-bookmark"></i>
+          <i className="fa-solid fa-handshake"></i>
           <span>Matchs</span>
         </Link>
 
@@ -238,7 +238,7 @@ export const MainLayout: React.FC = () => {
           to="/planes" 
           className={`bottom-nav-item ${location.pathname === '/planes' ? 'active' : ''}`}
         >
-          <i className="fa-solid fa-crown"></i>
+          <i className="fa-solid fa-tags"></i>
           <span>Planes</span>
         </Link>
       </nav>
