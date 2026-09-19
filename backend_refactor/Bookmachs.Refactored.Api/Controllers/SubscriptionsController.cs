@@ -66,7 +66,7 @@ public class SubscriptionsController : ControllerBase
             var buyOrder = $"SUB_{Guid.NewGuid().ToString("N")[..20]}";
             var sessionId = $"sub_sess_{userId.ToString("N")[..8]}";
 
-            var tbResult = await _paymentService.CreateTransbankHoldAsync(amount, buyOrder, sessionId, request.ReturnUrl);
+            var tbResult = await _paymentService.CreateTransbankTransactionAsync(amount, buyOrder, sessionId, request.ReturnUrl);
 
             if (tbResult.Success)
             {
@@ -129,7 +129,7 @@ public class SubscriptionsController : ControllerBase
 
         try
         {
-            var tbResult = await _paymentService.CommitTransbankHoldAsync(token);
+            var tbResult = await _paymentService.CommitTransbankTransactionAsync(token);
 
             if (tbResult.Success)
             {

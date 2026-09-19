@@ -140,7 +140,7 @@ export const TransactionsPage: React.FC = () => {
 
             // Abrir automáticamente Thank You Page con el detalle completo
             if (updatedList.length > 0) {
-              const matchedTx = updatedList.find(m => m.id === selectedTx?.id || m.paymentStatus === 'Hold') || updatedList[0];
+              const matchedTx = updatedList.find(m => m.id === selectedTx?.id || m.paymentStatus === 'Captured' || m.paymentStatus === 'Hold') || updatedList[0];
               setSelectedDetailTx(matchedTx);
               setIsThankYouMode(true);
               setDetailModalOpen(true);
@@ -251,7 +251,7 @@ export const TransactionsPage: React.FC = () => {
             ← Volver a mis matches
           </button>
           <h2>Proceso de Intercambio & Checkout</h2>
-          <p>Confirma los libros del trueque, la opción de logística y el Hold seguro de tarifa por Transbank.</p>
+          <p>Confirma los libros del trueque, la opción de logística y el pago seguro de tarifa por Transbank.</p>
         </div>
 
         {/* Stepper Wizard UX Senior */}
@@ -278,13 +278,13 @@ export const TransactionsPage: React.FC = () => {
           <div className="webpay-redirect-screen">
             <div className="redirect-loader"></div>
             <h3>Conectando de forma segura con Transbank Webpay...</h3>
-            <p className="webpay-redirect-msg">Por favor no cierres esta ventana. Se está generando la retención del fee de intercambio.</p>
+            <p className="webpay-redirect-msg">Por favor no cierres esta ventana. Se está procesando el pago del fee de intercambio.</p>
           </div>
         ) : checkoutSuccess ? (
           <div className="checkout-success-screen">
             <span className="success-badge-icon"><i className="fa-solid fa-circle-check icon-neon"></i></span>
-            <h3>¡Intercambio y Pre-autorización Confirmados!</h3>
-            <p>Los fondos del Fee de servicio <strong>(${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP)</strong> han sido retenidos en tu tarjeta hasta completar la entrega.</p>
+            <h3>¡Intercambio y Pago Confirmados!</h3>
+            <p>El Fee de servicio <strong>(${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP)</strong> ha sido cobrado exitosamente en tu tarjeta para iniciar la preparación y logística del intercambio.</p>
             
             <div className="checkout-summary-box">
               <div className="summary-row">
@@ -303,7 +303,7 @@ export const TransactionsPage: React.FC = () => {
               </div>
               <div className="summary-row">
                 <span>Estado de Pago:</span>
-                <span className="hold-status-locked">HOLD RETENIDO 🔒</span>
+                <span className="hold-status-locked" style={{ color: '#0F9D58' }}>PAGO COMPLETADO ✅</span>
               </div>
             </div>
 
@@ -601,7 +601,7 @@ export const TransactionsPage: React.FC = () => {
                     />
                     
                     <p className="webpay-desc-text">
-                      Al hacer clic en el botón inferior serás redirigido al servidor seguro de Transbank para pre-autorizar el Hold de <strong>${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP</strong>.
+                      Al hacer clic en el botón inferior serás redirigido al servidor seguro de Transbank para realizar el pago de <strong>${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP</strong>.
                     </p>
 
                     {checkoutError && <div className="webpay-error-text">{checkoutError}</div>}
@@ -639,7 +639,7 @@ export const TransactionsPage: React.FC = () => {
     <div className="transactions-page-container">
       <div className="transactions-header">
         <h1>Tus Matches y Transacciones</h1>
-        <p>Aquí puedes monitorear tus propuestas activas, realizar holds de fee y revisar la logística.</p>
+        <p>Aquí puedes monitorear tus propuestas activas, realizar el pago de fee y revisar la logística.</p>
       </div>
 
       {!hasOfferedBooks && matches.length > 0 && (
@@ -701,11 +701,9 @@ export const TransactionsPage: React.FC = () => {
                         Interés Guardado 💚
                       </span>
                     ) : tx.paymentStatus === 'Pending' ? (
-                      <span className="badge-pending">Hold de Fee Pendiente ⏳</span>
-                    ) : tx.paymentStatus === 'Hold' ? (
-                      <span className="badge-hold">Pago Retenido (Hold) 🔒</span>
-                    ) : tx.paymentStatus === 'Captured' ? (
-                      <span className="badge-captured">Pago Procesado 💳</span>
+                      <span className="badge-pending">Fee Pendiente ⏳</span>
+                    ) : tx.paymentStatus === 'Captured' || tx.paymentStatus === 'Hold' ? (
+                      <span className="badge-captured">Fee Pagado ✅</span>
                     ) : (
                       <span className="badge-failed">Pago Fallido ❌</span>
                     )}
@@ -752,12 +750,12 @@ export const TransactionsPage: React.FC = () => {
                   </button>
                 ) : !hasOfferedBooks ? (
                   null
-                ) : tx.paymentStatus === 'Pending' || tx.paymentStatus === 'Hold' ? (
+                ) : tx.paymentStatus === 'Pending' ? (
                   <button
                     className="pay-fee-btn font-heading"
                     onClick={() => setSearchParams({ checkout: tx.id })}
                   >
-                    {tx.paymentStatus === 'Hold' ? '💳 Ver Hold & Intercambio' : 'Pagar Fee & Intercambiar 💳'}
+                    Pagar Fee & Intercambiar 💳
                   </button>
                 ) : (
                   <button

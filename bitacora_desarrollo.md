@@ -975,6 +975,30 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [SwipePage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/SwipePage.tsx)
   - Migración [20260919215201_AddBonusSwipesToUser.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Migrations/20260919215201_AddBonusSwipesToUser.cs)
 
+---
+
+## Entrada de Bitácora: Transición de Captura Diferida a Cobro Definitivo del Fee de Intercambio
+
+* **Fecha:** 19 de Septiembre, 2026
+* **Objetivo:** Sustituir la captura diferida (Hold / Retención) por un **Cobro Definitivo inmediato (`PaymentStatus = "Captured"`)** al pagar la tarifa de intercambio mediante Transbank Webpay Plus, homologando el proceso al cobro de suscripciones Premium. Esto responde a la necesidad operativa de cubrir los costos de preparación logística y reserva del libro independientemente de si el usuario concreta o no la entrega física posterior.
+* **Detalles Técnicos:**
+  1. **Servicio Transaccional ([TransactionService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/TransactionService.cs)):**
+     - Al confirmar el callback de Webpay (`WebpayConfirmAsync`), la transacción pasa inmediatamente a `PaymentStatus = "Captured"`.
+     - Se actualiza la respuesta y los mensajes a *"Transacción Webpay Plus confirmada y cobrada con éxito"*.
+     - Se ajusta la validación de logística para autorizar pagos en estado `Captured`.
+  2. **Job de Seguimiento ([ExchangeFulfillmentJob.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Jobs/ExchangeFulfillmentJob.cs)):**
+     - Se eliminó la reversa/anulación automática de fondos (`RefundTransbankHoldAsync`) al cumplirse los 5 días de plazo. Si el usuario no realiza la entrega en 5 días, la logística se marca como expirada (`LogisticsStatus = "Expired"`), pero el cobro del fee queda en firme para cubrir el costo operativo de preparación del inventario.
+  3. **Frontend ([TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx) y [MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx)):**
+     - Eliminadas referencias a "Hold", "Pre-autorización" y "Fondos Retenidos".
+     - Insignia actualizada a **`Fee Pagado ✅`**.
+     - Botón principal de acción para transacciones pagadas actualizado a **`📦 Ver Detalle & Logística`**.
+     - Textos de confirmación actualizados indicando que el pago ha sido procesado en firme para la preparación del libro.
+* **Archivos Clave Modificados:**
+  - [TransactionService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/TransactionService.cs)
+  - [ExchangeFulfillmentJob.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Jobs/ExchangeFulfillmentJob.cs)
+  - [TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx)
+  - [MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx)
+
 
 
 

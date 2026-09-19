@@ -273,13 +273,13 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
               <span>{formattedPaymentDate}</span>
             </div>
             <div className="fee-row fee-detail-row">
-              <span>Fee Webpay Retenido:</span>
+              <span>Fee Webpay Pagado:</span>
               <span className="fee-estimate-amount" style={{ fontSize: '1rem' }}>
                 ${transaction.feeAmount.toLocaleString('es-CL')} CLP
               </span>
             </div>
             <div className="fee-row fee-detail-row-final">
-              <span>Fecha Límite Expiración:</span>
+              <span>Fecha Límite para Entrega:</span>
               <span className={daysRemaining <= 1 ? 'fee-error-msg' : ''}>{formattedDeadlineDate}</span>
             </div>
           </div>

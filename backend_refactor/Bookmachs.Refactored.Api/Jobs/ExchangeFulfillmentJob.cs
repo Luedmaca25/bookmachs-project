@@ -41,15 +41,15 @@ public class ExchangeFulfillmentJob : IExchangeFulfillmentJob
     {
         _logger.LogInformation("Iniciando tarea programada diaria de revisión de entregas e intercambio...");
 
-        // Buscar transacciones con retención activa (Hold) pendientes de entrega
+        // Buscar transacciones con pago confirmado pendientes de entrega
         var pendingTransactions = await _dbContext.MatchTransactions
             .Include(t => t.Book)
             .Include(t => t.RequesterUser)
             .Include(t => t.OwnerUser)
-            .Where(t => t.PaymentStatus == "Hold" && t.LogisticsStatus != "Completed" && t.LogisticsStatus != "Delivered")
+            .Where(t => (t.PaymentStatus == "Captured" || t.PaymentStatus == "Hold") && t.LogisticsStatus != "Completed" && t.LogisticsStatus != "Delivered" && t.LogisticsStatus != "Expired")
             .ToListAsync(cancellationToken);
 
-        _logger.LogInformation("Se encontraron {Count} transacciones en estado Hold pendientes de entrega.", pendingTransactions.Count);
+        _logger.LogInformation("Se encontraron {Count} transacciones pagadas pendientes de entrega.", pendingTransactions.Count);
 
         foreach (var tx in pendingTransactions)
         {
@@ -86,7 +86,7 @@ public class ExchangeFulfillmentJob : IExchangeFulfillmentJob
                     LogisticsMethodName = tx.LogisticsMethod ?? "Presencial",
                     LogisticsInstructions = GetLogisticsInstructions(tx.LogisticsMethod),
                     FeeAmount = tx.FeeAmount,
-                    PaymentStatus = "Retenido en Webpay Plus (Hold)",
+                    PaymentStatus = "Cobrado en Webpay Plus (Pago Confirmado)",
                     TransactionId = tx.BuyOrder ?? tx.Id.ToString("N")[..8]
                 };
 
@@ -97,16 +97,9 @@ public class ExchangeFulfillmentJob : IExchangeFulfillmentJob
             }
             else
             {
-                // Plazo vencido (>= 5 días): Anular retención en Transbank Webpay Plus y cancelar la transacción
-                _logger.LogWarning("Transacción {TxId} superó el plazo de {MaxDays} días. Anulando Hold en Transbank...", tx.Id, MaxFulfillmentDays);
+                // Plazo vencido (>= 5 días): Marcar logística como expirada sin reembolso de fee (cubre preparación física de inventario)
+                _logger.LogWarning("Transacción {TxId} superó el plazo de {MaxDays} días para entrega física.", tx.Id, MaxFulfillmentDays);
 
-                if (!string.IsNullOrEmpty(tx.PaymentHoldId))
-                {
-                    var refundResult = await _paymentGatewayService.RefundTransbankHoldAsync(tx.PaymentHoldId, tx.FeeAmount);
-                    _logger.LogInformation("Resultado de anulación en Transbank para {TxId}: Success={Success}, RefundId={RefundId}", tx.Id, refundResult.Success, refundResult.RefundId);
-                }
-
-                tx.PaymentStatus = "Cancelled";
                 tx.LogisticsStatus = "Expired";
                 tx.StatusUpdatedAt = DateTime.UtcNow;
 
@@ -118,8 +111,8 @@ public class ExchangeFulfillmentJob : IExchangeFulfillmentJob
                     Id = Guid.NewGuid(),
                     MatchTransactionId = tx.Id,
                     EventType = "FulfillmentExpired",
-                    Title = "Transacción Cancelada por Vencimiento de Plazo",
-                    Description = $"El intercambio expiró por superar el límite de {MaxFulfillmentDays} días para la entrega. La retención de fondos en Transbank Webpay Plus fue liberada automáticamente.",
+                    Title = "Plazo de Entrega Expirado",
+                    Description = $"El plazo de {MaxFulfillmentDays} días para la entrega del libro físico ha expirado. La tarifa de servicio cubre los gastos de gestión y preparación logística del intercambio.",
                     CreatedAt = DateTime.UtcNow
                 };
 

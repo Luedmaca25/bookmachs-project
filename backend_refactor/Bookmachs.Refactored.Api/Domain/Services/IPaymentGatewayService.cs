@@ -35,27 +35,22 @@ public class TransbankCommitResult
 }
 
 /// <summary>
-/// Servicio exclusivo de pasarela de pagos con Transbank Webpay Plus (Redirección, Hold y Captura Diferida).
+/// Servicio exclusivo de pasarela de pagos con Transbank Webpay Plus (Cobro Definitivo / Venta Normal).
 /// </summary>
 public interface IPaymentGatewayService
 {
     /// <summary>
-    /// Inicia una transacción diferida en Transbank Webpay Plus y retorna el token y la URL de redirección.
+    /// Inicia una transacción de cobro definitivo en Transbank Webpay Plus y retorna el token y la URL de redirección.
     /// </summary>
-    Task<TransbankCreateResult> CreateTransbankHoldAsync(decimal amount, string buyOrder, string sessionId, string returnUrl);
+    Task<TransbankCreateResult> CreateTransbankTransactionAsync(decimal amount, string buyOrder, string sessionId, string returnUrl);
 
     /// <summary>
-    /// Confirma la transacción en Transbank tras la redirección del usuario (Commit).
+    /// Confirma y liquida la transacción en Transbank tras la redirección del usuario (Commit).
     /// </summary>
-    Task<TransbankCommitResult> CommitTransbankHoldAsync(string token);
+    Task<TransbankCommitResult> CommitTransbankTransactionAsync(string token);
 
     /// <summary>
-    /// Captura diferida de fondos autorizados en Transbank Webpay.
+    /// Anula o reversa una transacción en Transbank Webpay Plus.
     /// </summary>
-    Task<PaymentCaptureResult> CaptureTransbankHoldAsync(string token, string buyOrder, string authorizationCode, decimal amount);
-
-    /// <summary>
-    /// Anula/Reversa los fondos autorizados diferidos en Transbank.
-    /// </summary>
-    Task<PaymentRefundResult> RefundTransbankHoldAsync(string token, decimal amount);
+    Task<PaymentRefundResult> RefundTransbankTransactionAsync(string token, decimal amount);
 }

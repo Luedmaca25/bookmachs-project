@@ -1,15 +1,11 @@
-using System;
-using System.Threading.Tasks;
 using Bookmachs.Refactored.Api.Domain.Services;
-using Microsoft.Extensions.Configuration;
 using Transbank.Common;
 using Transbank.Webpay.Common;
-using Transbank.Webpay.WebpayPlus;
 
 namespace Bookmachs.Refactored.Api.Infrastructure.Payments;
 
 /// <summary>
-/// Servicio exclusivo de pasarela de pagos con Transbank Webpay Plus (Redirección, Hold y Captura Diferida).
+/// Servicio exclusivo de pasarela de pagos con Transbank Webpay Plus (Cobro Definitivo / Venta Normal).
 /// </summary>
 public class PaymentGatewayService : IPaymentGatewayService
 {
@@ -40,10 +36,10 @@ public class PaymentGatewayService : IPaymentGatewayService
     }
 
     // ==========================================================================
-    // Transbank Webpay Plus (Redirección / Captura Diferida)
+    // Transbank Webpay Plus (Redirección / Cobro Definitivo)
     // ==========================================================================
 
-    public Task<TransbankCreateResult> CreateTransbankHoldAsync(decimal amount, string buyOrder, string sessionId, string returnUrl)
+    public Task<TransbankCreateResult> CreateTransbankTransactionAsync(decimal amount, string buyOrder, string sessionId, string returnUrl)
     {
         try
         {
@@ -68,7 +64,7 @@ public class PaymentGatewayService : IPaymentGatewayService
         }
     }
 
-    public Task<TransbankCommitResult> CommitTransbankHoldAsync(string token)
+    public Task<TransbankCommitResult> CommitTransbankTransactionAsync(string token)
     {
         try
         {
@@ -105,41 +101,7 @@ public class PaymentGatewayService : IPaymentGatewayService
         }
     }
 
-    public Task<PaymentCaptureResult> CaptureTransbankHoldAsync(string token, string buyOrder, string authorizationCode, decimal amount)
-    {
-        if (token.StartsWith("tb_token_"))
-        {
-            return Task.FromResult(new PaymentCaptureResult
-            {
-                Success = true,
-                TransactionId = $"tb_capture_{Guid.NewGuid().ToString("N")[..12]}",
-                ErrorMessage = null
-            });
-        }
-
-        try
-        {
-            var tx = new Transbank.Webpay.WebpayPlus.Transaction(_tbOptions);
-            var response = tx.Capture(token, buyOrder, authorizationCode, amount);
-
-            return Task.FromResult(new PaymentCaptureResult
-            {
-                Success = true,
-                TransactionId = response.AuthorizationCode,
-                ErrorMessage = null
-            });
-        }
-        catch (Exception ex)
-        {
-            return Task.FromResult(new PaymentCaptureResult
-            {
-                Success = false,
-                ErrorMessage = $"Error al capturar fondos diferidos en Webpay Plus: {ex.Message}"
-            });
-        }
-    }
-
-    public Task<PaymentRefundResult> RefundTransbankHoldAsync(string token, decimal amount)
+    public Task<PaymentRefundResult> RefundTransbankTransactionAsync(string token, decimal amount)
     {
         if (token.StartsWith("tb_token_"))
         {
@@ -168,7 +130,7 @@ public class PaymentGatewayService : IPaymentGatewayService
             return Task.FromResult(new PaymentRefundResult
             {
                 Success = false,
-                ErrorMessage = $"Error al anular transacción diferida en Webpay Plus: {ex.Message}"
+                ErrorMessage = $"Error al anular transacción en Webpay Plus: {ex.Message}"
             });
         }
     }

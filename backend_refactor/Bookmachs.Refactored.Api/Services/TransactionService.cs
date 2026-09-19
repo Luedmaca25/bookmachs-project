@@ -353,7 +353,7 @@ public class TransactionService : ITransactionService
 
         var sessionId = $"sess_{requesterUserId.ToString("N")[..8]}";
 
-        var tbResult = await _paymentService.CreateTransbankHoldAsync(
+        var tbResult = await _paymentService.CreateTransbankTransactionAsync(
             transaction.FeeAmount,
             buyOrder,
             sessionId,
@@ -367,7 +367,7 @@ public class TransactionService : ITransactionService
                 Success = true,
                 Token = tbResult.Token,
                 RedirectUrl = tbResult.RedirectUrl,
-                Message = "Redirección a Webpay Plus diferido generada con éxito."
+                Message = "Redirección a Transbank Webpay Plus generada con éxito."
             };
         }
 
@@ -392,7 +392,7 @@ public class TransactionService : ITransactionService
             return cachedResult;
         }
 
-        var tbResult = await _paymentService.CommitTransbankHoldAsync(token);
+        var tbResult = await _paymentService.CommitTransbankTransactionAsync(token);
 
         if (tbResult.Success && !string.IsNullOrEmpty(tbResult.BuyOrder))
         {
@@ -403,7 +403,7 @@ public class TransactionService : ITransactionService
             if (transaction != null)
             {
                 transaction.PaymentHoldId = token;
-                transaction.PaymentStatus = "Hold";
+                transaction.PaymentStatus = "Captured";
                 transaction.StatusUpdatedAt = DateTime.UtcNow;
 
                 var method = (transaction.LogisticsMethod ?? "Presencial").ToLowerInvariant();
@@ -426,8 +426,8 @@ public class TransactionService : ITransactionService
                 {
                     Success = true,
                     MatchTransactionId = transaction.Id.ToString(),
-                    PaymentStatus = "Hold",
-                    Message = "Transacción Webpay Plus confirmada y retenida con éxito."
+                    PaymentStatus = "Captured",
+                    Message = "Transacción Webpay Plus confirmada y cobrada con éxito."
                 };
                 _matchTokenConfirmCache[token] = successRes;
                 return successRes;
