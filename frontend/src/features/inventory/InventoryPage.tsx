@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
 import { MatchModal } from '../transactions/components/MatchModal';
@@ -29,6 +29,7 @@ interface MatchTransaction {
 
 export const InventoryPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'interested' | 'offered'>('interested');
 
   // Datos de libros que le interesan (Matches / Likes)
@@ -75,6 +76,18 @@ export const InventoryPage: React.FC = () => {
     fetchLikedMatches();
     fetchOfferedBooks();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    const addParam = params.get('add');
+    if (tabParam === 'offered' || addParam === 'true') {
+      setActiveTab('offered');
+    }
+    if (addParam === 'true') {
+      setShowAddForm(true);
+    }
+  }, [location.search]);
 
   const fetchLikedMatches = async () => {
     setLoadingMatches(true);

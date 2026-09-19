@@ -2014,29 +2014,29 @@ p {
   top: 14px;
   right: 14px;
   z-index: 25;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color:#fff;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: all var(--transition-fast);
 }
 
 .swipe-undo-btn:hover:not(:disabled) {
   background: var(--accent-primary);
-  color: #070a13;
+  color: #ffffff;
   border-color: var(--accent-primary);
-  transform: scale(1.1) rotate(-15deg);
-  box-shadow: 0 6px 18px rgba(182, 255, 0, 0.45);
+  transform: scale(1.08) rotate(-15deg);
+  box-shadow: 0 6px 18px rgba(15, 157, 88, 0.25);
 }
 
 .swipe-undo-btn:disabled,
@@ -2123,6 +2123,46 @@ p {
   inset: 0;
   /* background: radial-gradient(circle at center, rgba(78, 168, 222, 0.1) 0%, transparent 70%); */
   pointer-events: none;
+}
+
+/* Sellos de Swipe circulares estilo Tinder (Iconos 💚 / ❌) - Tema Claro */
+.swipe-stamp {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  padding: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 4px 16px rgba(15, 157, 88, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.swipe-stamp i {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.swipe-stamp.stamp-like {
+  left: 20px;
+  color: var(--accent-primary);
+  border: 3.5px solid var(--accent-primary);
+  box-shadow: 0 4px 18px rgba(15, 157, 88, 0.25);
+}
+
+.swipe-stamp.stamp-nope {
+  right: 20px;
+  color: #EF476F;
+  border: 3.5px solid #EF476F;
+  box-shadow: 0 4px 18px rgba(239, 71, 111, 0.25);
 }
 
 .book-card-info {
@@ -2214,36 +2254,44 @@ p {
   width: 60px;
   height: 60px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   font-size: 1.5rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-md);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .dislike-btn {
-  background-color: rgba(255, 255, 255, 0.02);
-  color: var(--text-primary);
+  background-color: #ffffff;
+  color: #EF476F;
+  border-color: rgba(239, 71, 111, 0.25);
+  box-shadow: 0 4px 14px rgba(239, 71, 111, 0.15);
 }
 
 .dislike-btn:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-  border-color: var(--text-secondary);
+  background-color: #EF476F;
+  color: #ffffff;
+  border-color: #EF476F;
   transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(239, 71, 111, 0.3);
 }
 
 .like-btn {
-  background: var(--gradient-accent);
-  color: #fff;
-  border: none;
+  background-color: #ffffff;
+  color: var(--accent-primary);
+  border-color: rgba(15, 157, 88, 0.35);
+  box-shadow: 0 4px 14px rgba(15, 157, 88, 0.2);
 }
 
 .like-btn:hover {
+  background: var(--gradient-accent);
+  color: #ffffff;
+  border-color: var(--accent-primary);
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(182, 255, 0, 0.5);
+  box-shadow: 0 6px 20px rgba(15, 157, 88, 0.4);
 }
 
 .swipe-feedback {
@@ -5133,6 +5181,13 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.catalog-card-footer:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
 }
 
 .catalog-price-tag {
@@ -9675,8 +9730,300 @@ p {
   }
 }
 
+/* Ocultar barra de navegación móvil en pantallas grandes */
+.mobile-bottom-nav {
+  display: none;
+}
+
 /* 3. Mobile / Small Tablet Breakpoint (max-width: 767px) */
 @media (max-width: 767px) {
+  /* Barra de Navegación Inferior Móvil (App Style - 5 opciones) */
+  /* Barra de Navegación Inferior Móvil (App Style - 5 opciones) - Tema Claro */
+  /* Barra de Navegación Inferior Móvil (App Style - 5 opciones) - Tema Claro */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-top: 1px solid var(--border-color);
+    z-index: 1000;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 0.4rem env(safe-area-inset-bottom, 0px) 0.4rem;
+    box-shadow: 0 -4px 20px rgba(15, 157, 88, 0.08);
+    box-sizing: border-box;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 4px 6px;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .bottom-nav-item i {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    transition: transform var(--transition-fast), color var(--transition-fast);
+  }
+
+  .bottom-nav-item.active {
+    color: var(--accent-primary);
+    font-weight: 600;
+  }
+
+  .bottom-nav-item.active i {
+    transform: scale(1.15);
+    color: var(--accent-primary);
+    text-shadow: 0 0 10px rgba(15, 157, 88, 0.25);
+  }
+
+  /* Centro destacado para el botón de Subir libro */
+  .bottom-nav-item.upload-highlight {
+    position: relative;
+  }
+
+  .upload-icon-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--gradient-accent);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(15, 157, 88, 0.35);
+    margin-bottom: 2px;
+    transition: transform var(--transition-fast);
+  }
+
+  .upload-icon-circle i {
+    font-size: 1rem;
+    color: #FFFFFF !important;
+    text-shadow: none !important;
+  }
+
+  .bottom-nav-item.upload-highlight:hover .upload-icon-circle,
+  .bottom-nav-item.upload-highlight.active .upload-icon-circle {
+    transform: scale(1.1);
+  }
+
+  /* Pantalla Swipe tipo Tinder a pantalla completa sin scroll vertical */
+  .app-main.swipe-main-active,
+  .app-main:has(.swipe-page-container) {
+    position: fixed !important;
+    top: 52px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    padding: 0.25rem 0.5rem 0.25rem 0.5rem !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    z-index: 10 !important;
+  }
+
+  .swipe-page-container {
+    height: 100% !important;
+    max-height: 100% !important;
+    flex: 1 1 0;
+    min-height: 0;
+    gap: 0.25rem;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+
+  .swipe-tracker-bar {
+    order: -1;
+    margin: 0 auto;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.72rem;
+    max-width: 100%;
+    flex-shrink: 0;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border-color);
+  }
+
+  .swipe-tracker-bar .upgrade-pill-btn {
+    padding: 0.15rem 0.5rem;
+    font-size: 0.68rem;
+  }
+
+  .swipe-card-wrapper {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+    max-height: 100%;
+    gap: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .book-swipe-card {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+    max-height: calc(100% - 62px);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .book-card-image-placeholder {
+    flex: 1 1 50%;
+    height: 50%;
+    min-height: 100px;
+    max-height: 52%;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .book-card-info {
+    padding: 0.4rem 0.65rem;
+    gap: 0.1rem;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .book-card-info h3 {
+    font-size: 1.05rem;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .book-card-info .book-author {
+    font-size: 0.78rem;
+  }
+
+  .book-card-info .book-desc {
+    font-size: 0.76rem;
+    line-height: 1.3;
+    margin: 0.1rem 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .book-card-info .book-desc.expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+  }
+
+  .see-more-btn {
+    font-size: 0.7rem;
+    padding: 1px 0;
+  }
+
+  .swipe-controls {
+    flex: 0 0 58px;
+    height: 58px;
+    min-height: 58px;
+    margin: 0.75rem 0;
+    padding: 2px 0;
+    gap: 2.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    width: 100%;
+    z-index: 10;
+  }
+
+  .swipe-controls .control-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .notebook-banner-card,
+  .swipe-header,
+  .app-footer {
+    display: none !important;
+  }
+
+  .guest-hero-container {
+    padding: 0;
+    margin: 0 0 0.15rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  .guest-hero-title {
+    font-size: 1.5rem;
+    margin: 0;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .guest-hero-title-highlight {
+    font-size: 0.95rem;
+  }
+
+  .guest-hero-subtitle,
+  .guest-flags-row {
+    display: none !important;
+  }
+
+  .guest-tutorial-trigger-btn {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    margin: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
   /* Admin CMS & Settings */
   .admin-settings-container {
     width: 100%;
@@ -9944,7 +10291,7 @@ p {
 
   /* Main Layout & Forms */
   .app-main {
-    padding: 1.5rem 1rem;
+    padding: 1.25rem 1rem calc(72px + env(safe-area-inset-bottom, 0px)) 1rem;
   }
 
   h1 {
@@ -9952,11 +10299,20 @@ p {
   }
 
   .app-header {
-    padding: 1rem 1.25rem;
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    padding: 0.35rem 1rem;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     gap: 0;
+    box-sizing: border-box;
+  }
+
+  .app-header .brand-logo-img {
+    height: 34px !important;
+    width: auto;
   }
 
   .form-two-columns {
@@ -10486,13 +10842,14 @@ p {
   color: #fff;
   padding: 0.75rem 1.6rem;
   border-radius: 50px;
-  font-size: 0.95rem;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 1.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
   transition: all var(--transition-fast);
   box-shadow: 0 4px 15px rgba(15, 157, 88, 0.15);
 }

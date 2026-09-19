@@ -18,6 +18,9 @@ interface BookCardProps {
   isNewlyArrived?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  isDragging?: boolean;
+  dragOffset?: { x: number; y: number };
+  swipeDirection?: 'left' | 'right' | null;
   onReserve?: (id: string, title: string) => void;
   showReserveButton?: boolean;
   onInterest?: (id: string, title: string) => void;
@@ -39,8 +42,11 @@ export const BookCard: React.FC<BookCardProps> = ({
   isNewlyArrived,
   className = '',
   style,
+  isDragging = false,
+  dragOffset = { x: 0, y: 0 },
+  swipeDirection = null,
   onReserve: _onReserve,
-  showReserveButton = false,
+  showReserveButton: _showReserveButton = false,
   onInterest,
   showInterestButton = true,
   showUndoButton = false,
@@ -56,9 +62,22 @@ export const BookCard: React.FC<BookCardProps> = ({
 }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-  const isSwipedRight = className.includes('swiped-right');
-  const isSwipedLeft = className.includes('swiped-left');
+  const isSwipedRight = className.includes('swiped-right') || swipeDirection === 'right';
+  const isSwipedLeft = className.includes('swiped-left') || swipeDirection === 'left';
   const isBlurred = className.includes('blurred-card');
+
+  // Cálculo dinámico de opacidad de los sellos durante el arrastre
+  const likeOpacity = isSwipedRight 
+    ? 1 
+    : isDragging && dragOffset.x > 20 
+      ? Math.min(1, (dragOffset.x - 20) / 60) 
+      : 0;
+
+  const nopeOpacity = isSwipedLeft 
+    ? 1 
+    : isDragging && dragOffset.x < -20 
+      ? Math.min(1, (Math.abs(dragOffset.x) - 20) / 60) 
+      : 0;
 
   const containerClassName = `book-swipe-card ${isBlurred ? 'blurred-card' : ''}`;
   const imageSwipeClassName = `swipe-card-img ${isSwipedRight ? 'swiped-right' : ''} ${isSwipedLeft ? 'swiped-left' : ''}`;
@@ -99,6 +118,26 @@ export const BookCard: React.FC<BookCardProps> = ({
       )}
 
       <div className="book-card-image-placeholder">
+        {/* Sellos dinámicos estilo Tinder circulares (Corazón 💚 / Equis ❌) */}
+        <div
+          className="swipe-stamp stamp-like"
+          style={{
+            opacity: likeOpacity,
+            transform: `translateY(-50%) scale(${likeOpacity > 0 ? 1 : 0.8})`,
+          }}
+        >
+          <i className="fa-solid fa-heart"></i>
+        </div>
+
+        <div
+          className="swipe-stamp stamp-nope"
+          style={{
+            opacity: nopeOpacity,
+            transform: `translateY(-50%) scale(${nopeOpacity > 0 ? 1 : 0.8})`,
+          }}
+        >
+          <i className="fa-solid fa-xmark"></i>
+        </div>
         {book.imageUrl ? (
           <img
             src={book.imageUrl}
@@ -180,21 +219,19 @@ export const BookCard: React.FC<BookCardProps> = ({
           </button>
         )}
 
-        {(showInterestButton || showReserveButton) && (
+        {showInterestButton && onInterest && (
           <div className="catalog-card-footer">
             {/* Botón Me Interesa (Intercambio / Swipe Like) */}
-            {showInterestButton && onInterest && (
-              <button
-                type="button"
-                className="catalog-interest-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onInterest(book.id, book.title);
-                }}
-              >
-                Me Interesa <i className="fa-solid fa-heart"></i>
-              </button>
-            )}
+            <button
+              type="button"
+              className="catalog-interest-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onInterest(book.id, book.title);
+              }}
+            >
+              Me Interesa <i className="fa-solid fa-heart"></i>
+            </button>
           </div>
         )}
       </div>

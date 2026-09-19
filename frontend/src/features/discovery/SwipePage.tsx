@@ -525,6 +525,9 @@ export const SwipePage: React.FC = () => {
               showUndoButton={true}
               canUndo={currentBookIndex > 0 || swipedHistory.length > 0}
               onUndo={handleUndoSwipe}
+              isDragging={isDragging}
+              dragOffset={dragOffset}
+              swipeDirection={swipeDirection}
               className={`${
                 swipeDirection === 'right' ? 'swiped-right' : 
                 swipeDirection === 'left' ? 'swiped-left' : ''
