@@ -109,7 +109,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
 
     // US-03 Escenario 2: No permitir avanzar sin seleccionar al menos 1 preferencia
     if (selectedTags.length === 0) {
-      setError('Debes seleccionar al menos una preferencia de lectura para que la IA personalice tus recomendaciones.');
+      setError('Debes seleccionar al menos una preferencia de lectura para que personalicemos tus recomendaciones.');
       return;
     }
 

@@ -34,7 +34,7 @@ export const PreferencesCard: React.FC<PreferencesCardProps> = ({
   submitButtonText = 'Guardar Preferencias',
   submitButtonIcon,
   title = 'Intereses y Preferencias',
-  subtitle = 'Selecciona tus categorías literarias de preferencia. El algoritmo de IA priorizará los libros que coincidan con estos intereses.'
+  subtitle = 'Selecciona tus categorías literarias de preferencia. El algoritmo priorizará los libros que coincidan con estos intereses.'
 }) => {
   return (
     <div className="profile-card">

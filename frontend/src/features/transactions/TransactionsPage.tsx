@@ -551,7 +551,7 @@ export const TransactionsPage: React.FC = () => {
                 <div className="checkout-step-header">
                   <h3 className="checkout-step-title">Paso 3: Pago Seguro del Fee de Intercambio</h3>
                   {/* <p className="checkout-step-subtitle">
-                    La tarifa del servicio calculada por la IA se retiene temporalmente en modo Hold y solo se liquida al concretar la entrega.
+                    La tarifa del servicio calculada por la se retiene temporalmente en modo Hold y solo se liquida al concretar la entrega.
                   </p> */}
                 </div>
 

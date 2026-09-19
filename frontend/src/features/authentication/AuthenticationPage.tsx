@@ -328,7 +328,7 @@ export const AuthenticationPage: React.FC = () => {
           <h1 className="neon-text">
             Perfil de usuario
           </h1>
-          <p className="profile-subtitle">Gestiona tu cuenta y personaliza tu recomendación de lectura por IA</p>
+          <p className="profile-subtitle">Gestiona tu cuenta y personaliza tu recomendación de lectura</p>
         </div>
 
         <div className="profile-grid">

@@ -192,7 +192,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         {/* Encabezado Neón Principal */}
         <div className="checkout-step-header">
           <div className="neon-badge-pill">
-            {isThankYouPage ? '🎉 ¡Pago Webpay Autorizado Exitosamente!' : '📋 Detalle de Transacción e Intercambio IA'}
+            {isThankYouPage ? '🎉 ¡Pago Webpay Autorizado Exitosamente!' : '📋 Detalle de Transacción e Intercambio'}
           </div>
           
           <h3 className="match-modal-title">

@@ -544,7 +544,7 @@ export const SwipePage: React.FC = () => {
         <div className="swipe-empty-state">
           <span className="empty-icon"><i className="fa-solid fa-book-open"></i></span>
           <h3>No hay más recomendaciones por ahora</h3>
-          <p>Sube más libros a tu libreta o actualiza tus preferencias de lectura para refinar las recomendaciones de la IA.</p>
+          <p>Sube más libros a tu libreta o actualiza tus preferencias de lectura para refinar las recomendaciones.</p>
         </div>
       ) : (
         <div className="swipe-card-wrapper">

@@ -523,7 +523,7 @@ export const InventoryPage: React.FC = () => {
           title: selectedProposal.bookTitle,
           author: selectedProposal.bookAuthor,
           condition: selectedProposal.bookCondition,
-          description: 'Libro emparejado por compatibilidad de IA.',
+          description: 'Libro emparejado por compatibilidad.',
           imageUrl: selectedProposal.bookImageUrl
         } : null}
         matchTransactionId={selectedProposal ? selectedProposal.id : null}

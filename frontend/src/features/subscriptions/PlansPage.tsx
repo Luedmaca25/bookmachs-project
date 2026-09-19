@@ -237,7 +237,7 @@ export const PlansPage: React.FC = () => {
         <h3>Información Importante de Facturación</h3>
         <p>1. Los cobros de las suscripciones se realizan mensualmente de manera automática en la pasarela segura.</p>
         <p>2. Puedes cancelar o modificar tu plan en cualquier momento sin cargos adicionales.</p>
-        <p>3. **El Fee por intercambio es cobrado por separado por cada match concretado**, independientemente del plan suscrito, para sustentar el motor de recomendación IA y las validaciones de stock.</p>
+        <p>3. **El Fee por intercambio es cobrado por separado por cada match concretado**, independientemente del plan suscrito, para sustentar el motor de recomendación y las validaciones de stock.</p>
       </div>
     </div>
   );
