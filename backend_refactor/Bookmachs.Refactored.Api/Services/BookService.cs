@@ -360,7 +360,7 @@ public class BookService : IBookService
         }
 
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int swipeLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 40);
+        int baseLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 40);
 
         var cacheKey = $"swipes_consumed_{user.Id}";
         int consumed = 0;
@@ -368,13 +368,16 @@ public class BookService : IBookService
         bool isNewMonth = (now.Year > user.LastSwipeResetDate.Year) || 
                           (now.Year == user.LastSwipeResetDate.Year && now.Month > user.LastSwipeResetDate.Month);
 
+        bool userModified = false;
+
         if (isNewMonth)
         {
             consumed = 0;
             user.DailySwipesConsumed = 0;
+            user.BonusSwipesGranted = 0;
+            user.LastBonusGrantedAt = null;
             user.LastSwipeResetDate = now;
-            _dbContext.Users.Update(user);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            userModified = true;
             _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
         }
         else
@@ -391,11 +394,50 @@ public class BookService : IBookService
             }
         }
 
+        int effectiveLimit = baseLimit;
+
+        if (!user.IsPremium)
+        {
+            effectiveLimit = baseLimit + user.BonusSwipesGranted;
+
+            // Si el usuario alcanzó o superó su límite actual y aún no ha recibido los 50 adicionales
+            if (consumed >= effectiveLimit)
+            {
+                if (user.BonusSwipesGranted < 50)
+                {
+                    if (user.LastBonusGrantedAt == null)
+                    {
+                        // Se agotó el límite por primera vez: iniciar contador de 24 horas
+                        user.LastBonusGrantedAt = now;
+                        userModified = true;
+                    }
+                    else
+                    {
+                        var elapsedHours = (now - user.LastBonusGrantedAt.Value).TotalHours;
+                        if (elapsedHours >= 24)
+                        {
+                            // Transcurrieron 24 horas: otorgar 10 me gusta adicionales (hasta 50 de bono máx)
+                            user.BonusSwipesGranted = Math.Min(50, user.BonusSwipesGranted + 10);
+                            user.LastBonusGrantedAt = now;
+                            userModified = true;
+                            effectiveLimit = baseLimit + user.BonusSwipesGranted;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (userModified)
+        {
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         return new SwipeStatusDto
         {
             SwipesConsumed = consumed,
-            SwipeLimit = swipeLimit,
-            LimitReached = consumed >= swipeLimit
+            SwipeLimit = effectiveLimit,
+            LimitReached = consumed >= effectiveLimit
         };
     }
 
@@ -408,10 +450,10 @@ public class BookService : IBookService
         }
 
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int swipeLimit = user.IsPremium ? 1000 : 40;
+        int baseLimit = user.IsPremium ? 1000 : 40;
         if (settings != null)
         {
-            swipeLimit = user.IsPremium ? settings.DailySwipeLimitPremium : settings.DailySwipeLimitFree;
+            baseLimit = user.IsPremium ? settings.DailySwipeLimitPremium : settings.DailySwipeLimitFree;
         }
 
         var cacheKey = $"swipes_consumed_{user.Id}";
@@ -420,13 +462,16 @@ public class BookService : IBookService
         bool isNewMonth = (now.Year > user.LastSwipeResetDate.Year) || 
                           (now.Year == user.LastSwipeResetDate.Year && now.Month > user.LastSwipeResetDate.Month);
 
+        bool userModified = false;
+
         if (isNewMonth)
         {
             consumed = 0;
             user.DailySwipesConsumed = 0;
+            user.BonusSwipesGranted = 0;
+            user.LastBonusGrantedAt = null;
             user.LastSwipeResetDate = now;
-            _dbContext.Users.Update(user);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            userModified = true;
             _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
         }
         else
@@ -443,27 +488,82 @@ public class BookService : IBookService
             }
         }
 
+        int effectiveLimit = baseLimit;
+
+        if (!user.IsPremium)
+        {
+            effectiveLimit = baseLimit + user.BonusSwipesGranted;
+
+            // Verificar si aplica bono de 24 horas si ya estaba en el límite
+            if (consumed >= effectiveLimit)
+            {
+                if (user.BonusSwipesGranted < 50)
+                {
+                    if (user.LastBonusGrantedAt == null)
+                    {
+                        user.LastBonusGrantedAt = now;
+                        userModified = true;
+                    }
+                    else
+                    {
+                        var elapsedHours = (now - user.LastBonusGrantedAt.Value).TotalHours;
+                        if (elapsedHours >= 24)
+                        {
+                            user.BonusSwipesGranted = Math.Min(50, user.BonusSwipesGranted + 10);
+                            user.LastBonusGrantedAt = now;
+                            userModified = true;
+                            effectiveLimit = baseLimit + user.BonusSwipesGranted;
+                        }
+                    }
+                }
+            }
+        }
+
         bool isLikeAction = action.Equals("like", StringComparison.OrdinalIgnoreCase);
 
         // Los swipes se descuentan únicamente cuando el usuario da "like" (me gusta a la derecha).
         // Los swipes a la izquierda (dislike) son infinitos en todos los planes.
         if (isLikeAction)
         {
-            if (consumed >= swipeLimit)
+            if (consumed >= effectiveLimit)
             {
+                if (user.LastBonusGrantedAt == null && !user.IsPremium)
+                {
+                    user.LastBonusGrantedAt = now;
+                    userModified = true;
+                }
+
+                if (userModified)
+                {
+                    _dbContext.Users.Update(user);
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                }
+
                 return new SwipeResultDto
                 {
                     Success = false,
                     SwipesConsumed = consumed,
-                    SwipeLimit = swipeLimit,
+                    SwipeLimit = effectiveLimit,
                     ErrorCode = "MonthlyLimitExceeded",
-                    Message = $"Has alcanzado tu límite de {swipeLimit} me gusta (likes) en el plan gratuito. Pásate a Premium para dar me gusta sin límites."
+                    Message = "Has alcanzado tu límite de me gusta en el plan gratuito. Pásate a Premium para continuar explorando sin límites."
                 };
             }
 
             consumed++;
             _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
             user.DailySwipesConsumed = consumed;
+
+            // Si al dar este like se alcanzó el límite vigente, guardar marca para contar las próximas 24h
+            if (!user.IsPremium && consumed >= effectiveLimit && user.BonusSwipesGranted < 50)
+            {
+                user.LastBonusGrantedAt = now;
+            }
+
+            userModified = true;
+        }
+
+        if (userModified)
+        {
             _dbContext.Users.Update(user);
         }
 
@@ -552,7 +652,7 @@ public class BookService : IBookService
         {
             Success = true,
             SwipesConsumed = consumed,
-            SwipeLimit = swipeLimit,
+            SwipeLimit = effectiveLimit,
             Message = isMatch ? "¡Match logrado!" : "Swipe registrado con éxito.",
             IsMatch = isMatch,
             MatchTransactionId = matchTransactionId
@@ -568,10 +668,16 @@ public class BookService : IBookService
         }
 
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int swipeLimit = user.IsPremium ? 1000 : 40;
+        int baseLimit = user.IsPremium ? 1000 : 40;
         if (settings != null)
         {
-            swipeLimit = user.IsPremium ? settings.DailySwipeLimitPremium : settings.DailySwipeLimitFree;
+            baseLimit = user.IsPremium ? settings.DailySwipeLimitPremium : settings.DailySwipeLimitFree;
+        }
+
+        int effectiveLimit = baseLimit;
+        if (!user.IsPremium)
+        {
+            effectiveLimit = baseLimit + user.BonusSwipesGranted;
         }
 
         // Buscar la interacción correspondiente
@@ -629,8 +735,8 @@ public class BookService : IBookService
         return new SwipeStatusDto
         {
             SwipesConsumed = consumed,
-            SwipeLimit = swipeLimit,
-            LimitReached = consumed >= swipeLimit
+            SwipeLimit = effectiveLimit,
+            LimitReached = consumed >= effectiveLimit
         };
     }
 

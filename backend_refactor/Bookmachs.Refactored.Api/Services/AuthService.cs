@@ -243,16 +243,42 @@ public class AuthService : IAuthService
         bool isNewMonth = (now.Year > user.LastSwipeResetDate.Year) || 
                           (now.Year == user.LastSwipeResetDate.Year && now.Month > user.LastSwipeResetDate.Month);
 
+        bool userModified = false;
+
         if (isNewMonth)
         {
             user.DailySwipesConsumed = 0;
+            user.BonusSwipesGranted = 0;
+            user.LastBonusGrantedAt = null;
             user.LastSwipeResetDate = now;
-            _dbContext.Users.Update(user);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            userModified = true;
         }
 
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int swipeLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 40);
+        int baseLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 40);
+        int effectiveLimit = baseLimit;
+
+        if (!user.IsPremium)
+        {
+            effectiveLimit = baseLimit + user.BonusSwipesGranted;
+
+            if (user.DailySwipesConsumed >= effectiveLimit && user.BonusSwipesGranted < 50)
+            {
+                if (user.LastBonusGrantedAt.HasValue && (now - user.LastBonusGrantedAt.Value).TotalHours >= 24)
+                {
+                    user.BonusSwipesGranted = Math.Min(50, user.BonusSwipesGranted + 10);
+                    user.LastBonusGrantedAt = now;
+                    effectiveLimit = baseLimit + user.BonusSwipesGranted;
+                    userModified = true;
+                }
+            }
+        }
+
+        if (userModified)
+        {
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return new UserProfileDto
         {
@@ -268,7 +294,7 @@ public class AuthService : IAuthService
             Role = user.Role,
             Preferences = user.Preferences.Select(p => p.PreferenceTag).ToList(),
             DailySwipesConsumed = user.DailySwipesConsumed,
-            DailySwipeLimit = swipeLimit
+            DailySwipeLimit = effectiveLimit
         };
     }
 

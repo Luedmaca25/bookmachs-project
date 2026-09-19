@@ -664,7 +664,7 @@ export const SwipePage: React.FC = () => {
                     <>Plan Premium &bull; Swipes <strong>Ilimitados</strong> ♾️</>
                   ) : (
                     <>
-                      Swipes restantes este mes: <strong>{Math.max(0, swipeLimit - swipesConsumed)}</strong> / {swipeLimit}
+                      Swipes restantes: <strong>{Math.max(0, swipeLimit - swipesConsumed)}</strong>
                     </>
                   )}
                 </span>

@@ -18,6 +18,8 @@ public class User
     // Control de cuota diaria de swipes
     public int DailySwipesConsumed { get; set; } = 0;
     public DateTime LastSwipeResetDate { get; set; } = DateTime.UtcNow;
+    public int BonusSwipesGranted { get; set; } = 0;
+    public DateTime? LastBonusGrantedAt { get; set; }
 
     // Estado de Suscripción
     public bool IsPremium { get; set; } = false;

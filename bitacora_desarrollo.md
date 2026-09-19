@@ -952,6 +952,29 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx)
   - [bitacora_desarrollo.md](file:///C:/Users/luis_/Proyectos/bookmachs/bitacora_desarrollo.md)
 
+---
+
+## Entrada de Bitácora: Sistema de Reenganche Progresivo de Swipes (40 Base + 50 Bono en Lotes de 10 cada 24h)
+
+* **Fecha:** 19 de Septiembre, 2026
+* **Objetivo:** Implementar la regla de negocio para usuarios gratuitos donde al agotar su cuota inicial de 40 *me gusta* (likes), si no se suscriben a Premium, se les habilitan automáticamente lotes de +10 *me gusta* cada 24 horas transcurridas desde su bloqueo, hasta alcanzar un tope máximo de 90 en el ciclo (40 base + 50 adicionales).
+* **Detalles Técnicos:**
+  1. **Base de Datos y Modelo (`User`):**
+     - Se crearon y migraron las columnas `BonusSwipesGranted` (int, default 0, máx 50) y `LastBonusGrantedAt` (DateTime nullable) en la tabla `Users` vía migración EF Core `20260919215201_AddBonusSwipesToUser`.
+  2. **Servicios de Backend (`BookService` y `AuthService`):**
+     - **Likes Exclusivos:** Se mantiene la regla estricta de que únicamente los swipes a la derecha (*like*) descuentan del contador de swipes. Los swipes a la izquierda (*dislike*) permanecen completamente ilimitados.
+     - **Desbloqueo Silencioso On-Demand:** Al consultar `/books/swipe-status`, `/books/{id}/swipe` o `/auth/profile`, si `user.DailySwipesConsumed >= effectiveLimit` y han transcurrido `>= 24 horas` desde `LastBonusGrantedAt`, se incrementa silenciosamente `BonusSwipesGranted += 10` (tope 50), desbloqueando al usuario sin necesidad de jobs pesados en segundo plano.
+     - Si el usuario llega al límite por primera vez (40), se sella `LastBonusGrantedAt = DateTime.UtcNow` para iniciar el reloj de las 24 horas.
+  3. **Frontend Silencioso (Sin Spoilers para el Usuario):**
+     - Se omitió cualquier temporizador o texto explicativo sobre recargas futuras. El usuario únicamente ve que agotó sus me gusta disponibles y el llamado a contratar Premium.
+     - La barra de seguimiento superior muestra únicamente `Swipes restantes: X` (sin revelar el límite total acumulado `/ 40`, `/ 50` o `/ 90`).
+* **Archivos Clave Modificados:**
+  - [User.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Domain/Entities/User.cs)
+  - [BookService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/BookService.cs)
+  - [AuthService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/AuthService.cs)
+  - [SwipePage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/SwipePage.tsx)
+  - Migración [20260919215201_AddBonusSwipesToUser.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Migrations/20260919215201_AddBonusSwipesToUser.cs)
+
 
 
 
