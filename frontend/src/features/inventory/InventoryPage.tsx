@@ -30,7 +30,7 @@ interface MatchTransaction {
 export const InventoryPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'interested' | 'offered'>('interested');
-  
+
   // Datos de libros que le interesan (Matches / Likes)
   const [likedMatches, setLikedMatches] = useState<MatchTransaction[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
@@ -185,23 +185,27 @@ export const InventoryPage: React.FC = () => {
 
       {/* Pestañas de Tu Libreta (Pantalla 4) */}
       <div className="libreta-tabs">
-        <button
-          type="button"
-          onClick={() => setActiveTab('interested')}
-          className={`libreta-tab-btn ${activeTab === 'interested' ? 'active' : ''}`}
-        >
-          <i className="fa-solid fa-heart"></i>
-          Me interesan ({likedMatches.length})
-        </button>
+        <div className='libreta-tab'>
+          <button
+            type="button"
+            onClick={() => setActiveTab('interested')}
+            className={`libreta-tab-btn ${activeTab === 'interested' ? 'active' : ''}`}
+          >
+            <i className="fa-solid fa-heart"></i>
+          </button>
+          <p>Me interesan ({likedMatches.length})</p>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('offered')}
-          className={`libreta-tab-btn ${activeTab === 'offered' ? 'active' : ''}`}
-        >
-          <i className="fa-solid fa-book-bookmark"></i>
-          Tengo para intercambiar ({offeredBooks.length})
-        </button>
+        <div className='libreta-tab'>
+          <button
+            type="button"
+            onClick={() => setActiveTab('offered')}
+            className={`libreta-tab-btn ${activeTab === 'offered' ? 'active' : ''}`}
+          >
+            <i className="fa-solid fa-book-bookmark"></i>
+          </button>
+          <p>Tengo para intercambiar ({offeredBooks.length})</p>
+        </div>
       </div>
 
       {formSuccess && <div className="inventory-toast success">{formSuccess}</div>}
@@ -246,8 +250,8 @@ export const InventoryPage: React.FC = () => {
           ) : (
             <div className="matches-libreta-list">
               {likedMatches.map((item) => (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className="libreta-match-card"
                 >
                   <div className="match-card-content">
@@ -268,7 +272,7 @@ export const InventoryPage: React.FC = () => {
                         )}
                       </div>
                       <span className="match-card-author">{item.bookAuthor}</span>
-                      
+
                       <div className="match-card-meta">
                         <span className="match-card-match-count">
                           <i className="fa-solid fa-arrows-rotate"></i> Match con {offeredBooks.length === 1 ? '1 tuyo' : `${offeredBooks.length} tuyos`}
@@ -336,7 +340,7 @@ export const InventoryPage: React.FC = () => {
       {activeTab === 'offered' && (
         <div className="tab-offered-content">
           <div className="add-book-bar">
-            <button 
+            <button
               className="add-book-trigger-btn font-heading"
               onClick={() => setShowAddForm(!showAddForm)}
             >
