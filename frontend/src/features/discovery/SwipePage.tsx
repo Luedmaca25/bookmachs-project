@@ -580,7 +580,7 @@ export const SwipePage: React.FC = () => {
           >
             <span className="notebook-banner-icon"><i className="fa-solid fa-book-bookmark icon-neon"></i></span>
             <div className="notebook-banner-body">
-              <div className="notebook-banner-title">Intercambiálos en tu libreta</div>
+              <div className="notebook-banner-title">Intercambialos en tu libreta</div>
               <div className="notebook-banner-subtitle">Tus likes se guardan automáticamente</div>
             </div>
           </div>

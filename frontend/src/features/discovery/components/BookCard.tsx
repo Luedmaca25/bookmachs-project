@@ -56,10 +56,16 @@ export const BookCard: React.FC<BookCardProps> = ({
 }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
+  const isSwipedRight = className.includes('swiped-right');
+  const isSwipedLeft = className.includes('swiped-left');
+  const isBlurred = className.includes('blurred-card');
+
+  const containerClassName = `book-swipe-card ${isBlurred ? 'blurred-card' : ''}`;
+  const imageSwipeClassName = `swipe-card-img ${isSwipedRight ? 'swiped-right' : ''} ${isSwipedLeft ? 'swiped-left' : ''}`;
+
   return (
     <div
-      className={`book-swipe-card ${className}`}
-      style={style}
+      className={containerClassName}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -97,16 +103,22 @@ export const BookCard: React.FC<BookCardProps> = ({
           <img
             src={book.imageUrl}
             alt={book.title}
-            className="swipe-card-img"
+            className={imageSwipeClassName}
+            style={style}
             onError={(e) => {
               e.currentTarget.onerror = null;
               e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400';
             }}
           />
         ) : (
-          <span className="book-fallback-icon">
-            <i className="fa-solid fa-book"></i>
-          </span>
+          <div
+            className={`book-fallback-icon-wrapper ${imageSwipeClassName}`}
+            style={style}
+          >
+            <span className="book-fallback-icon">
+              <i className="fa-solid fa-book"></i>
+            </span>
+          </div>
         )}
 
         <div className='badges'>
