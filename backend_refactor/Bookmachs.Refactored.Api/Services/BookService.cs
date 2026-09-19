@@ -400,63 +400,55 @@ public class BookService : IBookService
 
             if (book != null && book.IsAvailable)
             {
-                isMatch = book.IsInternalStock || (Random.Shared.NextDouble() < 0.35);
+                isMatch = true;
 
-                if (isMatch)
+                var existingMatch = await _dbContext.MatchTransactions
+                    .FirstOrDefaultAsync(t => t.RequesterUserId == user.Id && t.BookId == book.Id, cancellationToken);
+
+                if (existingMatch != null)
                 {
-                    // Verificar límite mensual de intercambios (2 para Plan Gratuito, 5 para Plan Premium)
-                    var firstDayOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-                    int currentMonthMatches = await _dbContext.MatchTransactions
-                        .CountAsync(t => t.RequesterUserId == user.Id && t.CreatedAt >= firstDayOfMonth, cancellationToken);
-                    int maxMatchesAllowed = user.IsPremium 
-                        ? (settings?.MonthlyMatchLimitPremium ?? 5) 
-                        : (settings?.MonthlyMatchLimitFree ?? 2);
+                    matchTransactionId = existingMatch.Id;
+                }
+                else
+                {
+                    decimal feePercentage = settings?.FeePercentage ?? 0.30m;
+                    decimal minFee = settings?.MinFeeAmount ?? 1000.0m;
+                    decimal maxFee = settings?.MaxFeeAmount ?? 9000.0m;
 
-                    if (currentMonthMatches >= maxMatchesAllowed)
+                    decimal rawFee = book.BaseValue * feePercentage;
+                    decimal finalFee = rawFee;
+
+                    if (finalFee < minFee) finalFee = minFee;
+                    else if (finalFee > maxFee) finalFee = maxFee;
+
+                    finalFee = Math.Round(finalFee, 2);
+
+                    bool isCrossBorder = false;
+                    if (!book.IsInternalStock && book.OwnerId.HasValue)
                     {
-                        isMatch = false;
-                    }
-                    else
-                    {
-                        decimal feePercentage = settings?.FeePercentage ?? 0.30m;
-                        decimal minFee = settings?.MinFeeAmount ?? 1000.0m;
-                        decimal maxFee = settings?.MaxFeeAmount ?? 9000.0m;
-
-                        decimal rawFee = book.BaseValue * feePercentage;
-                        decimal finalFee = rawFee;
-
-                        if (finalFee < minFee) finalFee = minFee;
-                        else if (finalFee > maxFee) finalFee = maxFee;
-
-                        finalFee = Math.Round(finalFee, 2);
-
-                        bool isCrossBorder = false;
-                        if (!book.IsInternalStock && book.OwnerId.HasValue)
+                        var owner = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == book.OwnerId.Value, cancellationToken);
+                        if (owner != null && !string.IsNullOrEmpty(user.Pais) && !string.IsNullOrEmpty(owner.Pais))
                         {
-                            var owner = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == book.OwnerId.Value, cancellationToken);
-                            if (owner != null && !string.IsNullOrEmpty(user.Pais) && !string.IsNullOrEmpty(owner.Pais))
-                            {
-                                isCrossBorder = !string.Equals(user.Pais, owner.Pais, StringComparison.OrdinalIgnoreCase);
-                            }
+                            isCrossBorder = !string.Equals(user.Pais, owner.Pais, StringComparison.OrdinalIgnoreCase);
                         }
-
-                        var transaction = new MatchTransaction
-                        {
-                            Id = Guid.NewGuid(),
-                            RequesterUserId = user.Id,
-                            BookId = book.Id,
-                            OwnerUserId = book.IsInternalStock ? null : book.OwnerId,
-                            FeeAmount = finalFee,
-                            PaymentStatus = "Pending",
-                            LogisticsStatus = "Pending",
-                            IsCrossBorder = isCrossBorder,
-                            CreatedAt = DateTime.UtcNow,
-                            StatusUpdatedAt = DateTime.UtcNow
-                        };
-
-                        await _dbContext.MatchTransactions.AddAsync(transaction, cancellationToken);
-                        matchTransactionId = transaction.Id;
                     }
+
+                    var transaction = new MatchTransaction
+                    {
+                        Id = Guid.NewGuid(),
+                        RequesterUserId = user.Id,
+                        BookId = book.Id,
+                        OwnerUserId = book.IsInternalStock ? null : book.OwnerId,
+                        FeeAmount = finalFee,
+                        PaymentStatus = "Pending",
+                        LogisticsStatus = "Pending",
+                        IsCrossBorder = isCrossBorder,
+                        CreatedAt = DateTime.UtcNow,
+                        StatusUpdatedAt = DateTime.UtcNow
+                    };
+
+                    await _dbContext.MatchTransactions.AddAsync(transaction, cancellationToken);
+                    matchTransactionId = transaction.Id;
                 }
             }
         }

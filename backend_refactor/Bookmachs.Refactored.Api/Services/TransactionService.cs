@@ -43,6 +43,79 @@ public class TransactionService : ITransactionService
 
     public async Task<IEnumerable<MatchTransactionDto>> GetMyMatchesAsync(Guid userId, CancellationToken cancellationToken = default)
     {
+        // Sincronizar/recuperar cualquier me gusta (UserBookInteractions) que no tenga aún un MatchTransaction
+        var userLikedBookIdStrs = await _dbContext.UserBookInteractions
+            .AsNoTracking()
+            .Where(i => i.UserId == userId && i.Action.ToLower() == "like")
+            .Select(i => i.BookId)
+            .ToListAsync(cancellationToken);
+
+        if (userLikedBookIdStrs.Any())
+        {
+            var existingMatchBookIds = await _dbContext.MatchTransactions
+                .Where(t => t.RequesterUserId == userId)
+                .Select(t => t.BookId)
+                .ToListAsync(cancellationToken);
+
+            var existingMatchSet = new HashSet<Guid>(existingMatchBookIds);
+            bool hasNewMatches = false;
+
+            var user = await _dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            var settings = await _dbContext.GlobalSettings.AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+
+            decimal feePercentage = settings?.FeePercentage ?? 0.30m;
+            decimal minFee = settings?.MinFeeAmount ?? 1000.0m;
+            decimal maxFee = settings?.MaxFeeAmount ?? 9000.0m;
+
+            foreach (var bIdStr in userLikedBookIdStrs)
+            {
+                if (Guid.TryParse(bIdStr, out var bGuid) && !existingMatchSet.Contains(bGuid))
+                {
+                    var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == bGuid, cancellationToken);
+                    if (book != null && book.IsAvailable)
+                    {
+                        decimal rawFee = book.BaseValue * feePercentage;
+                        decimal finalFee = rawFee;
+                        if (finalFee < minFee) finalFee = minFee;
+                        else if (finalFee > maxFee) finalFee = maxFee;
+                        finalFee = Math.Round(finalFee, 2);
+
+                        bool isCrossBorder = false;
+                        if (!book.IsInternalStock && book.OwnerId.HasValue && user != null)
+                        {
+                            var owner = await _dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == book.OwnerId.Value, cancellationToken);
+                            if (owner != null && !string.IsNullOrEmpty(user.Pais) && !string.IsNullOrEmpty(owner.Pais))
+                            {
+                                isCrossBorder = !string.Equals(user.Pais, owner.Pais, StringComparison.OrdinalIgnoreCase);
+                            }
+                        }
+
+                        await _dbContext.MatchTransactions.AddAsync(new MatchTransaction
+                        {
+                            Id = Guid.NewGuid(),
+                            RequesterUserId = userId,
+                            BookId = book.Id,
+                            OwnerUserId = book.IsInternalStock ? null : book.OwnerId,
+                            FeeAmount = finalFee,
+                            PaymentStatus = "Pending",
+                            LogisticsStatus = "Pending",
+                            IsCrossBorder = isCrossBorder,
+                            CreatedAt = DateTime.UtcNow,
+                            StatusUpdatedAt = DateTime.UtcNow
+                        }, cancellationToken);
+
+                        existingMatchSet.Add(bGuid);
+                        hasNewMatches = true;
+                    }
+                }
+            }
+
+            if (hasNewMatches)
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+        }
+
         var transactions = await _dbContext.MatchTransactions
             .Where(t => t.RequesterUserId == userId || t.OwnerUserId == userId)
             .Include(t => t.Book)
@@ -114,6 +187,17 @@ public class TransactionService : ITransactionService
         {
             transaction.Book.IsAvailable = true;
             _dbContext.Books.Update(transaction.Book);
+        }
+
+        // Eliminar también el registro de interacción en UserBookInteractions para evitar que se re-cree al recargar
+        string bookIdStr = transaction.BookId.ToString();
+        var interactions = await _dbContext.UserBookInteractions
+            .Where(i => i.UserId == userId && (i.BookId == bookIdStr || i.BookId.ToLower() == bookIdStr.ToLower()))
+            .ToListAsync(cancellationToken);
+
+        if (interactions.Any())
+        {
+            _dbContext.UserBookInteractions.RemoveRange(interactions);
         }
 
         _dbContext.MatchTransactions.Remove(transaction);

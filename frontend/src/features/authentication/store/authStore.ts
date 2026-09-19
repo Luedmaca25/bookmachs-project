@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { apiClient } from '../../../lib/apiClient';
 
 interface User {
   id: string;
@@ -32,6 +33,22 @@ export const useAuthStore = create<AuthState>((set) => {
     isAuthenticated: false, // Se establecerá en true una vez que el perfil de usuario se cargue con éxito
     login: (user, token) => {
       localStorage.setItem('token', token);
+      
+      const pendingLikesStr = localStorage.getItem('guest_pending_likes');
+      if (pendingLikesStr) {
+        try {
+          const guestLikes: string[] = JSON.parse(pendingLikesStr);
+          if (Array.isArray(guestLikes) && guestLikes.length > 0) {
+            apiClient.post('/books/sync-guest-likes', guestLikes).then(() => {
+              localStorage.removeItem('guest_pending_likes');
+              localStorage.removeItem('guest_swipes_count');
+            }).catch((e) => console.error('Error al sincronizar me gusta de invitado al iniciar sesión:', e));
+          }
+        } catch (e) {
+          console.error('Error al parsear guest_pending_likes:', e);
+        }
+      }
+
       set({ user, token, isAuthenticated: true });
     },
     logout: () => {

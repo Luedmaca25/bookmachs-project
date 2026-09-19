@@ -79,6 +79,20 @@ export const InventoryPage: React.FC = () => {
   const fetchLikedMatches = async () => {
     setLoadingMatches(true);
     try {
+      const pendingLikesStr = localStorage.getItem('guest_pending_likes');
+      if (pendingLikesStr) {
+        try {
+          const guestLikes: string[] = JSON.parse(pendingLikesStr);
+          if (Array.isArray(guestLikes) && guestLikes.length > 0) {
+            await apiClient.post('/books/sync-guest-likes', guestLikes);
+            localStorage.removeItem('guest_pending_likes');
+            localStorage.removeItem('guest_swipes_count');
+          }
+        } catch (e) {
+          console.error('Error al sincronizar me gusta de invitado:', e);
+        }
+      }
+
       const data = await apiClient.get<MatchTransaction[]>('/transactions/my-matches');
       setLikedMatches(data);
     } catch (err) {
