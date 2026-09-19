@@ -132,6 +132,27 @@ export const SwipePage: React.FC = () => {
   const [swipesConsumed, setSwipesConsumed] = useState(user?.dailySwipesConsumed ?? 0);
   const [swipeLimit, setSwipeLimit] = useState(user?.dailySwipeLimit ?? (user?.isPremium ? 1000 : 40));
 
+  // Bloquear el scroll y el rebote de pantalla en dispositivos móviles durante la experiencia de Swipe
+  useEffect(() => {
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalOverscroll = document.body.style.overscrollBehavior;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+    document.body.classList.add('swipe-page-active');
+    document.documentElement.classList.add('swipe-page-active');
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overscrollBehavior = originalOverscroll;
+      document.body.classList.remove('swipe-page-active');
+      document.documentElement.classList.remove('swipe-page-active');
+    };
+  }, []);
+
   // Cargar estado real de swipes consumidos en el día directamente desde la Base de Datos al entrar
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -233,6 +254,9 @@ export const SwipePage: React.FC = () => {
     }
 
     if (dragModeRef.current === 'horizontal') {
+      if (e.cancelable) {
+        e.preventDefault();
+      }
       setDragOffset({ x: deltaX, y: 0 });
     }
   };
