@@ -79,7 +79,7 @@ export const BookCard: React.FC<BookCardProps> = ({
       ? Math.min(1, (Math.abs(dragOffset.x) - 20) / 60) 
       : 0;
 
-  const containerClassName = `book-swipe-card ${isBlurred ? 'blurred-card' : ''}`;
+  const containerClassName = `book-swipe-card ${className} ${isBlurred ? 'blurred-card' : ''}`;
   const imageSwipeClassName = `swipe-card-img ${isSwipedRight ? 'swiped-right' : ''} ${isSwipedLeft ? 'swiped-left' : ''}`;
 
   return (
@@ -159,9 +159,11 @@ export const BookCard: React.FC<BookCardProps> = ({
             </span>
           </div>
         )}
+      </div>
 
+      <div className="book-card-floating-wrapper">
         <div className='badges'>
-          {/* Etiqueta de referencia de stock posicionada abajo a la izquierda dentro del contenedor de imagen */}
+          {/* Etiqueta de referencia de stock */}
           {book.isInternalStock !== false ? (
             <span className="stock-type-badge internal">
               <i className="fa-solid fa-shield-halved"></i> Intercambia libros
@@ -180,60 +182,59 @@ export const BookCard: React.FC<BookCardProps> = ({
           )}
         </div>
 
-      </div>
+        <div className="book-card-info">
+          {book.isFallbackCategory && (
+            <div className="fallback-category-badge">
+              <i className="fa-solid fa-compass"></i> Recomendación de otra sección (Has completado tus preferencias)
+            </div>
+          )}
 
-      <div className="book-card-info">
-        {book.isFallbackCategory && (
-          <div className="fallback-category-badge">
-            <i className="fa-solid fa-compass"></i> Recomendación de otra sección (Has completado tus preferencias)
-          </div>
-        )}
+          <h3>{book.title || 'Descubre Libros'}</h3>
+          <span className="book-author">Autor: {book.author || 'Desconocido'}</span>
 
-        <h3>{book.title || 'Descubre Libros'}</h3>
-        <span className="book-author">Autor: {book.author || 'Desconocido'}</span>
+          <p className={`book-desc ${isDescriptionExpanded ? 'expanded' : ''}`}>
+            {book.description || 'Encuentra tu próximo match.'}
+          </p>
 
-        <p className={`book-desc ${isDescriptionExpanded ? 'expanded' : ''}`}>
-          {book.description || 'Encuentra tu próximo match.'}
-        </p>
-
-        {book.description && book.description.length > 80 && (
-          <button
-            type="button"
-            className="see-more-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsDescriptionExpanded(!isDescriptionExpanded);
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-          >
-            {isDescriptionExpanded ? (
-              <>
-                Ver menos <i className="fa-solid fa-chevron-up"></i>
-              </>
-            ) : (
-              <>
-                Ver más <i className="fa-solid fa-chevron-down"></i>
-              </>
-            )}
-          </button>
-        )}
-
-        {showInterestButton && onInterest && (
-          <div className="catalog-card-footer">
-            {/* Botón Me Interesa (Intercambio / Swipe Like) */}
+          {book.description && book.description.length > 55 && (
             <button
               type="button"
-              className="catalog-interest-btn"
+              className="see-more-btn"
               onClick={(e) => {
                 e.stopPropagation();
-                onInterest(book.id, book.title);
+                setIsDescriptionExpanded(!isDescriptionExpanded);
               }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
             >
-              Me Interesa <i className="fa-solid fa-heart"></i>
+              {isDescriptionExpanded ? (
+                <>
+                  Ver menos <i className="fa-solid fa-chevron-up"></i>
+                </>
+              ) : (
+                <>
+                  Ver más <i className="fa-solid fa-chevron-down"></i>
+                </>
+              )}
             </button>
-          </div>
-        )}
+          )}
+
+          {showInterestButton && onInterest && (
+            <div className="catalog-card-footer">
+              {/* Botón Me Interesa (Intercambio / Swipe Like) */}
+              <button
+                type="button"
+                className="catalog-interest-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onInterest(book.id, book.title);
+                }}
+              >
+                Me Interesa <i className="fa-solid fa-heart"></i>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
