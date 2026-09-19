@@ -190,13 +190,31 @@ public class BookService : IBookService
                     .Distinct()
                     .ToList();
 
+                var prefCandidateLimit = Math.Max(limit * 2, 75);
+
                 var prefProducts = await _ecolecturaDbContext.Productos
                     .AsNoTracking()
                     .Where(p => p.Activo && p.Stock > 0)
                     .Where(p => (p.IdCategoriaProducto.HasValue && categoryOnlyIds.Contains(p.IdCategoriaProducto.Value)) ||
                                 (p.IdSubcategoria.HasValue && subcategoryIds.Contains(p.IdSubcategoria.Value)))
-                    .Include(p => p.Imagenes)
-                    .Take(limit * 5)
+                    .Select(p => new
+                    {
+                        p.IdProducto,
+                        p.NombreLibro,
+                        p.Autor,
+                        p.Resena,
+                        p.Precio,
+                        p.IdCategoriaProducto,
+                        p.IdSubcategoria,
+                        p.Activo,
+                        p.Stock,
+                        p.FechaRegistro,
+                        RutaImagen = p.Imagenes
+                            .OrderByDescending(i => i.Principal)
+                            .Select(i => i.RutaImagen)
+                            .FirstOrDefault()
+                    })
+                    .Take(prefCandidateLimit)
                     .ToListAsync(cancellationToken);
 
                 // Aleatorizar el orden del grupo de candidatos para asegurar que cada usuario vea una secuencia única y variada
@@ -206,8 +224,29 @@ public class BookService : IBookService
                 {
                     if (excludedIds.Contains(prod.IdProducto)) continue;
 
-                    var dto = MapEcolecturaProductToBookDto(prod);
-                    dto.IsFallbackCategory = false;
+                    Guid bookId = Guid.TryParse(prod.IdProducto, out var parsedGuid) ? parsedGuid : Guid.Empty;
+                    string? imageUrl = FormatImageUrl(prod.RutaImagen);
+                    string? categoryName = _homologationService.GetConceptNameForProduct(
+                        prod.IdCategoriaProducto,
+                        prod.IdSubcategoria
+                    );
+
+                    var dto = new BookDto
+                    {
+                        Id = bookId,
+                        Title = prod.NombreLibro,
+                        Author = prod.Autor ?? "Desconocido",
+                        Description = prod.Resena,
+                        Condition = "Bueno",
+                        Category = categoryName,
+                        ImageUrl = imageUrl,
+                        BaseValue = prod.Precio ?? 0.00m,
+                        IsInternalStock = true,
+                        IsAvailable = prod.Activo && (prod.Stock > 0),
+                        CreatedAt = prod.FechaRegistro ?? DateTime.UtcNow,
+                        IsFallbackCategory = false
+                    };
+
                     resultList.Add(dto);
                     excludedIds.Add(prod.IdProducto);
 
@@ -216,17 +255,34 @@ public class BookService : IBookService
             }
         }
 
-        // ETAPA 2: Fallback si la sección preferida no tiene suficientes libros (ej: < 100)
-        // Cargar libros de OTRAS SECCIONES / CATEGORÍAS no interactuadas para garantizar los 100 libros
+        // ETAPA 2: Fallback si la sección preferida no tiene suficientes libros
+        // Cargar libros de OTRAS SECCIONES / CATEGORÍAS no interactuadas para garantizar el límite
         if (resultList.Count < limit)
         {
             var remaining = limit - resultList.Count;
+            var fallbackCandidateLimit = Math.Max(remaining * 2, 50);
 
             var fallbackProducts = await _ecolecturaDbContext.Productos
                 .AsNoTracking()
                 .Where(p => p.Activo && p.Stock > 0)
-                .Include(p => p.Imagenes)
-                .Take(remaining * 5)
+                .Select(p => new
+                {
+                    p.IdProducto,
+                    p.NombreLibro,
+                    p.Autor,
+                    p.Resena,
+                    p.Precio,
+                    p.IdCategoriaProducto,
+                    p.IdSubcategoria,
+                    p.Activo,
+                    p.Stock,
+                    p.FechaRegistro,
+                    RutaImagen = p.Imagenes
+                        .OrderByDescending(i => i.Principal)
+                        .Select(i => i.RutaImagen)
+                        .FirstOrDefault()
+                })
+                .Take(fallbackCandidateLimit)
                 .ToListAsync(cancellationToken);
 
             var randomizedFallbackProducts = fallbackProducts.OrderBy(_ => Random.Shared.Next()).ToList();
@@ -235,9 +291,29 @@ public class BookService : IBookService
             {
                 if (excludedIds.Contains(prod.IdProducto)) continue;
 
-                var dto = MapEcolecturaProductToBookDto(prod);
-                // Si el usuario tenía preferencias y estamos en fallback, marcar IsFallbackCategory = true
-                dto.IsFallbackCategory = userPreferenceTags.Any();
+                Guid bookId = Guid.TryParse(prod.IdProducto, out var parsedGuid) ? parsedGuid : Guid.Empty;
+                string? imageUrl = FormatImageUrl(prod.RutaImagen);
+                string? categoryName = _homologationService.GetConceptNameForProduct(
+                    prod.IdCategoriaProducto,
+                    prod.IdSubcategoria
+                );
+
+                var dto = new BookDto
+                {
+                    Id = bookId,
+                    Title = prod.NombreLibro,
+                    Author = prod.Autor ?? "Desconocido",
+                    Description = prod.Resena,
+                    Condition = "Bueno",
+                    Category = categoryName,
+                    ImageUrl = imageUrl,
+                    BaseValue = prod.Precio ?? 0.00m,
+                    IsInternalStock = true,
+                    IsAvailable = prod.Activo && (prod.Stock > 0),
+                    CreatedAt = prod.FechaRegistro ?? DateTime.UtcNow,
+                    IsFallbackCategory = userPreferenceTags.Any()
+                };
+
                 resultList.Add(dto);
                 excludedIds.Add(prod.IdProducto);
 
@@ -253,7 +329,7 @@ public class BookService : IBookService
             var localUserBooks = await _dbContext.Books
                 .AsNoTracking()
                 .Where(b => b.IsAvailable && b.OwnerId != userId)
-                .Take(remaining * 3)
+                .Take(Math.Max(remaining * 2, 20))
                 .ToListAsync(cancellationToken);
 
             var randomizedLocalUserBooks = localUserBooks.OrderBy(_ => Random.Shared.Next()).ToList();

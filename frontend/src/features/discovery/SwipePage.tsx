@@ -53,17 +53,18 @@ export const SwipePage: React.FC = () => {
   const isRestoringSession = !!token && !user;
 
   // React Query para cargar libros según estado de autenticación (deduplica y maneja caché)
-  const { data: queryBooks, isLoading: loading, error: queryError } = useQuery<BookItem[]>({
+  const { data: queryBooks, isLoading: loading, isFetching, error: queryError } = useQuery<BookItem[]>({
     queryKey: ['books', isAuthenticated],
     queryFn: async () => {
       if (isAuthenticated) {
-        return apiClient.get<BookItem[]>('/books/recommendations?limit=100');
+        return apiClient.get<BookItem[]>('/books/recommendations?limit=50');
       } else {
         return apiClient.get<BookItem[]>('/books/guest-random?count=10');
       }
     },
     enabled: !isRestoringSession && !showWizard,
-    staleTime: 5000, // Evitar refetches inmediatos en transiciones rápidas
+    staleTime: 0, // Garantizar datos frescos al cambiar entre pantallas
+    refetchOnWindowFocus: false, // Evitar refetch intrusivo al cambiar de pestaña o ventana
   });
 
   const rawBooks = queryBooks || [];
@@ -76,6 +77,9 @@ export const SwipePage: React.FC = () => {
   // Control de límites diarios (Fase 6)
   const [limitReached, setLimitReached] = useState(false);
 
+  // Determinar si las recomendaciones se están cargando o sincronizando
+  const isRecommendationsLoading = loading || isFetching || (!!queryBooks && queryBooks.length > 0 && booksList.length === 0);
+
   // Inicializar la lista de libros cuando se recibe la respuesta inicial de React Query
   useEffect(() => {
     if (rawBooks && rawBooks.length > 0) {
@@ -85,13 +89,13 @@ export const SwipePage: React.FC = () => {
     }
   }, [queryBooks]);
 
-  // Cargar automáticamente los siguientes 100 libros cuando el usuario se aproxima al final de la lista actual
+  // Cargar automáticamente los siguientes 50 libros en segundo plano cuando el usuario llega al libro 40 (quedando 10 en la cola)
   const fetchMoreBooks = async () => {
     if (isFetchingMore) return;
     setIsFetchingMore(true);
     try {
       const endpoint = isAuthenticated
-        ? '/books/recommendations?limit=100'
+        ? '/books/recommendations?limit=50'
         : '/books/guest-random?count=20';
       const newBooks = await apiClient.get<BookItem[]>(endpoint);
       if (newBooks && newBooks.length > 0) {
@@ -111,7 +115,7 @@ export const SwipePage: React.FC = () => {
   useEffect(() => {
     if (
       booksList.length > 0 &&
-      currentBookIndex >= booksList.length - 5 &&
+      currentBookIndex >= booksList.length - 10 &&
       !isFetchingMore &&
       !limitReached
     ) {
@@ -528,8 +532,12 @@ export const SwipePage: React.FC = () => {
         </div>
       )}
 
-      {loading ? (
-        <div className="swipe-loading">Cargando recomendaciones personalizadas...</div>
+      {isRecommendationsLoading ? (
+        <div className="swipe-loading-container">
+          <div className="swipe-spinner" />
+          <p className="swipe-loading-text">Cargando recomendaciones...</p>
+          <span className="swipe-loading-subtext">Buscando los mejores libros para ti</span>
+        </div>
       ) : error ? (
         <div className="swipe-error-state">{error}</div>
       ) : !currentBook && !limitReached ? (
