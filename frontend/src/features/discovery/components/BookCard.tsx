@@ -109,16 +109,26 @@ export const BookCard: React.FC<BookCardProps> = ({
           </span>
         )}
 
-        {/* Etiqueta de referencia de stock posicionada abajo a la izquierda dentro del contenedor de imagen */}
-        {book.isInternalStock !== false ? (
-          <span className="stock-type-badge internal">
-            <i className="fa-solid fa-shield-halved"></i> Intercambialibros
-          </span>
-        ) : (
-          <span className="stock-type-badge external">
-            <i className="fa-solid fa-user"></i> Externo
-          </span>
-        )}
+        <div className='badges'>
+          {/* Etiqueta de referencia de stock posicionada abajo a la izquierda dentro del contenedor de imagen */}
+          {book.isInternalStock !== false ? (
+            <span className="stock-type-badge internal">
+              <i className="fa-solid fa-shield-halved"></i> Intercambia libros
+            </span>
+          ) : (
+            <span className="stock-type-badge external">
+              <i className="fa-solid fa-user"></i> Externo
+            </span>
+          )}
+
+          {/* Filas de etiquetas de estado */}
+          {book.condition && (
+            <span className="stock-type-badge internal">
+              <i className="fa-solid fa-check"></i> Estado: {book.condition}
+            </span>
+          )}
+        </div>
+
       </div>
 
       <div className="book-card-info">
@@ -156,15 +166,6 @@ export const BookCard: React.FC<BookCardProps> = ({
               </>
             )}
           </button>
-        )}
-
-        {/* Filas de etiquetas de estado */}
-        {book.condition && (
-          <div className="book-card-badges-row">
-            <span className={`condition-badge ${book.condition.toLowerCase()}`}>
-              Estado: {book.condition}
-            </span>
-          </div>
         )}
 
         {(showInterestButton || showReserveButton) && (

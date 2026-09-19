@@ -126,7 +126,7 @@ body {
   background-color: var(--gradient-nav);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-color);
+  border: 0;
 }
 
 .logo-text {
@@ -204,6 +204,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background-color: #fff;
 }
 
 .app-footer {
@@ -1864,7 +1865,7 @@ p {
   text-align: center;
   padding: 0;
   max-width: 750px;
-  margin: 0 auto 0.5rem auto;
+  margin: 0;
 }
 
 .guest-hero-title {
@@ -1900,21 +1901,24 @@ p {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0.4rem 0.6rem;
+  gap: 12px;
 }
 
 .guest-flag-item {
   display: flex;
   align-items: center;
+  flex-direction: column;
+  justify-content: center;
   gap: 0.35rem;
   font-size: clamp(0.85rem, 1.8vw, 0.95rem);
-  font-weight: 600;
+  font-weight: 400;
+  font-size: 12px;
   color: var(--text-primary);
 }
 
 .guest-flag-img {
-  width: 20px;
-  height: 14px;
+  width: 24px;
+  height: 16px;
   object-fit: cover;
   border-radius: 2px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
@@ -2013,7 +2017,7 @@ p {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: rgba(13, 20, 36, 0.85);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.22);
@@ -2053,7 +2057,7 @@ p {
   border-top: 1px dashed var(--border-color);
 }
 
-.stock-type-badge {
+.badges {
   position: absolute;
   bottom: 12px;
   left: 12px;
@@ -2061,18 +2065,22 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  width: 100%;
+}
+
+.stock-type-badge {
   padding: 0.35rem 0.75rem;
   border-radius: var(--radius-full);
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 500;
   letter-spacing: 0.02em;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 }
 
 .stock-type-badge.internal {
   /* border: 1px solid rgba(182, 255, 0, 0.45); */
-  background: rgba(15, 157, 88);
-  color: #fff;
+  color: rgba(15, 157, 88);
+  background-color: rgba(255,255,255, 0.9);
 }
 
 .stock-type-badge.external {
@@ -3151,14 +3159,14 @@ p {
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background-image: url(/background.png);
+  background-image: url(/background.jpeg);
   background-position: center;
   background-size: cover;
 }
 
 .swipe-card-img {
   width: 100%;
-  height: 100%;
+  height: 80%;
   object-fit: contain;
   transition: transform var(--transition-slow);
 }
@@ -4862,7 +4870,7 @@ p {
 .catalog-paywall .paywall-icon {
   font-size: 4.5rem;
   display: block;
-  margin-bottom: 1.5rem;
+  /* margin-bottom: 1.5rem; */
   animation: float 3s ease-in-out infinite;
 }
 
@@ -7177,7 +7185,7 @@ p {
 .mobile-hamburger-btn {
   display: none;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border-color);
+  border: 0;
   color: var(--text-primary);
   font-size: 1.25rem;
   padding: 0.5rem 0.85rem;
@@ -7188,7 +7196,8 @@ p {
 
 .mobile-hamburger-btn:hover {
   background: var(--neon);
-  color: #000;
+  color: #fff;
+  border: 0;
 }
 
 /* Offcanvas Backdrop & Panel */
@@ -7236,12 +7245,18 @@ p {
 
 .offcanvas-close-btn {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border-color);
   color: var(--text-primary);
   font-size: 1.25rem;
   padding: 0.5rem 0.85rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
+  border: 0;
+  transition: all 0.2s ease;
+}
+
+.offcanvas-close-btn:hover {
+  background: var(--neon);
+  color: #fff;
 }
 
 .offcanvas-body {
@@ -7272,7 +7287,7 @@ p {
 
 .offcanvas-divider {
   height: 1px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.8);
   margin: 0.75rem 0;
 }
 
@@ -7358,8 +7373,7 @@ p {
 }
 
 .brand-logo-img {
-  height: 30px;
-  max-height: 35px;
+  height: 60px;
   width: auto;
   object-fit: contain;
   display: block;
@@ -7412,7 +7426,6 @@ p {
   align-items: center;
   flex-direction: column;
   min-height: 70vh;
-  padding: 2rem 0;
   gap: 24px;
 }
 
@@ -7620,7 +7633,7 @@ p {
   gap: 1rem;
   width: 100%;
   max-width: 420px;
-  margin: 0 auto 1.25rem auto;
+  margin: 0 auto;
   padding: 0.6rem 1.1rem;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-color);
@@ -10382,6 +10395,10 @@ p {
   .comm-stat-box {
     min-width: unset;
   }
+
+  .catalog-paywall h2 {
+    font-size: 24px;
+  }
 }
 
 /* 4. Extra Small Mobile Breakpoint (max-width: 575px) */
@@ -10442,9 +10459,9 @@ p {
    ========================================================================== */
 
 .guest-tutorial-trigger-btn {
-  background: rgba(15, 157, 88, 0.12);
+  background: var(--accent-primary);
   border: 1px solid var(--accent-primary);
-  color: var(--accent-primary);
+  color: #fff;
   padding: 0.75rem 1.6rem;
   border-radius: 50px;
   font-size: 0.95rem;
@@ -10463,6 +10480,10 @@ p {
   color: #ffffff;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(15, 157, 88, 0.3);
+}
+
+.guest-tutorial-trigger-btn i {
+  font-size: 18px;
 }
 
 .header-tutorial-btn {

@@ -74,7 +74,7 @@ export const MainLayout: React.FC = () => {
       <header className="app-header">
         <div className="header-logo">
           <Link to="/" className="header-logo-link">
-            <img src="/logo-verde-alt.png" alt="Intercambialibros" className="brand-logo-img" />
+            <img src="/logo-intercambialibros.png" alt="Intercambialibros" className="brand-logo-img" />
           </Link>
         </div>
 
@@ -134,7 +134,7 @@ export const MainLayout: React.FC = () => {
           <div className="offcanvas-panel" onClick={(e) => e.stopPropagation()}>
             <div className="offcanvas-header">
               <Link to="/" className="header-logo-link">
-                <img src="/logo-verde-alt.png" alt="Intercambialibros" className="brand-logo-img" />
+                <img src="/logo-intercambialibros.png" alt="Intercambialibros" className="brand-logo-img" />
               </Link>
               <button className="offcanvas-close-btn" onClick={() => setMobileMenuOpen(false)}>
                 <i className="fa-solid fa-xmark"></i>
@@ -163,7 +163,7 @@ export const MainLayout: React.FC = () => {
                 </>
               )}
 
-              <div className="offcanvas-divider" />
+              {/* <div className="offcanvas-divider" /> */}
 
               {isAuthenticated && user ? (
                 <div className="offcanvas-user-actions">
@@ -182,7 +182,7 @@ export const MainLayout: React.FC = () => {
                 </div>
               ) : (
                 <Link to="/auth" className="offcanvas-login-btn">
-                  <i className="fa-solid fa-right-to-bracket"></i> Ingresar a Intercambialibros
+                  <i className="fa-solid fa-right-to-bracket"></i> Ingresar
                 </Link>
               )}
             </div>

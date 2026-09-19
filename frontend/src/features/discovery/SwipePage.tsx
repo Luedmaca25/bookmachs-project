@@ -473,7 +473,7 @@ export const SwipePage: React.FC = () => {
 
   return (
     <div className="swipe-page-container">
-      {!isAuthenticated ? (
+      {!isAuthenticated && (
         <div className="guest-hero-container">
           <h1 className="guest-hero-title">
             ¡Intercambio de libros <br />
@@ -488,62 +488,19 @@ export const SwipePage: React.FC = () => {
             onClick={() => setIsTutorialOpen(true)}
             className="guest-tutorial-trigger-btn font-heading"
           >
-            <i className="fa-solid fa-circle-play icon-neon"></i> Ver cómo funciona
+            <i className="fa-solid fa-circle-play"></i> Ver cómo funciona
           </button>
 
           <div className="guest-flags-row">
-            {COUNTRIES_LIST.map((country, idx) => (
+            {COUNTRIES_LIST.map((country) => (
               <React.Fragment key={country.name}>
                 <div className="guest-flag-item">
                   <img src={country.flag} alt={country.name} className="guest-flag-img" />
                   <span>{country.name}</span>
                 </div>
-                {idx < COUNTRIES_LIST.length - 1 && <span className="guest-flag-dot">&bull;</span>}
               </React.Fragment>
             ))}
           </div>
-        </div>
-      ) : (
-        <div className="swipe-header">
-          <h1 className="guest-hero-title">
-            ¡Intercambio de libros <br />
-            <span className="guest-hero-title-highlight">a un Match!</span>
-          </h1>
-          <div className="user-auth-badge" style={{ gap: '10px' }}>
-            <button
-              onClick={() => setIsTutorialOpen(true)}
-              className="header-tutorial-btn font-heading"
-              title="Ver guía paso a paso"
-            >
-              <i className="fa-solid fa-circle-question icon-neon"></i> ¿Cómo funciona?
-            </button>
-            <span>
-              Hola, <strong>{user?.name}</strong>
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Contador y Estado del Plan de Swipes */}
-      {isAuthenticated && user && (
-        <div className="swipe-tracker-bar">
-          <div className="tracker-pill">
-            <span className="tracker-icon"><i className="fa-solid fa-bolt"></i></span>
-            <span className="tracker-label">
-              {user.isPremium ? (
-                <>Plan Premium &bull; Swipes <strong>Ilimitados</strong> ♾️</>
-              ) : (
-                <>
-                  Swipes restantes este mes: <strong>{Math.max(0, swipeLimit - swipesConsumed)}</strong> / {swipeLimit}
-                </>
-              )}
-            </span>
-          </div>
-          {!user.isPremium && (
-            <Link to="/planes" className="upgrade-pill-btn">
-              <i className="fa-solid fa-crown icon-gold"></i> Obtener Ilimitados
-            </Link>
-          )}
         </div>
       )}
 
@@ -639,6 +596,52 @@ export const SwipePage: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Encabezado e indicador para usuarios autenticados (debajo del swipe-card-wrapper) */}
+      {isAuthenticated && (
+        <>
+          <div className="swipe-header">
+            <h1 className="guest-hero-title">
+              ¡Intercambio de libros <br />
+              <span className="guest-hero-title-highlight">a un Match!</span>
+            </h1>
+            <div className="user-auth-badge" style={{ gap: '10px' }}>
+              <button
+                onClick={() => setIsTutorialOpen(true)}
+                className="header-tutorial-btn font-heading"
+                title="Ver guía paso a paso"
+              >
+                <i className="fa-solid fa-circle-question icon-neon"></i> ¿Cómo funciona?
+              </button>
+              <span>
+                Hola, <strong>{user?.name}</strong>
+              </span>
+            </div>
+          </div>
+
+          {user && (
+            <div className="swipe-tracker-bar">
+              <div className="tracker-pill">
+                <span className="tracker-icon"><i className="fa-solid fa-bolt"></i></span>
+                <span className="tracker-label">
+                  {user.isPremium ? (
+                    <>Plan Premium &bull; Swipes <strong>Ilimitados</strong> ♾️</>
+                  ) : (
+                    <>
+                      Swipes restantes este mes: <strong>{Math.max(0, swipeLimit - swipesConsumed)}</strong> / {swipeLimit}
+                    </>
+                  )}
+                </span>
+              </div>
+              {!user.isPremium && (
+                <Link to="/planes" className="upgrade-pill-btn">
+                  <i className="fa-solid fa-crown icon-gold"></i> Obtener Ilimitados
+                </Link>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal de Tutorial Paso a Paso */}

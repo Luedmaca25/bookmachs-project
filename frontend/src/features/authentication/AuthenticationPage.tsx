@@ -469,7 +469,9 @@ export const AuthenticationPage: React.FC = () => {
               setError(null);
             }}
           >
-            {isLogin ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Inicia sesión aquí'}
+            {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
+            <br/>
+            {isLogin ? 'Regístrate aquí' : 'Inicia sesión aquí'}
           </button>
         </div>
         
