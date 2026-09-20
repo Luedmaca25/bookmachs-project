@@ -95,17 +95,31 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden !important;
   width: 100%;
-  max-width: 100%;
+  max-width: 100vw;
   position: relative;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #root,
 .app-container,
 .app-main {
   width: 100%;
-  max-width: 100%;
+  max-width: 100vw;
   overflow-x: hidden !important;
   box-sizing: border-box;
+  overscroll-behavior-x: none;
+}
+
+/* Evitar zoom automático en dispositivos móviles (iOS/Android) al hacer focus en inputs */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* Layout principal */
