@@ -35,7 +35,7 @@ export const PlansPage: React.FC = () => {
       name: 'Plan Gratuito',
       price: '$0 CLP',
       priceValue: 0,
-      swipes: '40 Swipes mensuales (1° al último día del mes)',
+      swipes: '40 Swipes mensuales',
       matches: '2 intercambios al mes**',
       features: [
         'Exploración de libros básica',
@@ -138,18 +138,27 @@ export const PlansPage: React.FC = () => {
           setErrorMessage(response.message || 'No se pudo iniciar la transacción en Transbank Webpay Plus.');
         }
       } else if (plan.id === 'free' && user.isPremium) {
-        // Simular cancelación
-        const response = await apiClient.post<any>('/webhooks/trigger-test', {
-          email: user.email,
-          action: 'cancelled'
-        });
+        if (user.isSubscriptionCancelled) {
+          setSuccessMessage(`Tu suscripción ya se encuentra cancelada. Seguirás teniendo acceso a todos tus beneficios Premium hasta el final de tu período de facturación${user.subscriptionEndDate ? ` (${new Date(user.subscriptionEndDate).toLocaleDateString('es-CL')})` : ''}.`);
+          return;
+        }
+
+        const confirmCancel = window.confirm(
+          `¿Estás seguro de que deseas cancelar tu suscripción Premium?\n\nAl cancelar, podrás seguir usando tu membresía con todos los beneficios Premium hasta la cancelación automática al final de tu período de facturación${user.subscriptionEndDate ? ` (${new Date(user.subscriptionEndDate).toLocaleDateString('es-CL')})` : ''}.`
+        );
+
+        if (!confirmCancel) {
+          return;
+        }
+
+        const response = await apiClient.post<any>('/subscriptions/cancel');
 
         if (response.success) {
           const updatedProfile = await apiClient.get<any>('/auth/me');
           const token = localStorage.getItem('token') || '';
           login(updatedProfile, token);
 
-          setSuccessMessage('Suscripción cancelada. Tu cuenta ha vuelto al Plan Gratuito.');
+          setSuccessMessage(response.message || 'Suscripción cancelada con éxito. Tu membresía permanecerá activa hasta el final de tu período de facturación.');
         } else {
           setErrorMessage(response.message || 'Error al cancelar la suscripción.');
         }
@@ -183,7 +192,15 @@ export const PlansPage: React.FC = () => {
           return (
             <div key={plan.id} className={`plan-card ${plan.recommended ? 'recommended' : ''} ${isUserCurrent ? 'current-active' : ''}`}>
               {plan.recommended && <div className="plan-badge-recommended">RECOMENDADO</div>}
-              {isUserCurrent && <div className="plan-badge-active">TU PLAN ACTUAL</div>}
+              {isUserCurrent && (
+                user?.isSubscriptionCancelled && plan.id === 'premium' ? (
+                  <div className="plan-badge-warning" style={{ backgroundColor: '#e67e22', color: '#fff', position: 'absolute', top: '-12px', right: '20px', padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold', zIndex: 2 }}>
+                    CANCELACIÓN PROGRAMADA
+                  </div>
+                ) : (
+                  <div className="plan-badge-active">TU PLAN ACTUAL</div>
+                )
+              )}
               
               <div className="plan-card-header">
                 <h3>{plan.name}</h3>
@@ -216,13 +233,19 @@ export const PlansPage: React.FC = () => {
               <div className="plan-card-action">
                 <button
                   onClick={() => handleSelectPlan(plan)}
-                  disabled={loadingPlanId !== null}
+                  disabled={loadingPlanId !== null || (plan.id === 'premium' && !!user?.isSubscriptionCancelled)}
                   className={`plan-action-btn ${isUserCurrent ? 'btn-current' : plan.recommended ? 'btn-premium' : 'btn-normal'}`}
                 >
                   {loadingPlanId === plan.id ? (
                     <span className="spinner">Procesando...</span>
                   ) : isUserCurrent ? (
-                    plan.id === 'free' ? <><>Plan Activo</> <i className="fa-solid fa-circle-check"></i></> : <><>Cancelar Suscripción</> <i className="fa-solid fa-circle-xmark"></i></>
+                    plan.id === 'free' ? (
+                      <><>Plan Activo</> <i className="fa-solid fa-circle-check"></i></>
+                    ) : user?.isSubscriptionCancelled ? (
+                      <><>Activo hasta {user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('es-CL') : 'fin de periodo'}</> <i className="fa-solid fa-clock"></i></>
+                    ) : (
+                      <><>Cancelar Suscripción</> <i className="fa-solid fa-circle-xmark"></i></>
+                    )
                   ) : (
                     `Suscribirse al plan`
                   )}

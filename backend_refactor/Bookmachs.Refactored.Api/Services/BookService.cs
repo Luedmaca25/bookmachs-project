@@ -417,24 +417,20 @@ public class BookService : IBookService
             throw new KeyNotFoundException("Usuario no encontrado.");
         }
 
-        var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int baseLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 40);
+        var now = DateTime.UtcNow;
+        bool userModified = false;
+
+        if (UserCycleHelper.CheckAndApplySubscriptionExpiration(user, now))
+        {
+            userModified = true;
+        }
 
         var cacheKey = $"swipes_consumed_{user.Id}";
         int consumed = 0;
-        var now = DateTime.UtcNow;
-        bool isNewMonth = (now.Year > user.LastSwipeResetDate.Year) || 
-                          (now.Year == user.LastSwipeResetDate.Year && now.Month > user.LastSwipeResetDate.Month);
 
-        bool userModified = false;
-
-        if (isNewMonth)
+        if (UserCycleHelper.CheckAndApplyMonthlySwipeReset(user, now))
         {
             consumed = 0;
-            user.DailySwipesConsumed = 0;
-            user.BonusSwipesGranted = 0;
-            user.LastBonusGrantedAt = null;
-            user.LastSwipeResetDate = now;
             userModified = true;
             _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
         }
@@ -452,6 +448,8 @@ public class BookService : IBookService
             }
         }
 
+        var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
+        int baseLimit = user.IsPremium ? (settings?.DailySwipeLimitPremium ?? 1000) : (settings?.DailySwipeLimitFree ?? 40);
         int effectiveLimit = baseLimit;
 
         if (!user.IsPremium)
@@ -507,6 +505,14 @@ public class BookService : IBookService
             throw new KeyNotFoundException("Usuario no encontrado.");
         }
 
+        var now = DateTime.UtcNow;
+        bool userModified = false;
+
+        if (UserCycleHelper.CheckAndApplySubscriptionExpiration(user, now))
+        {
+            userModified = true;
+        }
+
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
         int baseLimit = user.IsPremium ? 1000 : 40;
         if (settings != null)
@@ -516,19 +522,10 @@ public class BookService : IBookService
 
         var cacheKey = $"swipes_consumed_{user.Id}";
         int consumed = 0;
-        var now = DateTime.UtcNow;
-        bool isNewMonth = (now.Year > user.LastSwipeResetDate.Year) || 
-                          (now.Year == user.LastSwipeResetDate.Year && now.Month > user.LastSwipeResetDate.Month);
 
-        bool userModified = false;
-
-        if (isNewMonth)
+        if (UserCycleHelper.CheckAndApplyMonthlySwipeReset(user, now))
         {
             consumed = 0;
-            user.DailySwipesConsumed = 0;
-            user.BonusSwipesGranted = 0;
-            user.LastBonusGrantedAt = null;
-            user.LastSwipeResetDate = now;
             userModified = true;
             _cacheService.Set(cacheKey, consumed, TimeSpan.FromDays(30));
         }
@@ -804,6 +801,13 @@ public class BookService : IBookService
         if (user == null)
         {
             throw new KeyNotFoundException("Usuario no encontrado.");
+        }
+
+        var now = DateTime.UtcNow;
+        if (UserCycleHelper.CheckAndApplySubscriptionExpiration(user, now))
+        {
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         if (!user.IsPremium)

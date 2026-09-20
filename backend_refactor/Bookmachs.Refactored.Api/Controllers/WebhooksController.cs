@@ -47,11 +47,36 @@ public class WebhooksController : ControllerBase
                 return NotFound(new { message = $"Usuario con email '{request.Email}' no encontrado." });
             }
 
-            bool activate = !string.Equals(request.Action, "cancelled", StringComparison.OrdinalIgnoreCase);
+            bool isCancellation = string.Equals(request.Action, "cancelled", StringComparison.OrdinalIgnoreCase);
 
-            user.IsPremium = activate;
-            user.SubscriptionPlan = activate ? "Premium" : "Free";
-            user.SubscriptionEndDate = activate ? DateTime.UtcNow.AddDays(30) : null;
+            string responseMessage;
+            if (isCancellation)
+            {
+                if (user.SubscriptionEndDate.HasValue && user.SubscriptionEndDate.Value > DateTime.UtcNow)
+                {
+                    user.IsSubscriptionCancelled = true;
+                    // Mantiene IsPremium = true hasta el fin de su periodo
+                    responseMessage = $"Suscripción cancelada correctamente. Tu membresía y beneficios continuarán activos hasta el {user.SubscriptionEndDate.Value:dd/MM/yyyy}, cuando finalizará de forma automática.";
+                }
+                else
+                {
+                    user.IsPremium = false;
+                    user.SubscriptionPlan = "Free";
+                    user.SubscriptionEndDate = null;
+                    user.IsSubscriptionCancelled = false;
+                    responseMessage = "Suscripción cancelada correctamente. Tu cuenta ha vuelto al Plan Gratuito.";
+                }
+            }
+            else
+            {
+                user.IsPremium = true;
+                user.SubscriptionPlan = "Premium";
+                user.SubscriptionEndDate = (user.SubscriptionEndDate.HasValue && user.SubscriptionEndDate.Value > DateTime.UtcNow)
+                    ? user.SubscriptionEndDate.Value.AddMonths(1)
+                    : DateTime.UtcNow.AddMonths(1);
+                user.IsSubscriptionCancelled = false;
+                responseMessage = "¡Pago procesado con éxito! Tu cuenta ha sido actualizada al Plan Premium.";
+            }
 
             _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync();
@@ -59,9 +84,7 @@ public class WebhooksController : ControllerBase
             return Ok(new WebhookProcessResultDto
             {
                 Success = true,
-                Message = activate 
-                    ? "¡Pago procesado con éxito! Tu cuenta ha sido actualizada al Plan Premium." 
-                    : "Suscripción cancelada correctamente."
+                Message = responseMessage
             });
         }
         catch (Exception ex)

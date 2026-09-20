@@ -12,6 +12,8 @@ interface User {
   role: string;
   isPremium: boolean;
   subscriptionPlan?: string;
+  subscriptionEndDate?: string;
+  isSubscriptionCancelled?: boolean;
   preferences?: string[];
   dailySwipesConsumed?: number;
   dailySwipeLimit?: number;

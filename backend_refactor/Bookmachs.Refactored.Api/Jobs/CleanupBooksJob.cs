@@ -71,16 +71,43 @@ public class CleanupBooksJob
                 }
             }
 
-            // 3. Confirmar cambios en la base de datos
-            if (expiredReservationsReleased > 0 || expiredTransactionsCancelled > 0)
+            // 3. Expirar membresías Premium cuyo período de facturación haya finalizado
+            int expiredSubscriptionsCount = 0;
+            var expiredPremiumUsers = await _dbContext.Users
+                .Where(u => u.IsPremium && u.SubscriptionEndDate != null && u.SubscriptionEndDate <= DateTime.UtcNow)
+                .ToListAsync();
+
+            foreach (var user in expiredPremiumUsers)
+            {
+                user.IsPremium = false;
+                user.SubscriptionPlan = "Free";
+                user.SubscriptionEndDate = null;
+                user.IsSubscriptionCancelled = false;
+                _dbContext.Users.Update(user);
+                expiredSubscriptionsCount++;
+                _logger.LogInformation("Membresía Premium del usuario {UserId} ({Email}) ha expirado al final del periodo de facturación y volvió a Plan Free.", user.Id, user.Email);
+            }
+
+            var expiredSubscriptions = await _dbContext.Subscriptions
+                .Where(s => s.IsActive && s.EndDate <= DateTime.UtcNow)
+                .ToListAsync();
+
+            foreach (var sub in expiredSubscriptions)
+            {
+                sub.IsActive = false;
+                _dbContext.Subscriptions.Update(sub);
+            }
+
+            // 4. Confirmar cambios en la base de datos
+            if (expiredReservationsReleased > 0 || expiredTransactionsCancelled > 0 || expiredSubscriptionsCount > 0)
             {
                 await _dbContext.SaveChangesAsync();
-                _logger.LogInformation("Limpieza completada. Reservas liberadas: {ReservationsCount}, Transacciones anuladas: {TransactionsCount}", 
-                    expiredReservationsReleased, expiredTransactionsCancelled);
+                _logger.LogInformation("Limpieza completada. Reservas liberadas: {ReservationsCount}, Transacciones anuladas: {TransactionsCount}, Membresías expiradas: {ExpiredSubscriptionsCount}", 
+                    expiredReservationsReleased, expiredTransactionsCancelled, expiredSubscriptionsCount);
             }
             else
             {
-                _logger.LogInformation("No se encontraron reservas expiradas ni transacciones pendientes que requieran anulación.");
+                _logger.LogInformation("No se encontraron reservas expiradas, transacciones pendientes ni membresías vencidas.");
             }
         }
         catch (Exception ex)

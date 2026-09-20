@@ -25,6 +25,7 @@ public class User
     public bool IsPremium { get; set; } = false;
     public string SubscriptionPlan { get; set; } = "Free"; // Free, Basic, Full
     public DateTime? SubscriptionEndDate { get; set; }
+    public bool IsSubscriptionCancelled { get; set; } = false;
 
     // Identificador único de Google SSO
     public string? GoogleSub { get; set; }

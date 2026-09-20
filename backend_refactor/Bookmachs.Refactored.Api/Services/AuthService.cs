@@ -240,17 +240,17 @@ public class AuthService : IAuthService
         }
 
         var now = DateTime.UtcNow;
-        bool isNewMonth = (now.Year > user.LastSwipeResetDate.Year) || 
-                          (now.Year == user.LastSwipeResetDate.Year && now.Month > user.LastSwipeResetDate.Month);
-
         bool userModified = false;
 
-        if (isNewMonth)
+        // 1. Validar y aplicar expiración automática de membresía Premium
+        if (UserCycleHelper.CheckAndApplySubscriptionExpiration(user, now))
         {
-            user.DailySwipesConsumed = 0;
-            user.BonusSwipesGranted = 0;
-            user.LastBonusGrantedAt = null;
-            user.LastSwipeResetDate = now;
+            userModified = true;
+        }
+
+        // 2. Control de ciclo mensual de swipes basado en mes corrido desde el registro
+        if (UserCycleHelper.CheckAndApplyMonthlySwipeReset(user, now))
+        {
             userModified = true;
         }
 
@@ -291,6 +291,8 @@ public class AuthService : IAuthService
             ProfileImageUrl = user.ProfileImageUrl,
             IsPremium = user.IsPremium,
             SubscriptionPlan = user.SubscriptionPlan,
+            SubscriptionEndDate = user.SubscriptionEndDate,
+            IsSubscriptionCancelled = user.IsSubscriptionCancelled,
             Role = user.Role,
             Preferences = user.Preferences.Select(p => p.PreferenceTag).ToList(),
             DailySwipesConsumed = user.DailySwipesConsumed,
@@ -311,6 +313,9 @@ public class AuthService : IAuthService
             ProfileImageUrl = user.ProfileImageUrl,
             Role = user.Role,
             IsPremium = user.IsPremium,
+            SubscriptionPlan = user.SubscriptionPlan,
+            SubscriptionEndDate = user.SubscriptionEndDate,
+            IsSubscriptionCancelled = user.IsSubscriptionCancelled,
             Token = token
         };
     }

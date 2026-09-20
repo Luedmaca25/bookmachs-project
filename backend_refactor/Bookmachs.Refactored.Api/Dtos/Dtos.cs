@@ -13,6 +13,9 @@ public class AuthResponseDto
     public string? ProfileImageUrl { get; set; }
     public string Role { get; set; } = string.Empty;
     public bool IsPremium { get; set; }
+    public string SubscriptionPlan { get; set; } = "Free";
+    public DateTime? SubscriptionEndDate { get; set; }
+    public bool IsSubscriptionCancelled { get; set; }
     public string Token { get; set; } = string.Empty;
 }
 
@@ -27,6 +30,8 @@ public class UserProfileDto
     public string? ProfileImageUrl { get; set; }
     public bool IsPremium { get; set; }
     public string SubscriptionPlan { get; set; } = "Free";
+    public DateTime? SubscriptionEndDate { get; set; }
+    public bool IsSubscriptionCancelled { get; set; }
     public string Role { get; set; } = "User";
     public System.Collections.Generic.List<string> Preferences { get; set; } = new System.Collections.Generic.List<string>();
     public int DailySwipesConsumed { get; set; }
@@ -44,11 +49,20 @@ public class AdminUserDetailDto
     public string? ProfileImageUrl { get; set; }
     public bool IsPremium { get; set; }
     public string SubscriptionPlan { get; set; } = "Free";
+    public DateTime? SubscriptionEndDate { get; set; }
+    public bool IsSubscriptionCancelled { get; set; }
     public string Role { get; set; } = "User";
     public bool IsBlocked { get; set; }
     public DateTime CreatedAt { get; set; }
     public int BooksCount { get; set; }
     public System.Collections.Generic.List<string> Preferences { get; set; } = new System.Collections.Generic.List<string>();
+}
+
+public class SubscriptionCancelResultDto
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public DateTime? EndDate { get; set; }
 }
 
 public class SwipeStatusDto

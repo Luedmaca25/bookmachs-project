@@ -6,6 +6,7 @@ using Bookmachs.Refactored.Api.Domain.Entities;
 using Bookmachs.Refactored.Api.Domain.Services;
 using Bookmachs.Refactored.Api.Dtos;
 using Bookmachs.Refactored.Api.Infrastructure.Persistence;
+using Bookmachs.Refactored.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -49,7 +50,7 @@ public class SubscriptionsController : ControllerBase
                 return NotFound("Usuario no encontrado.");
             }
 
-            if (user.IsPremium)
+            if (user.IsPremium && !user.IsSubscriptionCancelled)
             {
                 return BadRequest(new WebpayStartResultDto
                 {
@@ -77,7 +78,7 @@ public class SubscriptionsController : ControllerBase
                     PlanName = "Premium",
                     Price = amount,
                     StartDate = DateTime.UtcNow,
-                    EndDate = DateTime.UtcNow.AddDays(30),
+                    EndDate = DateTime.UtcNow.AddMonths(1),
                     IsActive = false,
                     ExternalSubscriptionId = buyOrder,
                     CreatedAt = DateTime.UtcNow
@@ -156,7 +157,10 @@ public class SubscriptionsController : ControllerBase
                 {
                     user.IsPremium = true;
                     user.SubscriptionPlan = "Premium";
-                    user.SubscriptionEndDate = DateTime.UtcNow.AddDays(30);
+                    user.SubscriptionEndDate = (user.SubscriptionEndDate.HasValue && user.SubscriptionEndDate.Value > DateTime.UtcNow)
+                        ? user.SubscriptionEndDate.Value.AddMonths(1)
+                        : DateTime.UtcNow.AddMonths(1);
+                    user.IsSubscriptionCancelled = false;
                     _dbContext.Users.Update(user);
                     await _dbContext.SaveChangesAsync();
                 }
@@ -184,6 +188,84 @@ public class SubscriptionsController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("cancel")]
+    public async Task<ActionResult<SubscriptionCancelResultDto>> CancelSubscription(CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+        {
+            return NotFound("Usuario no encontrado.");
+        }
+
+        var now = DateTime.UtcNow;
+
+        if (UserCycleHelper.CheckAndApplySubscriptionExpiration(user, now))
+        {
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        if (!user.IsPremium)
+        {
+            return BadRequest(new SubscriptionCancelResultDto
+            {
+                Success = false,
+                Message = "No cuentas con una suscripción Premium activa para cancelar."
+            });
+        }
+
+        if (user.IsSubscriptionCancelled)
+        {
+            var formattedDate = user.SubscriptionEndDate?.ToString("dd/MM/yyyy") ?? "el fin de tu periodo";
+            return Ok(new SubscriptionCancelResultDto
+            {
+                Success = true,
+                EndDate = user.SubscriptionEndDate,
+                Message = $"Tu suscripción ya se encuentra cancelada. Podrás seguir usando todos los beneficios Premium hasta el final de tu período de facturación ({formattedDate}), momento en el cual la cuenta volverá automáticamente al Plan Gratuito."
+            });
+        }
+
+        // Si aún queda tiempo del período de facturación:
+        if (user.SubscriptionEndDate.HasValue && user.SubscriptionEndDate.Value > now)
+        {
+            user.IsSubscriptionCancelled = true;
+            // IMPORTANTE: user.IsPremium permanece true para que disfrute de los beneficios hasta el final del periodo
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            var formattedDate = user.SubscriptionEndDate.Value.ToString("dd/MM/yyyy");
+            return Ok(new SubscriptionCancelResultDto
+            {
+                Success = true,
+                EndDate = user.SubscriptionEndDate,
+                Message = $"Suscripción cancelada con éxito. Podrás usar tu membresía con todos los beneficios Premium hasta la cancelación automática al final de tu período de facturación el {formattedDate}."
+            });
+        }
+        else
+        {
+            user.IsPremium = false;
+            user.SubscriptionPlan = "Free";
+            user.SubscriptionEndDate = null;
+            user.IsSubscriptionCancelled = false;
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            return Ok(new SubscriptionCancelResultDto
+            {
+                Success = true,
+                EndDate = null,
+                Message = "Tu suscripción ha finalizado y tu cuenta ha vuelto al Plan Gratuito."
+            });
         }
     }
 }
