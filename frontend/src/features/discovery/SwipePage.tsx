@@ -504,8 +504,8 @@ export const SwipePage: React.FC = () => {
       {!isAuthenticated && (
         <div className="guest-hero-container">
           <h1 className="guest-hero-title">
-            ¡Intercambio de libros <br />
-            <span className="guest-hero-title-highlight">a un Match!</span>
+            Más de 100.000 libros <br />
+            <span className="guest-hero-title-highlight">para intercambiar</span>
           </h1>
           <p className="guest-hero-subtitle">
             Más de 100.000 libros para intercambiar, <br />
@@ -638,8 +638,8 @@ export const SwipePage: React.FC = () => {
         <>
           <div className="swipe-header">
             <h1 className="guest-hero-title">
-              ¡Intercambio de libros <br />
-              <span className="guest-hero-title-highlight">a un Match!</span>
+              Más de 100.000 libros  <br />
+              <span className="guest-hero-title-highlight">para intercambiar</span>
             </h1>
             <div className="user-auth-badge" style={{ gap: '10px' }}>
               <button

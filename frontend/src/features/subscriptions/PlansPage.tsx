@@ -36,7 +36,7 @@ export const PlansPage: React.FC = () => {
       price: '$0 CLP',
       priceValue: 0,
       swipes: '40 Swipes mensuales (1° al último día del mes)',
-      matches: '2 intercambios al mes',
+      matches: '2 intercambios al mes**',
       features: [
         'Exploración de libros básica',
         'Registro manual de libros',
@@ -49,7 +49,7 @@ export const PlansPage: React.FC = () => {
       price: premiumPriceFormatted,
       priceValue: globalSettings?.premiumPlanPriceUsd ?? 9990,
       swipes: 'Swipes ilimitados',
-      matches: '5 intercambios al mes',
+      matches: '5 intercambios al mes**',
       features: [
         'Acceso a Catálogo Avanzado en Grilla',
         'Búsqueda directa por título, autor o palabras clave (hasta 10)',
@@ -236,7 +236,7 @@ export const PlansPage: React.FC = () => {
       <div className="plans-legal-footer">
         <h3>Información Importante de Facturación</h3>
         <p>1. Los cobros de las suscripciones se realizan mensualmente de manera automática en la pasarela segura.</p>
-        <p>2. Puedes cancelar o modificar tu plan en cualquier momento sin cargos adicionales.</p>
+        <p>2. Puedes cancelar tu plan en cualquier momento. Si, en el momento de cancelar el servicio, aún queda tiempo de tu periodo de facturación, podrás usar tu membresía hasta la cancelación automática de la cuenta, al final del periodo de facturación. <br/>NOTA: Esta es la única manera de cancelar tu cuenta y finalizar tu membresía. Al cerrar sesión en tu cuenta o eliminar la app, no se cancelará tu cuenta.</p>
         <p>3. **El Fee por intercambio es cobrado por separado por cada match concretado**, independientemente del plan suscrito, para sustentar el motor de recomendación y las validaciones de stock.</p>
       </div>
     </div>
