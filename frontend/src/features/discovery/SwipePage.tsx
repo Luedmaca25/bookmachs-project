@@ -6,6 +6,7 @@ import { OnboardingWizard } from '../authentication/components/OnboardingWizard'
 import { MatchModal } from '../transactions/components/MatchModal';
 import { BookCard } from './components/BookCard';
 import { StepByStepTutorialModal } from './components/StepByStepTutorialModal';
+import { GuestLimitModal } from './components/GuestLimitModal';
 import { apiClient } from '../../lib/apiClient';
 
 const COUNTRIES_LIST = [
@@ -707,37 +708,10 @@ export const SwipePage: React.FC = () => {
         }}
       />
 
-      {showGuestLimitModal && (
-        <div className="modal-overlay">
-          <div className="modal-card match-modal-card text-center" style={{ maxWidth: '460px', padding: '2.2rem 1.8rem', borderRadius: '20px' }}>
-            <div style={{ fontSize: '3.2rem', marginBottom: '0.8rem', color: '#e67e22' }}>
-              <i className="fa-solid fa-fire-flame-curved"></i>
-            </div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 700, marginBottom: '0.8rem', color: '#2c3e50' }}>
-              ¡Alcanzaste el límite de 5 swipes como invitado!
-            </h2>
-            <p style={{ color: '#555', fontSize: '0.95rem', marginBottom: '1.6rem', lineHeight: '1.5' }}>
-              Has explorado 5 libros como invitado. Inicia sesión o regístrate en Intercambialibros para conservar los libros que te gustaron en tu libreta y recibir propuestas de intercambio.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button 
-                className="pay-fee-btn font-heading" 
-                onClick={() => navigate('/auth')}
-                style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
-              >
-                🚀 Registrarme / Iniciar Sesión
-              </button>
-              <button 
-                className="cancel-btn" 
-                onClick={() => setShowGuestLimitModal(false)}
-                style={{ width: '100%', padding: '10px', background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.9rem' }}
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GuestLimitModal
+        isOpen={showGuestLimitModal}
+        onClose={() => setShowGuestLimitModal(false)}
+      />
     </div>
   );
 };
