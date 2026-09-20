@@ -249,7 +249,6 @@ p {
   color: var(--text-secondary);
   /* Negro/Secundario Botánico #4A5D55 */
   font-size: 1.05rem;
-  max-width: 600px;
   margin-bottom: 2rem;
   line-height: 1.6;
 }
