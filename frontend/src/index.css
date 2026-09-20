@@ -11332,3 +11332,75 @@ body.swipe-page-active .app-footer {
   }
 }
 
+/* ==========================================================================
+   Modal ¿Cómo funciona? - Imagen Única (como-funciona.jpeg)
+   ========================================================================== */
+.tutorial-image-modal-card {
+  max-width: 580px;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+}
+
+.tutorial-image-close-btn {
+  position: absolute !important;
+  top: 14px !important;
+  right: 14px !important;
+  z-index: 20 !important;
+  background: rgba(0, 0, 0, 0.65) !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.tutorial-image-close-btn:hover {
+  background: #000000 !important;
+  transform: scale(1.1) !important;
+}
+
+.tutorial-single-image-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.tutorial-single-image {
+  width: 100%;
+  height: auto;
+  max-height: calc(85vh - 75px);
+  object-fit: contain;
+  display: block;
+}
+
+.tutorial-image-footer {
+  padding: 0.9rem 1.25rem;
+  background: #ffffff;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: center;
+}
+
+.tutorial-image-footer .tutorial-finish-btn {
+  width: 100%;
+  justify-content: center;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 12px;
+}
+

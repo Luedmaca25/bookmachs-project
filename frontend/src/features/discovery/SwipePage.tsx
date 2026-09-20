@@ -645,7 +645,7 @@ export const SwipePage: React.FC = () => {
               <button
                 onClick={() => setIsTutorialOpen(true)}
                 className="header-tutorial-btn font-heading"
-                title="Ver guía paso a paso"
+                title="¿Cómo funciona?"
               >
                 <i className="fa-solid fa-circle-question icon-neon"></i> ¿Cómo funciona?
               </button>
