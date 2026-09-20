@@ -123,6 +123,18 @@ export const SwipePage: React.FC = () => {
     }
   }, [currentBookIndex, booksList.length, isFetchingMore, limitReached]);
 
+  // Precargar las siguientes portadas de libros para evitar cualquier parpadeo de carga
+  useEffect(() => {
+    if (!booksList || booksList.length === 0) return;
+    const nextBooks = booksList.slice(currentBookIndex + 1, currentBookIndex + 6);
+    nextBooks.forEach((b) => {
+      if (b.imageUrl) {
+        const img = new Image();
+        img.src = b.imageUrl;
+      }
+    });
+  }, [currentBookIndex, booksList]);
+
   const books = booksList;
 
   // Estados de animación y arrastre (Drag / Slide Gesture)
@@ -552,7 +564,6 @@ export const SwipePage: React.FC = () => {
 
           {currentBook && (
             <BookCard
-              key={currentBook.id}
               book={currentBook}
               showUndoButton={true}
               canUndo={currentBookIndex > 0 || swipedHistory.length > 0}
@@ -560,10 +571,7 @@ export const SwipePage: React.FC = () => {
               isDragging={isDragging}
               dragOffset={dragOffset}
               swipeDirection={swipeDirection}
-              className={`${
-                swipeDirection === 'right' ? 'swiped-right' : 
-                swipeDirection === 'left' ? 'swiped-left' : ''
-              } ${limitReached ? 'blurred-card' : ''}`}
+              className={limitReached ? 'blurred-card' : ''}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}

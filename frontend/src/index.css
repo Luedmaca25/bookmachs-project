@@ -2171,20 +2171,35 @@ body.swipe-page-active .app-footer {
   border: 1.5px solid #6366f1;
 }
 
-.book-swipe-card.swiped-right,
-.book-card-image-placeholder.swiped-right,
+/* Animación exclusiva de la portada/imagen al deslizar (la card y su fondo se mantienen 100% fijos) */
 .swipe-card-img.swiped-right,
 .book-fallback-icon-wrapper.swiped-right {
-  transform: translate(150%, -20px) rotate(20deg);
-  opacity: 0;
+  transform: translate(140%, -20px) rotate(20deg) !important;
+  opacity: 0 !important;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease-out !important;
 }
 
-.book-swipe-card.swiped-left,
-.book-card-image-placeholder.swiped-left,
 .swipe-card-img.swiped-left,
 .book-fallback-icon-wrapper.swiped-left {
-  transform: translate(-150%, -20px) rotate(-20deg);
-  opacity: 0;
+  transform: translate(-140%, -20px) rotate(-20deg) !important;
+  opacity: 0 !important;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease-out !important;
+}
+
+@keyframes coverFadeIn {
+  from {
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.swipe-card-img:not(.swiped-right):not(.swiped-left),
+.book-fallback-icon-wrapper:not(.swiped-right):not(.swiped-left) {
+  animation: coverFadeIn 0.2s ease-out;
 }
 
 .book-card-image-placeholder {

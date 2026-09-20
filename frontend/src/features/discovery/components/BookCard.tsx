@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export interface BookCardData {
   id: string;
@@ -66,6 +66,11 @@ export const BookCard: React.FC<BookCardProps> = ({
 }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
+  // Al cambiar de libro, reiniciar el estado de expansión de sinopsis
+  useEffect(() => {
+    setIsDescriptionExpanded(false);
+  }, [book.id]);
+
   const isSwipedRight = className.includes('swiped-right') || swipeDirection === 'right';
   const isSwipedLeft = className.includes('swiped-left') || swipeDirection === 'left';
   const isBlurred = className.includes('blurred-card');
@@ -83,7 +88,9 @@ export const BookCard: React.FC<BookCardProps> = ({
       ? Math.min(1, (Math.abs(dragOffset.x) - 20) / 60) 
       : 0;
 
-  const containerClassName = `book-swipe-card ${className} ${isBlurred ? 'blurred-card' : ''}`;
+  // La card exterior se mantiene fija sin clases de swipe que la muevan o desvanezcan
+  const cleanClassName = className.replace(/swiped-right|swiped-left/g, '').trim();
+  const containerClassName = `book-swipe-card ${cleanClassName} ${isBlurred ? 'blurred-card' : ''}`;
   const imageSwipeClassName = `swipe-card-img ${isSwipedRight ? 'swiped-right' : ''} ${isSwipedLeft ? 'swiped-left' : ''}`;
 
   return (
@@ -144,6 +151,7 @@ export const BookCard: React.FC<BookCardProps> = ({
         </div>
         {book.imageUrl ? (
           <img
+            key={book.id}
             src={book.imageUrl}
             alt={book.title}
             className={imageSwipeClassName}
@@ -155,6 +163,7 @@ export const BookCard: React.FC<BookCardProps> = ({
           />
         ) : (
           <div
+            key={book.id}
             className={`book-fallback-icon-wrapper ${imageSwipeClassName}`}
             style={style}
           >
