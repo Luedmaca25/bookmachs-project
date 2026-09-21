@@ -19,6 +19,7 @@ public interface ITransactionService
     Task<CheckoutResultDto> CheckoutCardAsync(Guid matchTransactionId, string cardToken, Guid requesterUserId, bool acceptCrossBorder, CancellationToken cancellationToken = default);
     Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, CancellationToken cancellationToken = default);
     Task<WebpayConfirmResultDto> WebpayConfirmAsync(string token, CancellationToken cancellationToken = default);
+    Task<WebpayConfirmResultDto> WebpayCancelAsync(string? tbkToken, string? buyOrder, CancellationToken cancellationToken = default);
     Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, CancellationToken cancellationToken = default);
     Task<WebhookProcessResultDto> ProcessMercadoPagoWebhookAsync(string type, string action, string dataId, CancellationToken cancellationToken = default);
     Task<LogisticsResultDto> ConfirmAdminBookReceiptAsync(Guid matchTransactionId, Guid adminUserId, CancellationToken cancellationToken = default);
@@ -294,6 +295,9 @@ public class TransactionService : ITransactionService
         }
 
         // Validar si el libro objetivo ya no está disponible o está reservado por otro usuario
+        bool alreadyHasActiveReservation = false;
+        bool didApplyTemporaryCheckoutHold = false;
+
         if (transaction.Book != null)
         {
             bool isTakenByAnotherTx = await _dbContext.MatchTransactions
@@ -309,12 +313,88 @@ public class TransactionService : ITransactionService
                     Message = "⚠️ Este libro ya no está disponible para intercambio porque se encuentra reservado o ya fue tomado por otro usuario."
                 };
             }
+
+            alreadyHasActiveReservation = transaction.Book.IsReserved && 
+                                          transaction.Book.ReservedByUserId == requesterUserId && 
+                                          transaction.Book.ReservedUntil >= DateTime.UtcNow;
+
+            // INVENTORY HOLD: Descontar stock temporalmente en Ecolectura si el libro no estaba reservado previamente
+            if (transaction.Book.IsInternalStock && !alreadyHasActiveReservation)
+            {
+                var product = await _ecolecturaDbContext.Productos
+                    .FirstOrDefaultAsync(p => p.IdProducto == transaction.Book.Id.ToString(), cancellationToken);
+
+                if (product == null || (product.Stock ?? 0) <= 0)
+                {
+                    return new WebpayStartResultDto
+                    {
+                        Success = false,
+                        Message = "⚠️ Lo sentimos, este libro ya no cuenta con stock disponible en Ecolectura para ser intercambiado."
+                    };
+                }
+
+                int stockAnterior = product.Stock ?? 0;
+                int nuevoStock = stockAnterior - 1;
+                product.Stock = nuevoStock;
+
+                // Por requerimiento explícito, NO se modifica product.Activo
+                _ecolecturaDbContext.Productos.Update(product);
+
+                var adjustment = new EcolecturaAjusteInventario
+                {
+                    IdProducto = product.IdProducto,
+                    PrecioAnterior = product.Precio ?? 0.00m,
+                    StockAnterior = stockAnterior,
+                    UbicacionAnterior = (product.Ubicacion ?? "No especificada").Length > 100 
+                        ? (product.Ubicacion ?? "No especificada")[..100] 
+                        : (product.Ubicacion ?? "No especificada"),
+                    EstadoAnterior = product.Activo,
+                    PrecioActualizacion = product.Precio ?? 0.00m,
+                    StockActualizacion = nuevoStock,
+                    UbicacionActualizacion = (product.Ubicacion ?? "No especificada").Length > 100 
+                        ? (product.Ubicacion ?? "No especificada")[..100] 
+                        : (product.Ubicacion ?? "No especificada"),
+                    EstadoActual = product.Activo,
+                    IdUsuario = null,
+                    FechaActualizacion = DateTime.UtcNow,
+                    Justificacion = $"Bloqueo temporal de stock por inicio de pago en Webpay (20 min). Transacción: {transaction.Id}. Usuario: {requesterUserId}."
+                };
+
+                await _ecolecturaDbContext.AjustesInventario.AddAsync(adjustment, cancellationToken);
+                await _ecolecturaDbContext.SaveChangesAsync(cancellationToken);
+            }
+
+            // Aplicar bloqueo temporal en Bookmachs por 20 minutos si no tenía reserva previa
+            if (!alreadyHasActiveReservation)
+            {
+                transaction.Book.IsReserved = true;
+                transaction.Book.ReservedByUserId = requesterUserId;
+                transaction.Book.ReservedUntil = DateTime.UtcNow.AddMinutes(20);
+                _dbContext.Books.Update(transaction.Book);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                didApplyTemporaryCheckoutHold = true;
+            }
         }
 
         // Validar que el usuario tenga al menos un libro cargado en su libreta para ofrecer a cambio
         var userInventory = await _dbContext.Books.Where(b => b.OwnerId == requesterUserId).ToListAsync(cancellationToken);
         if (userInventory == null || !userInventory.Any())
         {
+            // Revertir bloqueo temporal si no cumple condición
+            if (didApplyTemporaryCheckoutHold && transaction.Book != null)
+            {
+                transaction.Book.IsReserved = false;
+                transaction.Book.ReservedUntil = null;
+                transaction.Book.ReservedByUserId = null;
+                _dbContext.Books.Update(transaction.Book);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                if (transaction.Book.IsInternalStock)
+                {
+                    await RestoreEcolecturaStockAsync(transaction.Book.Id, $"Restitución de stock por validación fallida de libreta. Transacción: {transaction.Id}.", cancellationToken);
+                }
+            }
+
             return new WebpayStartResultDto
             {
                 Success = false,
@@ -324,6 +404,20 @@ public class TransactionService : ITransactionService
 
         if (transaction.IsCrossBorder && !acceptCrossBorder)
         {
+            if (didApplyTemporaryCheckoutHold && transaction.Book != null)
+            {
+                transaction.Book.IsReserved = false;
+                transaction.Book.ReservedUntil = null;
+                transaction.Book.ReservedByUserId = null;
+                _dbContext.Books.Update(transaction.Book);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                if (transaction.Book.IsInternalStock)
+                {
+                    await RestoreEcolecturaStockAsync(transaction.Book.Id, $"Restitución de stock por rechazo de costos internacionales. Transacción: {transaction.Id}.", cancellationToken);
+                }
+            }
+
             return new WebpayStartResultDto
             {
                 Success = false,
@@ -368,6 +462,21 @@ public class TransactionService : ITransactionService
                 RedirectUrl = tbResult.RedirectUrl,
                 Message = "Redirección a Transbank Webpay Plus generada con éxito."
             };
+        }
+
+        // Si falló el inicio en Webpay, revertir el bloqueo temporal
+        if (didApplyTemporaryCheckoutHold && transaction.Book != null)
+        {
+            transaction.Book.IsReserved = false;
+            transaction.Book.ReservedUntil = null;
+            transaction.Book.ReservedByUserId = null;
+            _dbContext.Books.Update(transaction.Book);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            if (transaction.Book.IsInternalStock)
+            {
+                await RestoreEcolecturaStockAsync(transaction.Book.Id, $"Restitución de stock por error al iniciar pasarela Webpay. Transacción: {transaction.Id}.", cancellationToken);
+            }
         }
 
         return new WebpayStartResultDto
@@ -456,12 +565,31 @@ public class TransactionService : ITransactionService
         if (!string.IsNullOrEmpty(tbResult.BuyOrder))
         {
             var transaction = await _dbContext.MatchTransactions
+                .Include(t => t.Book)
                 .FirstOrDefaultAsync(t => t.BuyOrder == tbResult.BuyOrder, cancellationToken);
 
             if (transaction != null)
             {
                 transaction.PaymentStatus = "Failed";
                 transaction.StatusUpdatedAt = DateTime.UtcNow;
+
+                // Si tenía bloqueo temporal de checkout Webpay, liberarlo y restituir stock en Ecolectura
+                if (transaction.Book != null && transaction.Book.IsReserved && transaction.Book.ReservedByUserId == transaction.RequesterUserId)
+                {
+                    if (transaction.Book.ReservedUntil <= DateTime.UtcNow.AddMinutes(30))
+                    {
+                        transaction.Book.IsReserved = false;
+                        transaction.Book.ReservedUntil = null;
+                        transaction.Book.ReservedByUserId = null;
+                        _dbContext.Books.Update(transaction.Book);
+
+                        if (transaction.Book.IsInternalStock)
+                        {
+                            await RestoreEcolecturaStockAsync(transaction.Book.Id, $"Restitución de stock por pago rechazado o fallido en Webpay. Transacción: {transaction.Id}.", cancellationToken);
+                        }
+                    }
+                }
+
                 _dbContext.MatchTransactions.Update(transaction);
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -485,6 +613,66 @@ public class TransactionService : ITransactionService
         };
         _matchTokenConfirmCache[token] = defaultFailRes;
         return defaultFailRes;
+    }
+
+    public async Task<WebpayConfirmResultDto> WebpayCancelAsync(string? tbkToken, string? buyOrder, CancellationToken cancellationToken = default)
+    {
+        MatchTransaction? transaction = null;
+
+        if (!string.IsNullOrEmpty(buyOrder))
+        {
+            transaction = await _dbContext.MatchTransactions
+                .Include(t => t.Book)
+                .FirstOrDefaultAsync(t => t.BuyOrder == buyOrder, cancellationToken);
+        }
+
+        if (transaction == null && !string.IsNullOrEmpty(tbkToken))
+        {
+            transaction = await _dbContext.MatchTransactions
+                .Include(t => t.Book)
+                .FirstOrDefaultAsync(t => t.PaymentHoldId == tbkToken, cancellationToken);
+        }
+
+        if (transaction != null)
+        {
+            transaction.PaymentStatus = "Failed";
+            transaction.StatusUpdatedAt = DateTime.UtcNow;
+
+            if (transaction.Book != null && transaction.Book.IsReserved && transaction.Book.ReservedByUserId == transaction.RequesterUserId)
+            {
+                // Si fue un bloqueo temporal de checkout Webpay, liberarlo y restituir stock en Ecolectura
+                if (transaction.Book.ReservedUntil <= DateTime.UtcNow.AddMinutes(30))
+                {
+                    transaction.Book.IsReserved = false;
+                    transaction.Book.ReservedUntil = null;
+                    transaction.Book.ReservedByUserId = null;
+                    _dbContext.Books.Update(transaction.Book);
+
+                    if (transaction.Book.IsInternalStock)
+                    {
+                        await RestoreEcolecturaStockAsync(transaction.Book.Id, $"Restitución de stock por anulación voluntaria del usuario en Webpay. Transacción: {transaction.Id}.", cancellationToken);
+                    }
+                }
+            }
+
+            _dbContext.MatchTransactions.Update(transaction);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            return new WebpayConfirmResultDto
+            {
+                Success = false,
+                MatchTransactionId = transaction.Id.ToString(),
+                PaymentStatus = "Failed",
+                Message = "El pago en Webpay fue cancelado por el usuario. El libro ha sido liberado."
+            };
+        }
+
+        return new WebpayConfirmResultDto
+        {
+            Success = false,
+            PaymentStatus = "Failed",
+            Message = "Cancelación de Webpay procesada."
+        };
     }
 
     public async Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, CancellationToken cancellationToken = default)
@@ -721,6 +909,52 @@ public class TransactionService : ITransactionService
         {
             // Registrar error pero no interrumpir la transacción local de Bookmachs
             Console.Error.WriteLine($"Error al descontar stock de Ecolectura o registrar el ajuste de inventario: {ex.Message}");
+        }
+    }
+
+    private async Task RestoreEcolecturaStockAsync(Guid bookId, string justificacion, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var product = await _ecolecturaDbContext.Productos
+                .FirstOrDefaultAsync(p => p.IdProducto == bookId.ToString(), cancellationToken);
+
+            if (product != null)
+            {
+                int stockAnterior = product.Stock ?? 0;
+                int nuevoStock = stockAnterior + 1;
+                product.Stock = nuevoStock;
+
+                // IMPORTANTE: Por requerimiento explícito, NO se modifica product.Activo.
+                _ecolecturaDbContext.Productos.Update(product);
+
+                var adjustment = new EcolecturaAjusteInventario
+                {
+                    IdProducto = product.IdProducto,
+                    PrecioAnterior = product.Precio ?? 0.00m,
+                    StockAnterior = stockAnterior,
+                    UbicacionAnterior = (product.Ubicacion ?? "No especificada").Length > 100 
+                        ? (product.Ubicacion ?? "No especificada")[..100] 
+                        : (product.Ubicacion ?? "No especificada"),
+                    EstadoAnterior = product.Activo,
+                    PrecioActualizacion = product.Precio ?? 0.00m,
+                    StockActualizacion = nuevoStock,
+                    UbicacionActualizacion = (product.Ubicacion ?? "No especificada").Length > 100 
+                        ? (product.Ubicacion ?? "No especificada")[..100] 
+                        : (product.Ubicacion ?? "No especificada"),
+                    EstadoActual = product.Activo,
+                    IdUsuario = null,
+                    FechaActualizacion = DateTime.UtcNow,
+                    Justificacion = justificacion
+                };
+
+                await _ecolecturaDbContext.AjustesInventario.AddAsync(adjustment, cancellationToken);
+                await _ecolecturaDbContext.SaveChangesAsync(cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al restituir stock de Ecolectura o registrar ajuste: {ex.Message}");
         }
     }
 }

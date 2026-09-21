@@ -194,11 +194,23 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpPost("webpay-confirm")]
-    public async Task<ActionResult<WebpayConfirmResultDto>> WebpayConfirm([FromQuery] string? token_ws, [FromBody] WebpayConfirmRequest? body)
+    public async Task<ActionResult<WebpayConfirmResultDto>> WebpayConfirm(
+        [FromQuery] string? token_ws, 
+        [FromQuery] string? tbk_token, 
+        [FromQuery] string? tbk_orden_compra, 
+        [FromBody] WebpayConfirmRequest? body)
     {
         var token = token_ws ?? body?.Token;
         if (string.IsNullOrEmpty(token))
         {
+            var cancelToken = tbk_token ?? body?.TbkToken;
+            var cancelOrder = tbk_orden_compra ?? body?.BuyOrder;
+            if (!string.IsNullOrEmpty(cancelToken) || !string.IsNullOrEmpty(cancelOrder))
+            {
+                var cancelResult = await _transactionService.WebpayCancelAsync(cancelToken, cancelOrder);
+                return Ok(cancelResult);
+            }
+
             return BadRequest("El token de Webpay Plus (token_ws) es requerido.");
         }
 
@@ -224,6 +236,19 @@ public class TransactionsController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    [HttpPost("webpay-cancel")]
+    public async Task<ActionResult<WebpayConfirmResultDto>> WebpayCancel(
+        [FromQuery] string? tbk_token, 
+        [FromQuery] string? buy_order, 
+        [FromBody] WebpayCancelRequest? body)
+    {
+        var token = tbk_token ?? body?.TbkToken;
+        var order = buy_order ?? body?.BuyOrder;
+
+        var result = await _transactionService.WebpayCancelAsync(token, order);
+        return Ok(result);
     }
 
     [HttpPost("update-logistics")]
@@ -336,4 +361,12 @@ public class WebpayStartRequest
 public class WebpayConfirmRequest
 {
     public string Token { get; set; } = string.Empty;
+    public string? TbkToken { get; set; }
+    public string? BuyOrder { get; set; }
+}
+
+public class WebpayCancelRequest
+{
+    public string? TbkToken { get; set; }
+    public string? BuyOrder { get; set; }
 }

@@ -39,6 +39,8 @@ export const TransactionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const checkoutId = searchParams.get('checkout');
   const webpayTokenWs = searchParams.get('token_ws');
+  const webpayTbkToken = searchParams.get('TBK_TOKEN') || searchParams.get('tbk_token');
+  const webpayTbkOrden = searchParams.get('TBK_ORDEN_COMPRA') || searchParams.get('tbk_orden_compra');
 
   // Estado general de transacciones
   const [matches, setMatches] = useState<MatchTransaction[]>([]);
@@ -159,6 +161,39 @@ export const TransactionsPage: React.FC = () => {
       confirmWebpay();
     }
   }, [webpayTokenWs]);
+
+  const processedWebpayCancelRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const cancelKey = webpayTbkToken || webpayTbkOrden;
+    if (cancelKey && processedWebpayCancelRef.current !== cancelKey) {
+      processedWebpayCancelRef.current = cancelKey;
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('TBK_TOKEN');
+        next.delete('tbk_token');
+        next.delete('TBK_ORDEN_COMPRA');
+        next.delete('tbk_orden_compra');
+        return next;
+      }, { replace: true });
+
+      const cancelWebpay = async () => {
+        setCheckoutLoading(true);
+        try {
+          await apiClient.post<any>(`/transactions/webpay-cancel?tbk_token=${encodeURIComponent(webpayTbkToken || '')}&buy_order=${encodeURIComponent(webpayTbkOrden || '')}`);
+          const updatedList = await apiClient.get<MatchTransaction[]>('/transactions/my-matches');
+          setMatches(updatedList);
+          setCheckoutError('Has cancelado el proceso de pago en Webpay Plus. El libro ha sido liberado.');
+        } catch (err: any) {
+          console.error('Error reporting Webpay cancellation:', err);
+        } finally {
+          setCheckoutLoading(false);
+          setSearchParams({});
+        }
+      };
+      cancelWebpay();
+    }
+  }, [webpayTbkToken, webpayTbkOrden]);
 
   // Iniciar Webpay
   const handleWebpayStart = async () => {

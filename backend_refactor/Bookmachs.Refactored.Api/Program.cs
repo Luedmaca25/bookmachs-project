@@ -194,7 +194,7 @@ using (var scope = app.Services.CreateScope())
     recurringJobManager.AddOrUpdate<Bookmachs.Refactored.Api.Jobs.CleanupBooksJob>(
         "cleanup-expired-reservations-and-transactions-refactored",
         job => job.ExecuteAsync(),
-        Cron.Hourly());
+        "*/15 * * * *");
 }
 
 app.MapControllers();
