@@ -34,6 +34,16 @@ interface MyOfferedBook {
   imageUrl: string;
 }
 
+interface ExchangeQuota {
+  exchangesConsumed: number;
+  monthlyLimit: number;
+  limitReached: boolean;
+  isPremium: boolean;
+  planName: string;
+  cycleStartDate: string;
+  cycleEndDate: string;
+}
+
 export const TransactionsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,8 +52,9 @@ export const TransactionsPage: React.FC = () => {
   const webpayTbkToken = searchParams.get('TBK_TOKEN') || searchParams.get('tbk_token');
   const webpayTbkOrden = searchParams.get('TBK_ORDEN_COMPRA') || searchParams.get('tbk_orden_compra');
 
-  // Estado general de transacciones
+  // Estado general de transacciones y cuota mensual
   const [matches, setMatches] = useState<MatchTransaction[]>([]);
+  const [quota, setQuota] = useState<ExchangeQuota | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,6 +88,13 @@ export const TransactionsPage: React.FC = () => {
     try {
       const data = await apiClient.get<MatchTransaction[]>('/transactions/my-matches');
       setMatches(data);
+
+      try {
+        const quotaData = await apiClient.get<ExchangeQuota>('/transactions/exchange-quota');
+        setQuota(quotaData);
+      } catch (qErr) {
+        console.warn('No se pudo cargar la cuota de intercambios:', qErr);
+      }
 
       const myBooks = await apiClient.get<MyOfferedBook[]>('/books/my-inventory');
       setMyOfferedBooks(myBooks);
@@ -139,6 +157,11 @@ export const TransactionsPage: React.FC = () => {
             setCheckoutSuccess(true);
             const updatedList = await apiClient.get<MatchTransaction[]>('/transactions/my-matches');
             setMatches(updatedList);
+
+            try {
+              const quotaData = await apiClient.get<ExchangeQuota>('/transactions/exchange-quota');
+              setQuota(quotaData);
+            } catch {}
 
             // Abrir automáticamente Thank You Page con el detalle completo
             if (updatedList.length > 0) {
@@ -639,16 +662,71 @@ export const TransactionsPage: React.FC = () => {
                       Al hacer clic en el botón inferior serás redirigido al servidor seguro de Transbank para realizar el pago de <strong>${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP</strong>.
                     </p>
 
+                    {quota && (
+                      <div style={{
+                        padding: '10px 14px',
+                        background: quota.limitReached ? '#fff1f2' : '#f0fdf4',
+                        border: `1px solid ${quota.limitReached ? '#fca5a5' : '#bbf7d0'}`,
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px'
+                      }}>
+                        <span style={{ color: quota.limitReached ? '#991b1b' : '#166534', fontWeight: 600 }}>
+                          <i className={`fa-solid ${quota.limitReached ? 'fa-triangle-exclamation' : 'fa-chart-pie'}`}></i> Cuota mensual: <strong>{quota.exchangesConsumed} / {quota.monthlyLimit}</strong> ({quota.planName})
+                        </span>
+                        {!quota.isPremium && (
+                          <button
+                            type="button"
+                            onClick={() => navigate('/planes')}
+                            style={{
+                              background: '#10b981',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '4px 8px',
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                              fontWeight: 700
+                            }}
+                          >
+                            <i className="fa-solid fa-crown"></i> Subir a 5
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {quota?.limitReached && (
+                      <div className="webpay-error-text" style={{ marginBottom: '12px', textAlign: 'left' }}>
+                        ⚠️ Has alcanzado tu límite de {quota.monthlyLimit} intercambios mensuales para tu {quota.planName}.
+                        {!quota.isPremium ? ' Actualiza al Plan Premium para obtener hasta 5 intercambios al mes.' : ' Tu cuota se reiniciará al inicio de tu próximo ciclo de facturación.'}
+                      </div>
+                    )}
+
                     {checkoutError && <div className="webpay-error-text">{checkoutError}</div>}
 
                     <button
                       type="button"
                       className="confirm-checkout-btn webpay-btn font-heading webpay-pay-btn"
                       onClick={handleWebpayStart}
-                      disabled={checkoutLoading || (selectedTx.isCrossBorder && !acceptCrossBorder)}
+                      disabled={checkoutLoading || quota?.limitReached || (selectedTx.isCrossBorder && !acceptCrossBorder)}
                     >
                       {checkoutLoading ? 'Conectando con Webpay...' : <>Pagar Fee</>}
                     </button>
+
+                    {quota?.limitReached && !quota.isPremium && (
+                      <button
+                        type="button"
+                        className="confirm-checkout-btn font-heading"
+                        style={{ background: '#e11d48', color: '#fff', marginTop: '10px', width: '100%' }}
+                        onClick={() => navigate('/planes')}
+                      >
+                        <i className="fa-solid fa-crown"></i> Desbloquear 5 Intercambios con Premium
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -673,9 +751,74 @@ export const TransactionsPage: React.FC = () => {
   return (
     <div className="transactions-page-container">
       <div className="transactions-header">
-        <h1>Tus Matches y Transacciones</h1>
-        <p>Aquí puedes monitorear tus propuestas activas, realizar el pago de fee y revisar la logística.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h1>Tus Matches y Transacciones</h1>
+            <p>Aquí puedes monitorear tus propuestas activas, realizar el pago de fee y revisar la logística.</p>
+          </div>
+          {quota && (
+            <div style={{
+              background: quota.limitReached ? '#fff1f2' : '#f0fdf4',
+              border: `1px solid ${quota.limitReached ? '#fca5a5' : '#bbf7d0'}`,
+              borderRadius: '24px',
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontSize: '13px',
+              color: quota.limitReached ? '#dc2626' : '#166534',
+              fontWeight: 600
+            }}>
+              <span>
+                <i className={`fa-solid ${quota.limitReached ? 'fa-triangle-exclamation' : 'fa-handshake'}`}></i> Cuota mensual: <strong>{quota.exchangesConsumed} / {quota.monthlyLimit}</strong> ({quota.planName})
+              </span>
+              {!quota.isPremium && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/planes')}
+                  style={{
+                    background: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '16px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    fontWeight: 700
+                  }}
+                >
+                  <i className="fa-solid fa-crown"></i> Subir a 5
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+
+      {quota?.limitReached && (
+        <div className="no-offered-alert-green" style={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#991b1b', marginBottom: '1.5rem' }}>
+          <div>
+            <strong className="alert-title" style={{ color: '#991b1b' }}>
+              <i className="fa-solid fa-circle-exclamation"></i> Límite de intercambios mensuales alcanzado ({quota.exchangesConsumed}/{quota.monthlyLimit})
+            </strong>
+            <span className="alert-subtitle" style={{ color: '#7f1d1d' }}>
+              {quota.isPremium 
+                ? `Has completado todos los intercambios permitidos para tu ciclo actual. Tu cupo se renovará el ${new Date(quota.cycleEndDate).toLocaleDateString('es-CL')}.` 
+                : `Has alcanzado el tope de 2 intercambios mensuales del Plan Gratuito. Pásate al Plan Premium para acceder a hasta 5 intercambios al mes.`}
+            </span>
+          </div>
+          {!quota.isPremium && (
+            <button
+              type="button"
+              onClick={() => navigate('/planes')}
+              className="btn-green-inventory"
+              style={{ background: '#e11d48', color: '#fff' }}
+            >
+              <i className="fa-solid fa-crown"></i> Ver Planes
+            </button>
+          )}
+        </div>
+      )}
 
       {!hasOfferedBooks && matches.length > 0 && (
         <div className="no-offered-alert-green">

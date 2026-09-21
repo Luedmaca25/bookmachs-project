@@ -287,3 +287,14 @@ public class WebhookProcessResultDto
     public string? UserId { get; set; }
     public string? SubscriptionPlan { get; set; }
 }
+
+public class ExchangeQuotaDto
+{
+    public int ExchangesConsumed { get; set; }
+    public int MonthlyLimit { get; set; }
+    public bool LimitReached { get; set; }
+    public bool IsPremium { get; set; }
+    public string PlanName { get; set; } = "Plan Gratuito";
+    public DateTime CycleStartDate { get; set; }
+    public DateTime CycleEndDate { get; set; }
+}

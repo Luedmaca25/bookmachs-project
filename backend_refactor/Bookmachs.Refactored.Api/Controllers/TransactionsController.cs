@@ -59,6 +59,30 @@ public class TransactionsController : ControllerBase
         }
     }
 
+    [HttpGet("exchange-quota")]
+    public async Task<ActionResult<ExchangeQuotaDto>> GetExchangeQuota()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            var result = await _transactionService.GetExchangeQuotaAsync(userId);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpDelete("my-matches/{id}")]
     public async Task<ActionResult<bool>> DeleteMatch(Guid id)
     {

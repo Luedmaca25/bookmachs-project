@@ -20,6 +20,7 @@ public interface ITransactionService
     Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, CancellationToken cancellationToken = default);
     Task<WebpayConfirmResultDto> WebpayConfirmAsync(string token, CancellationToken cancellationToken = default);
     Task<WebpayConfirmResultDto> WebpayCancelAsync(string? tbkToken, string? buyOrder, CancellationToken cancellationToken = default);
+    Task<ExchangeQuotaDto> GetExchangeQuotaAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, CancellationToken cancellationToken = default);
     Task<WebhookProcessResultDto> ProcessMercadoPagoWebhookAsync(string type, string action, string dataId, CancellationToken cancellationToken = default);
     Task<LogisticsResultDto> ConfirmAdminBookReceiptAsync(Guid matchTransactionId, Guid adminUserId, CancellationToken cancellationToken = default);
@@ -292,6 +293,20 @@ public class TransactionService : ITransactionService
         if (transaction.RequesterUserId != requesterUserId)
         {
             throw new UnauthorizedAccessException("No tienes permisos para pagar esta transacción.");
+        }
+
+        // Validar límite mensual de intercambios del plan (Free: 2, Premium: 5)
+        var quota = await GetExchangeQuotaAsync(requesterUserId, cancellationToken);
+        if (quota.LimitReached)
+        {
+            string upgradeSuggestion = !quota.IsPremium 
+                ? " Actualiza a Plan Premium para obtener hasta 5 intercambios al mes." 
+                : " Has alcanzado el tope mensual de intercambios de tu plan.";
+            return new WebpayStartResultDto
+            {
+                Success = false,
+                Message = $"Has alcanzado tu límite mensual de intercambios ({quota.ExchangesConsumed}/{quota.MonthlyLimit}) para tu {quota.PlanName}.{upgradeSuggestion}"
+            };
         }
 
         // Validar si el libro objetivo ya no está disponible o está reservado por otro usuario
@@ -672,6 +687,50 @@ public class TransactionService : ITransactionService
             Success = false,
             PaymentStatus = "Failed",
             Message = "Cancelación de Webpay procesada."
+        };
+    }
+
+    public async Task<ExchangeQuotaDto> GetExchangeQuotaAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("Usuario no encontrado.");
+        }
+
+        var now = DateTime.UtcNow;
+        if (UserCycleHelper.CheckAndApplySubscriptionExpiration(user, now))
+        {
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var (cycleStart, cycleEnd) = UserCycleHelper.GetUserMonthlyCycle(user, now);
+
+        var settings = await _dbContext.GlobalSettings.AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+        int limit = user.IsPremium ? (settings?.MonthlyMatchLimitPremium ?? 5) : (settings?.MonthlyMatchLimitFree ?? 2);
+
+        // Contar transacciones de intercambio donde el usuario es el solicitante y que hayan sido pagadas/iniciadas dentro del ciclo actual
+        var consumedCount = await _dbContext.MatchTransactions
+            .AsNoTracking()
+            .Where(t => t.RequesterUserId == userId &&
+                        (t.PaymentStatus == "Captured" || t.PaymentStatus == "Hold" ||
+                         t.LogisticsStatus == "Delivered" || t.LogisticsStatus == "Completed" ||
+                         t.LogisticsStatus == "InTransit" || t.LogisticsStatus == "Pendiente Comprobante" ||
+                         t.LogisticsStatus == "En Espera") &&
+                        t.LogisticsStatus != "Cancelled" && t.LogisticsStatus != "Expired" &&
+                        t.CreatedAt >= cycleStart)
+            .CountAsync(cancellationToken);
+
+        return new ExchangeQuotaDto
+        {
+            ExchangesConsumed = consumedCount,
+            MonthlyLimit = limit,
+            LimitReached = consumedCount >= limit,
+            IsPremium = user.IsPremium,
+            PlanName = user.IsPremium ? "Plan Premium" : "Plan Gratuito",
+            CycleStartDate = cycleStart,
+            CycleEndDate = cycleEnd
         };
     }
 
