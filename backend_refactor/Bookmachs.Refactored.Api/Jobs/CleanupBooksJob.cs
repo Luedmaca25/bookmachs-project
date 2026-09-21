@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Bookmachs.Refactored.Api.Domain.Entities;
 using Bookmachs.Refactored.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,11 +11,16 @@ namespace Bookmachs.Refactored.Api.Jobs;
 public class CleanupBooksJob
 {
     private readonly BookmachsDbContext _dbContext;
+    private readonly EcolecturaDbContext _ecolecturaDbContext;
     private readonly ILogger<CleanupBooksJob> _logger;
 
-    public CleanupBooksJob(BookmachsDbContext dbContext, ILogger<CleanupBooksJob> logger)
+    public CleanupBooksJob(
+        BookmachsDbContext dbContext,
+        EcolecturaDbContext ecolecturaDbContext,
+        ILogger<CleanupBooksJob> logger)
     {
         _dbContext = dbContext;
+        _ecolecturaDbContext = ecolecturaDbContext;
         _logger = logger;
     }
 
@@ -32,8 +38,51 @@ public class CleanupBooksJob
                 .Where(b => b.IsReserved && b.ReservedUntil < DateTime.UtcNow)
                 .ToListAsync();
 
+            bool hasEcolecturaStockRestored = false;
+
             foreach (var book in expiredReservedBooks)
             {
+                // Si el origen del libro es de Ecolectura, restituir stock y registrar AjusteInventario
+                if (book.IsInternalStock)
+                {
+                    var product = await _ecolecturaDbContext.Productos
+                        .FirstOrDefaultAsync(p => p.IdProducto == book.Id.ToString());
+
+                    if (product != null)
+                    {
+                        int stockAnterior = product.Stock ?? 0;
+                        int nuevoStock = stockAnterior + 1;
+                        product.Stock = nuevoStock;
+
+                        // IMPORTANTE: Según instrucciones directas, no se modifica product.Activo
+                        _ecolecturaDbContext.Productos.Update(product);
+
+                        var adjustment = new EcolecturaAjusteInventario
+                        {
+                            IdProducto = product.IdProducto,
+                            PrecioAnterior = product.Precio ?? 0.00m,
+                            StockAnterior = stockAnterior,
+                            UbicacionAnterior = (product.Ubicacion ?? "No especificada").Length > 100 
+                                ? (product.Ubicacion ?? "No especificada")[..100] 
+                                : (product.Ubicacion ?? "No especificada"),
+                            EstadoAnterior = product.Activo,
+                            PrecioActualizacion = product.Precio ?? 0.00m,
+                            StockActualizacion = nuevoStock,
+                            UbicacionActualizacion = (product.Ubicacion ?? "No especificada").Length > 100 
+                                ? (product.Ubicacion ?? "No especificada")[..100] 
+                                : (product.Ubicacion ?? "No especificada"),
+                            EstadoActual = product.Activo,
+                            IdUsuario = null,
+                            FechaActualizacion = DateTime.UtcNow,
+                            Justificacion = $"Restitución de stock por expiración de reserva (48 hrs) en Bookmachs. Libro ID: {book.Id}."
+                        };
+
+                        await _ecolecturaDbContext.AjustesInventario.AddAsync(adjustment);
+                        hasEcolecturaStockRestored = true;
+                        _logger.LogInformation("Stock de Ecolectura restituido (+1) para el producto {IdProducto} por expiración de reserva.", product.IdProducto);
+                    }
+                }
+
                 book.IsReserved = false;
                 book.ReservedUntil = null;
                 book.ReservedByUserId = null;
@@ -41,6 +90,11 @@ public class CleanupBooksJob
                 _dbContext.Books.Update(book);
                 expiredReservationsReleased++;
                 _logger.LogInformation("Reserva del libro '{BookTitle}' ({BookId}) ha expirado y fue liberada.", book.Title, book.Id);
+            }
+
+            if (hasEcolecturaStockRestored)
+            {
+                await _ecolecturaDbContext.SaveChangesAsync();
             }
 
             // 2. Anular transacciones pendientes de pago pasadas las 48 horas

@@ -217,6 +217,13 @@ public class BookService : IBookService
             .Select(t => t.BookId.ToString())
             .ToListAsync(cancellationToken);
 
+        // Excluir libros reservados activamente por otros usuarios
+        var reservedByOthersGuids = await _dbContext.Books
+            .AsNoTracking()
+            .Where(b => b.IsReserved && b.ReservedUntil >= DateTime.UtcNow && b.ReservedByUserId != userId)
+            .Select(b => b.Id.ToString())
+            .ToListAsync(cancellationToken);
+
         // Conjunto de IDs en formato string para rápida exclusión
         var excludedIds = new HashSet<string>(swipedBookGuids, StringComparer.OrdinalIgnoreCase);
         foreach (var myGuid in myBookGuids)
@@ -226,6 +233,10 @@ public class BookService : IBookService
         foreach (var unavId in unavailableBookIds)
         {
             excludedIds.Add(unavId);
+        }
+        foreach (var resId in reservedByOthersGuids)
+        {
+            excludedIds.Add(resId);
         }
 
         var resultList = new List<BookDto>();
@@ -630,8 +641,9 @@ public class BookService : IBookService
         if (isLikeAction)
         {
             var book = await EnsureBookExistsLocallyAsync(bookId, cancellationToken);
+            bool isReservedByOther = book != null && book.IsReserved && book.ReservedUntil >= DateTime.UtcNow && book.ReservedByUserId != user.Id;
 
-            if (book != null && book.IsAvailable)
+            if (book != null && book.IsAvailable && !isReservedByOther)
             {
                 isMatch = true;
 
@@ -963,6 +975,48 @@ public class BookService : IBookService
             throw new InvalidOperationException("El libro ya se encuentra reservado por otro usuario.");
         }
 
+        // Si el origen del libro es de Ecolectura, descontar stock de la base de datos de Ecolectura y registrar AjusteInventario
+        if (book.IsInternalStock)
+        {
+            var product = await _ecolecturaDbContext.Productos
+                .FirstOrDefaultAsync(p => p.IdProducto == book.Id.ToString(), cancellationToken);
+
+            if (product == null || (product.Stock ?? 0) <= 0)
+            {
+                throw new InvalidOperationException("El libro no cuenta con stock disponible en Ecolectura para ser reservado.");
+            }
+
+            int stockAnterior = product.Stock ?? 0;
+            int nuevoStock = stockAnterior - 1;
+            product.Stock = nuevoStock;
+
+            // IMPORTANTE: Según instrucciones directas, no se modifica product.Activo
+            _ecolecturaDbContext.Productos.Update(product);
+
+            var adjustment = new EcolecturaAjusteInventario
+            {
+                IdProducto = product.IdProducto,
+                PrecioAnterior = product.Precio ?? 0.00m,
+                StockAnterior = stockAnterior,
+                UbicacionAnterior = (product.Ubicacion ?? "No especificada").Length > 100 
+                    ? (product.Ubicacion ?? "No especificada")[..100] 
+                    : (product.Ubicacion ?? "No especificada"),
+                EstadoAnterior = product.Activo,
+                PrecioActualizacion = product.Precio ?? 0.00m,
+                StockActualizacion = nuevoStock,
+                UbicacionActualizacion = (product.Ubicacion ?? "No especificada").Length > 100 
+                    ? (product.Ubicacion ?? "No especificada")[..100] 
+                    : (product.Ubicacion ?? "No especificada"),
+                EstadoActual = product.Activo,
+                IdUsuario = null,
+                FechaActualizacion = DateTime.UtcNow,
+                Justificacion = $"Reserva de libro por 48 horas en Bookmachs. Usuario: {user.Email ?? userId.ToString()}. Libro ID: {book.Id}."
+            };
+
+            await _ecolecturaDbContext.AjustesInventario.AddAsync(adjustment, cancellationToken);
+            await _ecolecturaDbContext.SaveChangesAsync(cancellationToken);
+        }
+
         book.IsReserved = true;
         book.ReservedUntil = DateTime.UtcNow.AddHours(48);
         book.ReservedByUserId = userId;
@@ -992,6 +1046,46 @@ public class BookService : IBookService
         if (!book.IsReserved || book.ReservedByUserId != userId)
         {
             throw new InvalidOperationException("No tienes ninguna reserva activa sobre este libro.");
+        }
+
+        // Si es stock interno de Ecolectura, restituir stock a Ecolectura y registrar AjusteInventario
+        if (book.IsInternalStock)
+        {
+            var product = await _ecolecturaDbContext.Productos
+                .FirstOrDefaultAsync(p => p.IdProducto == book.Id.ToString(), cancellationToken);
+
+            if (product != null)
+            {
+                int stockAnterior = product.Stock ?? 0;
+                int nuevoStock = stockAnterior + 1;
+                product.Stock = nuevoStock;
+
+                // IMPORTANTE: Según instrucciones directas, no se modifica product.Activo
+                _ecolecturaDbContext.Productos.Update(product);
+
+                var adjustment = new EcolecturaAjusteInventario
+                {
+                    IdProducto = product.IdProducto,
+                    PrecioAnterior = product.Precio ?? 0.00m,
+                    StockAnterior = stockAnterior,
+                    UbicacionAnterior = (product.Ubicacion ?? "No especificada").Length > 100 
+                        ? (product.Ubicacion ?? "No especificada")[..100] 
+                        : (product.Ubicacion ?? "No especificada"),
+                    EstadoAnterior = product.Activo,
+                    PrecioActualizacion = product.Precio ?? 0.00m,
+                    StockActualizacion = nuevoStock,
+                    UbicacionActualizacion = (product.Ubicacion ?? "No especificada").Length > 100 
+                        ? (product.Ubicacion ?? "No especificada")[..100] 
+                        : (product.Ubicacion ?? "No especificada"),
+                    EstadoActual = product.Activo,
+                    IdUsuario = null,
+                    FechaActualizacion = DateTime.UtcNow,
+                    Justificacion = $"Restitución de stock por cancelación voluntaria de reserva en Bookmachs. Usuario: {userId}. Libro ID: {book.Id}."
+                };
+
+                await _ecolecturaDbContext.AjustesInventario.AddAsync(adjustment, cancellationToken);
+                await _ecolecturaDbContext.SaveChangesAsync(cancellationToken);
+            }
         }
 
         book.IsReserved = false;

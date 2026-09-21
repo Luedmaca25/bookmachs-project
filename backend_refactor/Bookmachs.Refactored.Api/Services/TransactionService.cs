@@ -72,7 +72,9 @@ public class TransactionService : ITransactionService
                 if (Guid.TryParse(bIdStr, out var bGuid) && !existingMatchSet.Contains(bGuid))
                 {
                     var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == bGuid, cancellationToken);
-                    if (book != null && book.IsAvailable)
+                    bool isReservedByOther = book != null && book.IsReserved && book.ReservedUntil >= DateTime.UtcNow && book.ReservedByUserId != userId;
+
+                    if (book != null && book.IsAvailable && !isReservedByOther)
                     {
                         decimal rawFee = book.BaseValue * feePercentage;
                         decimal finalFee = rawFee;
@@ -131,23 +133,12 @@ public class TransactionService : ITransactionService
             bool isAvailable = false;
             if (t.Book != null)
             {
-                if (t.Book.IsInternalStock)
-                {
-                    if (!t.Book.IsAvailable)
-                    {
-                        t.Book.IsAvailable = true;
-                        _dbContext.Books.Update(t.Book);
-                        await _dbContext.SaveChangesAsync(cancellationToken);
-                    }
-                    isAvailable = true;
-                }
-                else
-                {
-                    bool isTakenByOther = await _dbContext.MatchTransactions
-                        .AnyAsync(other => other.Id != t.Id && other.BookId == t.BookId && (other.PaymentStatus == "Captured" || other.PaymentStatus == "Hold" || other.LogisticsStatus == "Delivered") && other.LogisticsStatus != "Cancelled" && other.LogisticsStatus != "Expired", cancellationToken);
+                bool isTakenByOther = await _dbContext.MatchTransactions
+                    .AnyAsync(other => other.Id != t.Id && other.BookId == t.BookId && (other.PaymentStatus == "Captured" || other.PaymentStatus == "Hold" || other.LogisticsStatus == "Delivered") && other.LogisticsStatus != "Cancelled" && other.LogisticsStatus != "Expired", cancellationToken);
 
-                    isAvailable = t.Book.IsAvailable && !isTakenByOther;
-                }
+                bool isReservedByOther = t.Book.IsReserved && t.Book.ReservedUntil >= DateTime.UtcNow && t.Book.ReservedByUserId != userId;
+
+                isAvailable = t.Book.IsAvailable && !isTakenByOther && !isReservedByOther;
             }
 
             resultList.Add(new MatchTransactionDto
@@ -302,18 +293,20 @@ public class TransactionService : ITransactionService
             throw new UnauthorizedAccessException("No tienes permisos para pagar esta transacción.");
         }
 
-        // Validar si el libro objetivo ya no está disponible
+        // Validar si el libro objetivo ya no está disponible o está reservado por otro usuario
         if (transaction.Book != null)
         {
             bool isTakenByAnotherTx = await _dbContext.MatchTransactions
                 .AnyAsync(t => t.Id != matchTransactionId && t.BookId == transaction.BookId && (t.PaymentStatus == "Captured" || t.PaymentStatus == "Hold" || t.LogisticsStatus == "Delivered") && t.LogisticsStatus != "Cancelled" && t.LogisticsStatus != "Expired", cancellationToken);
 
-            if ((!transaction.Book.IsInternalStock && !transaction.Book.IsAvailable) || isTakenByAnotherTx)
+            bool isReservedByOther = transaction.Book.IsReserved && transaction.Book.ReservedUntil >= DateTime.UtcNow && transaction.Book.ReservedByUserId != requesterUserId;
+
+            if ((!transaction.Book.IsInternalStock && !transaction.Book.IsAvailable) || isTakenByAnotherTx || isReservedByOther)
             {
                 return new WebpayStartResultDto
                 {
                     Success = false,
-                    Message = "⚠️ Este libro ya no está disponible para intercambio porque fue tomado o ya se encuentra intercambiado por otro usuario."
+                    Message = "⚠️ Este libro ya no está disponible para intercambio porque se encuentra reservado o ya fue tomado por otro usuario."
                 };
             }
         }
@@ -423,17 +416,22 @@ public class TransactionService : ITransactionService
                 }
 
                 var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == transaction.BookId, cancellationToken);
+                bool wasAlreadyReserved = false;
                 if (book != null)
                 {
+                    wasAlreadyReserved = book.IsReserved && book.ReservedByUserId == transaction.RequesterUserId;
                     book.IsAvailable = false;
+                    book.IsReserved = false;
+                    book.ReservedUntil = null;
+                    book.ReservedByUserId = null;
                     _dbContext.Books.Update(book);
                 }
 
                 _dbContext.MatchTransactions.Update(transaction);
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
-                // Descontar stock y registrar el ajuste en Ecolectura
-                await DeductStockAndLogAdjustmentAsync(transaction.BookId, transaction.Id, transaction.RequesterUserId, cancellationToken);
+                // Descontar stock y registrar el ajuste en Ecolectura (evitando duplicidad si ya estaba reservado)
+                await DeductStockAndLogAdjustmentAsync(transaction.BookId, transaction.Id, transaction.RequesterUserId, wasAlreadyReserved, cancellationToken);
 
                 var successRes = new WebpayConfirmResultDto
                 {
@@ -648,7 +646,7 @@ public class TransactionService : ITransactionService
         });
     }
 
-    private async Task DeductStockAndLogAdjustmentAsync(Guid bookId, Guid matchTransactionId, Guid requesterUserId, CancellationToken cancellationToken)
+    private async Task DeductStockAndLogAdjustmentAsync(Guid bookId, Guid matchTransactionId, Guid requesterUserId, bool wasAlreadyReserved, CancellationToken cancellationToken)
     {
         try
         {
@@ -674,17 +672,26 @@ public class TransactionService : ITransactionService
             string ubicacionAnterior = product.Ubicacion ?? "No especificada";
             bool estadoAnterior = product.Activo;
 
-            // 3. Descontar stock
-            int nuevoStock = stockAnterior > 0 ? stockAnterior - 1 : 0;
-            product.Stock = nuevoStock;
-            
-            // Si el stock llega a 0, desactivamos el producto para que no se muestre más en el e-commerce
-            if (nuevoStock == 0)
+            int nuevoStock = stockAnterior;
+            string justificacion;
+
+            if (wasAlreadyReserved)
             {
-                product.Activo = false;
+                // El stock ya fue descontado de la base de datos al realizar la reserva previa en Bookmachs.
+                // No se descuenta nuevamente para evitar duplicidad de decremento.
+                justificacion = $"Intercambio concretado en Bookmachs (Previamente reservado con descuento de stock aplicado). Match Transaction ID: {matchTransactionId}. Requester User ID: {requesterUserId}.";
+            }
+            else
+            {
+                // Descontar 1 unidad de stock directamente ya que no provenía de una reserva previa
+                nuevoStock = stockAnterior > 0 ? stockAnterior - 1 : 0;
+                product.Stock = nuevoStock;
+                _ecolecturaDbContext.Productos.Update(product);
+
+                justificacion = $"Descuento por intercambio directo concretado en Bookmachs. Match Transaction ID: {matchTransactionId}. Requester User ID: {requesterUserId}.";
             }
 
-            _ecolecturaDbContext.Productos.Update(product);
+            // IMPORTANTE: Por requerimiento explícito, NO se modifica product.Activo. Se preserva su estado original.
 
             // 4. Crear el registro en AjusteInventario
             var adjustment = new EcolecturaAjusteInventario
@@ -702,7 +709,7 @@ public class TransactionService : ITransactionService
                 EstadoActual = product.Activo,
                 IdUsuario = null, // Al ser a través de API externa, no se asocia un usuario AspNetUsers local
                 FechaActualizacion = DateTime.UtcNow,
-                Justificacion = $"Descuento por adquisición en Bookmachs. Match Transaction ID: {matchTransactionId}. Requester User ID: {requesterUserId}."
+                Justificacion = justificacion
             };
 
             await _ecolecturaDbContext.AjustesInventario.AddAsync(adjustment, cancellationToken);
