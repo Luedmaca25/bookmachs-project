@@ -252,10 +252,10 @@ export const MatchModal: React.FC<MatchModalProps> = ({
 
           {showDetail && feeDetails && (
             <div className="fee-details-list fee-details-expanded">
-              <div className="fee-row fee-detail-row">
+              {/* <div className="fee-row fee-detail-row">
                 <span>Base ponderada del libro:</span>
                 <span>${Math.round(feeDetails.baseValue).toLocaleString('es-CL')} CLP</span>
-              </div>
+              </div> */}
               <div className="fee-row fee-detail-row">
                 <span>Fee:</span>
                 <span>${Math.round(feeDetails.rawFee).toLocaleString('es-CL')} CLP</span>
