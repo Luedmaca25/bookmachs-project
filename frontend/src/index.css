@@ -3493,8 +3493,9 @@ body.swipe-page-active .app-footer {
 
 .swipe-empty-state h3 {
   font-size: 1.4rem;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
+  font-weight: 700;
 }
 
 .swipe-empty-state p {
@@ -3502,6 +3503,35 @@ body.swipe-page-active .app-footer {
   font-size: 0.95rem;
   margin: 0;
   line-height: 1.5;
+}
+
+.reset-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1.6rem;
+  background: var(--accent-primary);
+  color: #ffffff;
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-full);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 14px rgba(15, 157, 88, 0.25);
+}
+
+.reset-search-btn:hover {
+  background: var(--accent-primary-hover, #0B7A44);
+  border-color: var(--accent-primary-hover, #0B7A44);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15, 157, 88, 0.35);
+}
+
+.reset-search-btn:active {
+  transform: translateY(0);
 }
 
 /* ==========================================================================
@@ -5279,9 +5309,62 @@ body.swipe-page-active .app-footer {
 /* Catalog View Modes (Grid & List) */
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2.5rem;
   margin-bottom: 2rem;
+}
+
+/* Catalog Grid with BookCard (exact SwipePage card style) */
+.catalog-swipe-card {
+  width: 100%;
+  max-width: 360px;
+  height: 520px !important;
+  min-height: 520px !important;
+  max-height: 520px !important;
+  position: relative !important;
+  background: #FFFFFF !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  cursor: default !important;
+  touch-action: auto !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+  margin: 0 auto;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast) !important;
+}
+
+.catalog-swipe-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+.catalog-swipe-card .swipe-card-img,
+.catalog-swipe-card .book-fallback-icon-wrapper {
+  cursor: default !important;
+}
+
+.catalog-swipe-card .swipe-stamp {
+  display: none !important;
+}
+
+.catalog-swipe-card .book-card-info {
+  max-height: 250px;
+}
+
+.catalog-swipe-card .book-card-floating-wrapper {
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+}
+
+.catalog-swipe-card .book-card-info .catalog-card-footer {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .catalog-list {
@@ -5312,7 +5395,7 @@ body.swipe-page-active .app-footer {
 .catalog-card-cover {
   position: relative;
   aspect-ratio: 3/4;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5341,7 +5424,7 @@ body.swipe-page-active .app-footer {
   font-weight: 700;
   padding: 0.25rem 0.6rem;
   border-radius: var(--radius-sm);
-  z-index: 2;
+  z-index: 22;
   box-shadow: 0 2px 8px rgba(6, 214, 160, 0.35);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -5385,11 +5468,25 @@ body.swipe-page-active .app-footer {
 
 .catalog-card-footer {
   margin-top: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border-color);
   padding-top: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.catalog-actions-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.catalog-actions-row .catalog-interest-btn,
+.catalog-actions-row .catalog-reserve-btn {
+  flex: 1;
+  padding: 0.65rem 0.5rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .catalog-card-footer:empty {
@@ -5485,7 +5582,7 @@ body.swipe-page-active .app-footer {
 .catalog-list-item-cover {
   width: 160px;
   min-width: 160px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5516,7 +5613,7 @@ body.swipe-page-active .app-footer {
 
 .catalog-list-item-info h3 {
   font-size: 1.45rem;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0 0 0.4rem 0;
   font-family: var(--font-heading);
 }
@@ -5542,11 +5639,11 @@ body.swipe-page-active .app-footer {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-end;
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 1px solid var(--border-color);
   min-width: 200px;
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--bg-surface);
 }
 
 .catalog-list-item-actions .price-section {
@@ -9425,33 +9522,53 @@ body.swipe-page-active .app-footer {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.spotify-search-form {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .spotify-search-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #ffffff;
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-full);
-  padding: 6px 20px;
-  height: 54px;
-  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 5px 6px 5px 16px;
+  min-height: 52px;
+  height: 52px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
   transition: all var(--transition-normal);
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 
 .spotify-search-input-wrapper:focus-within {
-  background: rgba(255, 255, 255, 0.12);
+  background: #ffffff;
   border-color: var(--accent-primary);
-  /* box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.18), 0 16px 40px rgba(0, 0, 0, 0.6); */
+  box-shadow: 0 0 0 3px rgba(15, 157, 88, 0.15), 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.search-submit-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .spotify-search-input-wrapper .search-icon {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   color: var(--text-secondary);
-  margin-right: 14px;
   transition: color var(--transition-fast);
 }
 
@@ -9460,40 +9577,68 @@ body.swipe-page-active .app-footer {
 }
 
 .spotify-search-input-wrapper input {
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
   background: transparent;
   border: none;
-  color: var(--accent-primary);
-  font-size: 1.05rem;
-  font-weight: 700;
-  padding: 8px 0;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 6px 0;
   outline: none;
+  text-overflow: ellipsis;
 }
 
 .spotify-search-input-wrapper input::placeholder {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--text-muted);
   font-weight: 400;
+  text-overflow: ellipsis;
 }
 
 .spotify-search-clear-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.06);
+  border: none;
   color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 0.85rem;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   cursor: pointer;
-  padding: 5px 12px;
-  border-radius: var(--radius-full);
+  font-size: 0.8rem;
   transition: all var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .spotify-search-clear-btn:hover {
+  background: rgba(239, 71, 111, 0.15);
+  color: #ef476f;
+}
+
+.spotify-search-action-btn {
   background: var(--accent-primary);
-  color: #070a13;
-  border-color: var(--accent-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(15, 157, 88, 0.25);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spotify-search-action-btn:hover {
+  background: #0d8a4c;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(15, 157, 88, 0.35);
 }
 
 .spotify-search-limit-badge {
@@ -9506,8 +9651,8 @@ body.swipe-page-active .app-footer {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid var(--border-color);
   color: var(--text-secondary);
   padding: 4px 12px;
   border-radius: var(--radius-full);
@@ -9520,8 +9665,8 @@ body.swipe-page-active .app-footer {
 }
 
 .limit-pill.exceeded {
-  background: rgba(239, 71, 111, 0.18);
-  border-color: rgba(239, 71, 111, 0.4);
+  background: rgba(239, 71, 111, 0.1);
+  border-color: rgba(239, 71, 111, 0.35);
   color: #ef476f;
 }
 
@@ -9532,8 +9677,8 @@ body.swipe-page-active .app-footer {
 .search-limit-warning {
   max-width: 760px;
   margin: -0.5rem auto 1.5rem;
-  background: rgba(239, 71, 111, 0.15);
-  border: 1px solid rgba(239, 71, 111, 0.35);
+  background: rgba(239, 71, 111, 0.1);
+  border: 1px solid rgba(239, 71, 111, 0.3);
   border-radius: var(--radius-md);
   padding: 10px 16px;
   color: #ef476f;
@@ -9558,8 +9703,8 @@ body.swipe-page-active .app-footer {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #ffffff;
+  border: 1.5px solid var(--border-color);
   color: var(--text-primary);
   padding: 8px 18px;
   border-radius: var(--radius-full);
@@ -9567,18 +9712,19 @@ body.swipe-page-active .app-footer {
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .toggle-filters-btn:hover,
 .toggle-filters-btn.active {
-  /* background: rgba(255, 209, 102, 0.15); */
   border-color: var(--accent-primary);
   color: var(--accent-primary);
+  background: rgba(15, 157, 88, 0.06);
 }
 
 .toggle-filters-btn .active-filters-count-badge {
   background: var(--accent-primary);
-  color: #070a13;
+  color: #ffffff;
   font-size: 0.75rem;
   font-weight: 800;
   width: 20px;
@@ -9595,16 +9741,14 @@ body.swipe-page-active .app-footer {
   transition: transform var(--transition-fast);
 }
 
-/* Rediseño del Panel Colapsable de Filtros (Glassmorphic & Premium Gradient) */
+/* Panel Colapsable de Filtros - Tema Claro */
 .catalog-filters-collapsible {
-  background: linear-gradient(145deg, rgba(26, 32, 52, 0.85) 0%, rgba(14, 18, 30, 0.92) 100%);
-  border: 1px solid rgba(255, 209, 102, 0.25);
+  background: #ffffff;
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   margin-bottom: 1.8rem;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 .catalog-filters-grid {
@@ -9615,9 +9759,9 @@ body.swipe-page-active .app-footer {
 }
 
 .catalog-filters-collapsible .filter-group label {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  color: var(--accent-primary);
+  color: var(--text-primary);
   margin-bottom: 0.4rem;
   display: flex;
   align-items: center;
@@ -9626,49 +9770,40 @@ body.swipe-page-active .app-footer {
   letter-spacing: 0.04em;
 }
 
+.catalog-filters-collapsible .filter-group label i {
+  color: var(--accent-primary);
+}
+
 .catalog-filters-collapsible .filter-group select {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #f8fafc;
+  border: 1.5px solid var(--border-color);
   border-radius: var(--radius-md);
-  color: #ffffff;
+  color: var(--text-primary);
   padding: 0.75rem 1rem;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 500;
   transition: all var(--transition-fast);
   cursor: pointer;
   outline: none;
+  width: 100%;
 }
 
 .catalog-filters-collapsible .filter-group select:focus,
 .catalog-filters-collapsible .filter-group select:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: #ffffff;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.15);
+  box-shadow: 0 0 0 3px rgba(15, 157, 88, 0.12);
 }
 
 .catalog-filters-collapsible .filter-group select option {
-  background: #101422;
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--text-primary);
   padding: 8px;
 }
 
-.fallback-category-badge {
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeeba;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .drawer-reset-btn {
-  background: rgba(239, 71, 111, 0.12);
-  border: 1px solid rgba(239, 71, 111, 0.35);
+  background: rgba(239, 71, 111, 0.08);
+  border: 1px solid rgba(239, 71, 111, 0.25);
   color: #ef476f;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
@@ -9687,7 +9822,7 @@ body.swipe-page-active .app-footer {
   background: #ef476f;
   color: #ffffff;
   border-color: #ef476f;
-  box-shadow: 0 4px 15px rgba(239, 71, 111, 0.4);
+  box-shadow: 0 4px 15px rgba(239, 71, 111, 0.3);
 }
 
 .spotify-hero-search-state {
@@ -9720,24 +9855,27 @@ body.swipe-page-active .app-footer {
 }
 
 .spotify-tag-chip {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #ffffff;
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
   border-radius: var(--radius-full);
   padding: 8px 18px;
   font-size: 0.92rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
   display: flex;
   align-items: center;
   gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .spotify-tag-chip:hover {
   background: var(--accent-primary);
-  color: #070a13;
+  color: #ffffff;
   border-color: var(--accent-primary);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 157, 88, 0.25);
 }
 
 /* Spotify Explore Genre Tiles Grid (Evidencia 5) */
@@ -9767,7 +9905,7 @@ body.swipe-page-active .app-footer {
   padding: 16px;
   overflow: hidden;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   display: flex;
   flex-direction: column;
@@ -9776,7 +9914,7 @@ body.swipe-page-active .app-footer {
 
 .spotify-genre-card:hover {
   transform: scale(1.04);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
 }
 
 .spotify-genre-card .genre-name {
@@ -9808,9 +9946,10 @@ body.swipe-page-active .app-footer {
   gap: 8px;
   margin: -0.5rem 0 1.5rem;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: #ffffff;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .active-filters-label {
@@ -9823,9 +9962,9 @@ body.swipe-page-active .app-footer {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 209, 102, 0.15);
+  background: rgba(15, 157, 88, 0.08);
   color: var(--accent-primary);
-  border: 1px solid rgba(255, 209, 102, 0.3);
+  border: 1px solid rgba(15, 157, 88, 0.25);
   border-radius: var(--radius-full);
   padding: 4px 12px;
   font-size: 0.85rem;
@@ -9841,10 +9980,11 @@ body.swipe-page-active .app-footer {
   display: flex;
   align-items: center;
   font-size: 0.9rem;
+  transition: color var(--transition-fast);
 }
 
 .active-filter-chip button:hover {
-  color: #fff;
+  color: var(--accent-primary-hover, #0B7A44);
 }
 
 .clear-all-filters-btn {
@@ -9855,6 +9995,8 @@ body.swipe-page-active .app-footer {
   text-decoration: underline;
   cursor: pointer;
   margin-left: auto;
+  font-weight: 500;
+  transition: color var(--transition-fast);
 }
 
 .clear-all-filters-btn:hover {
@@ -9881,8 +10023,8 @@ body.swipe-page-active .app-footer {
 }
 
 .pagination-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #ffffff;
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
   padding: 8px 18px;
   border-radius: var(--radius-full);
@@ -9893,12 +10035,14 @@ body.swipe-page-active .app-footer {
   display: flex;
   align-items: center;
   gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .pagination-btn:hover:not(:disabled) {
   background: var(--accent-primary);
-  color: #070a13;
+  color: #ffffff;
   border-color: var(--accent-primary);
+  box-shadow: 0 4px 12px rgba(15, 157, 88, 0.2);
 }
 
 .pagination-btn:disabled {
@@ -9947,6 +10091,29 @@ body.swipe-page-active .app-footer {
 
 /* 3. Mobile / Small Tablet Breakpoint (max-width: 767px) */
 @media (max-width: 767px) {
+  /* Barra de Búsqueda Catálogo Responsiva */
+  .spotify-search-input-wrapper {
+    min-height: 48px;
+    height: 48px;
+    padding: 4px 6px 4px 14px;
+    gap: 6px;
+  }
+
+  .spotify-search-input-wrapper input {
+    font-size: 0.88rem;
+  }
+
+  .spotify-search-action-btn {
+    padding: 7px 14px;
+    font-size: 0.84rem;
+  }
+
+  .spotify-search-clear-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
   /* Barra de Navegación Inferior Móvil (App Style - 5 opciones) */
   /* Barra de Navegación Inferior Móvil (App Style - 5 opciones) - Tema Claro */
   /* Barra de Navegación Inferior Móvil (App Style - 5 opciones) - Tema Claro */
@@ -10805,6 +10972,26 @@ body.swipe-page-active .app-footer {
 
 /* 4. Extra Small Mobile Breakpoint (max-width: 575px) */
 @media (max-width: 575px) {
+  .spotify-search-input-wrapper {
+    min-height: 44px;
+    height: 44px;
+    padding: 3px 5px 3px 12px;
+    gap: 5px;
+  }
+
+  .spotify-search-input-wrapper input {
+    font-size: 0.84rem;
+  }
+
+  .spotify-search-input-wrapper .search-icon {
+    font-size: 1rem;
+  }
+
+  .spotify-search-action-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
   .view-mode-toggle {
     display: none;
   }

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../authentication/store/authStore';
-import { BookCard } from './components/BookCard';
 import { apiClient } from '../../lib/apiClient';
+import { BookCard } from './components/BookCard';
 
 interface BookItem {
   id: string;
@@ -15,6 +15,8 @@ interface BookItem {
   baseValue: number;
   createdAt: string;
   isAvailable: boolean;
+  category?: string;
+  isInternalStock?: boolean;
 }
 
 interface PaginatedBooks {
@@ -54,13 +56,13 @@ export const CatalogPage: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   // Estados de filtros
+  const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
   const [condition, setCondition] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
 
-  // Vista activa: grid o list
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const hasSearchCriteria = searchTerm.trim().length > 0 || !!category || !!condition;
 
   // Estado para panel de filtros colapsable (oculto por defecto)
   const [showFilters, setShowFilters] = useState(false);
@@ -98,9 +100,20 @@ export const CatalogPage: React.FC = () => {
     fetchTags();
   }, [isAuthenticated, user]);
 
-  // Cargar libros con filtros aplicados
+  // Cargar libros con filtros aplicados (solo si hay criterio de búsqueda y cancela peticiones anteriores)
   useEffect(() => {
     if (!isAuthenticated || !user?.isPremium) return;
+
+    if (!hasSearchCriteria) {
+      setBooks([]);
+      setTotalPages(1);
+      setTotalCount(0);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    const abortController = new AbortController();
 
     const loadCatalog = async () => {
       setLoading(true);
@@ -114,11 +127,15 @@ export const CatalogPage: React.FC = () => {
         queryParams.append('pageSize', pageSize.toString());
         queryParams.append('sortBy', sortBy);
 
-        const response = await apiClient.get<PaginatedBooks>(`/books/catalog?${queryParams.toString()}`);
+        const response = await apiClient.get<PaginatedBooks>(
+          `/books/catalog?${queryParams.toString()}`,
+          { signal: abortController.signal }
+        );
         setBooks(response.items);
         setTotalPages(response.totalPages);
         setTotalCount(response.totalCount);
       } catch (err: any) {
+        if (err.name === 'AbortError') return;
         console.error('Error al cargar catálogo:', err);
         setError('Ocurrió un error al cargar el catálogo avanzado de libros.');
       } finally {
@@ -126,10 +143,12 @@ export const CatalogPage: React.FC = () => {
       }
     };
 
-    // Debounce de búsqueda (200ms) para evitar múltiples requests mientras el usuario escribe
-    const timer = setTimeout(loadCatalog, 200);
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, user, searchTerm, category, condition, pageNumber, pageSize, sortBy]);
+    loadCatalog();
+
+    return () => {
+      abortController.abort();
+    };
+  }, [isAuthenticated, user, searchTerm, category, condition, pageNumber, pageSize, sortBy, hasSearchCriteria]);
 
   // Reset de página al cambiar filtros
   useEffect(() => {
@@ -271,10 +290,18 @@ export const CatalogPage: React.FC = () => {
   const currentKeywords = searchTerm.trim() ? searchTerm.trim().split(/\s+/).filter(Boolean) : [];
   const isKeywordLimitExceeded = currentKeywords.length > maxSearchKeywords;
 
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSearchTerm(searchInput.trim());
+    setPageNumber(1);
+  };
+
   const clearAllFilters = () => {
+    setSearchInput('');
     setSearchTerm('');
     setCategory('');
     setCondition('');
+    setSortBy('createdAt');
     setPageNumber(1);
   };
 
@@ -291,17 +318,53 @@ export const CatalogPage: React.FC = () => {
 
         {/* Input Principal de Búsqueda Estilo Spotify */}
         <div className="spotify-search-bar-container">
-          <div className="spotify-search-input-wrapper">
-            <i className="fa-solid fa-magnifying-glass search-icon"></i>
-            <input
-              id="search-input"
-              type="text"
-              placeholder="¿Qué libro, autor o palabra clave quieres buscar?"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              autoComplete="off"
-            />
-          </div>
+          <form onSubmit={handleSearchSubmit} className="spotify-search-form">
+            <div className="spotify-search-input-wrapper">
+              <button
+                type="submit"
+                className="search-submit-btn"
+                title="Buscar (Presiona Enter)"
+                aria-label="Buscar"
+              >
+                <i className="fa-solid fa-magnifying-glass search-icon"></i>
+              </button>
+              <input
+                id="search-input"
+                type="text"
+                placeholder="¿Qué libro, autor o palabra clave quieres buscar? (Presiona Enter)"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSearchSubmit();
+                  }
+                }}
+                autoComplete="off"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  className="spotify-search-clear-btn"
+                  onClick={() => {
+                    setSearchInput('');
+                    setSearchTerm('');
+                    setPageNumber(1);
+                  }}
+                  title="Limpiar texto"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              )}
+              <button
+                type="submit"
+                className="spotify-search-action-btn font-heading"
+                title="Buscar libro"
+              >
+                Buscar
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -341,27 +404,6 @@ export const CatalogPage: React.FC = () => {
             )}
           </button> */}
         </div>
-
-        <div className="view-mode-toggle">
-          <button
-            type="button"
-            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-            onClick={() => setViewMode('grid')}
-            title="Vista en Grilla"
-            aria-label="Vista en Grilla"
-          >
-            <i className="fa-solid fa-grip"></i>
-          </button>
-          <button
-            type="button"
-            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-            title="Vista en Lista"
-            aria-label="Vista en Lista"
-          >
-            <i className="fa-solid fa-list-ul"></i>
-          </button>
-        </div>
       </div>
 
       {/* Panel de Filtros Colapsable (Oculto de Primera Instancia) */}
@@ -393,6 +435,7 @@ export const CatalogPage: React.FC = () => {
               >
                 <option value="">Todos los estados</option>
                 <option value="Excelente">Excelente</option>
+                <option value="Muy bueno">Muy bueno</option>
                 <option value="Bueno">Bueno</option>
                 <option value="Aceptable">Aceptable</option>
                 <option value="Desgastado">Desgastado</option>
@@ -433,28 +476,40 @@ export const CatalogPage: React.FC = () => {
           {searchTerm && (
             <span className="active-filter-chip">
               Búsqueda: "{searchTerm}"
-              <button onClick={() => setSearchTerm('')}><i className="fa-solid fa-xmark"></i></button>
+              <button 
+                type="button"
+                onClick={() => { setSearchTerm(''); setSearchInput(''); setPageNumber(1); }}
+                title="Quitar búsqueda"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
             </span>
           )}
           {category && (
             <span className="active-filter-chip">
               Categoría: {category}
-              <button onClick={() => setCategory('')}><i className="fa-solid fa-xmark"></i></button>
+              <button type="button" onClick={() => setCategory('')} title="Quitar categoría"><i className="fa-solid fa-xmark"></i></button>
             </span>
           )}
           {condition && (
             <span className="active-filter-chip">
               Estado: {condition}
-              <button onClick={() => setCondition('')}><i className="fa-solid fa-xmark"></i></button>
+              <button type="button" onClick={() => setCondition('')} title="Quitar estado"><i className="fa-solid fa-xmark"></i></button>
             </span>
           )}
         </div>
       )}
 
       {/* Resultados de la búsqueda */}
-      {loading ? (
+      {!hasSearchCriteria ? (
+        <div className="swipe-empty-state catalog-initial-state">
+          <span className="empty-icon"><i className="fa-solid fa-magnifying-glass"></i></span>
+          <h3>Busca en el catálogo</h3>
+          <p>Escribe el título, autor o palabra clave del libro que deseas encontrar para ver los resultados disponibles.</p>
+        </div>
+      ) : loading ? (
         <div className="swipe-loading">
-          <i className="fa-solid fa-circle-notch fa-spin"></i> Cargando...
+          <i className="fa-solid fa-circle-notch fa-spin"></i> Buscando libros...
         </div>
       ) : error ? (
         <div className="swipe-error-state">
@@ -462,51 +517,46 @@ export const CatalogPage: React.FC = () => {
         </div>
       ) : books.length === 0 ? (
         <div className="swipe-empty-state">
-          <span className="empty-icon"><i className="fa-solid fa-magnifying-glass"></i></span>
+          <span className="empty-icon"><i className="fa-solid fa-book-open"></i></span>
           <h3>No encontramos resultados para tu búsqueda</h3>
-          <p>Prueba buscando por un título más general, el nombre del autor o cambiando los filtros seleccionados.</p>
-          <button className="reset-search-btn" onClick={clearAllFilters}>
-            Ver todos los libros
+          <p>Prueba buscando con otro término, autor o cambiando los filtros seleccionados.</p>
+          <button type="button" className="reset-search-btn font-heading" onClick={clearAllFilters}>
+            <i className="fa-solid fa-rotate-left"></i> Limpiar filtros y búsqueda
           </button>
         </div>
       ) : (
         <>
           {/* Contador de resultados con formato de miles (es-CL) */}
           <div className="results-count-bar font-body">
-            <span>Mostrando {books.length.toLocaleString('es-CL')} de {totalCount.toLocaleString('es-CL')} libros en catálogo</span>
+            <span>Mostrando {books.length.toLocaleString('es-CL')} de {totalCount.toLocaleString('es-CL')} libros encontrados</span>
           </div>
 
-          {viewMode === 'grid' ? (
-            /* Vista en Grilla usando el componente común BookCard */
-            <div className="catalog-grid">
-              {books.map((book) => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  isNewlyArrived={isNewlyArrived(book.createdAt)}
-                  className="catalog-card"
-                  showInterestButton={true}
-                  onInterest={(id, title) => handleInterestBook(id, title)}
-                  onReserve={(id, title) => handleReserveBook(id, title)}
-                />
-              ))}
-            </div>
-          ) : (
-            /* Vista en Lista usando el componente común BookCard */
-            <div className="catalog-list">
-              {books.map((book) => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  isNewlyArrived={isNewlyArrived(book.createdAt)}
-                  className="catalog-list-item"
-                  showInterestButton={true}
-                  onInterest={(id, title) => handleInterestBook(id, title)}
-                  onReserve={(id, title) => handleReserveBook(id, title)}
-                />
-              ))}
-            </div>
-          )}
+          {/* Grilla con diseño de tarjetas de SwipePage */}
+          <div className="catalog-grid">
+            {books.map((book) => (
+              <BookCard
+                key={book.id}
+                book={{
+                  id: book.id,
+                  title: book.title,
+                  author: book.author,
+                  condition: book.condition,
+                  description: book.description,
+                  imageUrl: book.imageUrl,
+                  baseValue: book.baseValue,
+                  isInternalStock: book.isInternalStock,
+                  createdAt: book.createdAt,
+                }}
+                isNewlyArrived={isNewlyArrived(book.createdAt)}
+                className="catalog-swipe-card"
+                showInterestButton={true}
+                onInterest={handleInterestBook}
+                showReserveButton={true}
+                onReserve={handleReserveBook}
+                showUndoButton={false}
+              />
+            ))}
+          </div>
 
           {/* Paginación Elegante */}
           {totalPages > 1 && (

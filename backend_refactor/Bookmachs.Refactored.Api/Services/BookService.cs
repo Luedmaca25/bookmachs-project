@@ -264,6 +264,7 @@ public class BookService : IBookService
                         p.Precio,
                         p.IdCategoriaProducto,
                         p.IdSubcategoria,
+                        p.IdEstadoProducto,
                         p.Activo,
                         p.Stock,
                         p.FechaRegistro,
@@ -295,7 +296,7 @@ public class BookService : IBookService
                         Title = prod.NombreLibro,
                         Author = prod.Autor ?? "Desconocido",
                         Description = prod.Resena,
-                        Condition = "Bueno",
+                        Condition = MapEstadoProducto(prod.IdEstadoProducto),
                         Category = categoryName,
                         ImageUrl = imageUrl,
                         BaseValue = prod.Precio ?? 0.00m,
@@ -332,6 +333,7 @@ public class BookService : IBookService
                     p.Precio,
                     p.IdCategoriaProducto,
                     p.IdSubcategoria,
+                    p.IdEstadoProducto,
                     p.Activo,
                     p.Stock,
                     p.FechaRegistro,
@@ -362,7 +364,7 @@ public class BookService : IBookService
                     Title = prod.NombreLibro,
                     Author = prod.Autor ?? "Desconocido",
                     Description = prod.Resena,
-                    Condition = "Bueno",
+                    Condition = MapEstadoProducto(prod.IdEstadoProducto),
                     Category = categoryName,
                     ImageUrl = imageUrl,
                     BaseValue = prod.Precio ?? 0.00m,
@@ -862,6 +864,31 @@ public class BookService : IBookService
             }
         }
 
+        if (!string.IsNullOrWhiteSpace(condition))
+        {
+            var cond = condition.Trim().ToLower();
+            if (cond == "excelente" || cond == "nuevo")
+            {
+                query = query.Where(p => p.IdEstadoProducto == 4);
+            }
+            else if (cond == "muy bueno")
+            {
+                query = query.Where(p => p.IdEstadoProducto == 5);
+            }
+            else if (cond == "bueno")
+            {
+                query = query.Where(p => p.IdEstadoProducto == 1);
+            }
+            else if (cond == "aceptable" || cond == "normal")
+            {
+                query = query.Where(p => p.IdEstadoProducto == 2);
+            }
+            else if (cond == "desgastado" || cond == "reliquia" || cond == "reliquias")
+            {
+                query = query.Where(p => p.IdEstadoProducto == 7);
+            }
+        }
+
         query = sortBy?.ToLower() switch
         {
             "title" => query.OrderBy(p => p.NombreLibro),
@@ -1056,7 +1083,7 @@ public class BookService : IBookService
             Title = product.NombreLibro,
             Author = product.Autor ?? "Desconocido",
             Description = product.Resena,
-            Condition = "Bueno", // Por defecto para inventario de Ecolectura
+            Condition = MapEstadoProducto(product.IdEstadoProducto),
             Category = categoryName,
             ImageUrl = imageUrl,
             BaseValue = product.Precio ?? 0.00m,
@@ -1089,7 +1116,7 @@ public class BookService : IBookService
             Title = product.NombreLibro,
             Author = product.Autor ?? "Desconocido",
             Description = product.Resena,
-            Condition = "Bueno",
+            Condition = MapEstadoProducto(product.IdEstadoProducto),
             Category = categoryName,
             ImageUrl = imageUrl,
             BaseValue = product.Precio ?? 0.00m,
@@ -1097,6 +1124,19 @@ public class BookService : IBookService
             IsAvailable = product.Activo && (product.Stock > 0),
             ExchangeStatus = (product.Activo && (product.Stock > 0)) ? "Available" : "Unavailable",
             CreatedAt = product.FechaRegistro ?? DateTime.UtcNow
+        };
+    }
+
+    public static string MapEstadoProducto(int? idEstadoProducto)
+    {
+        return idEstadoProducto switch
+        {
+            4 => "Excelente",   // Nuevo en Ecolectura
+            5 => "Muy bueno",   // Muy bueno en Ecolectura
+            1 => "Bueno",       // Bueno en Ecolectura
+            2 => "Aceptable",   // Normal en Ecolectura
+            7 => "Reliquia",    // Reliquias en Ecolectura
+            _ => "Bueno"
         };
     }
 

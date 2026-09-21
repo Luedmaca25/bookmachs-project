@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getFileUrl } from '../../../lib/formatters';
 
 export interface BookCardData {
   id: string;
@@ -49,8 +50,8 @@ export const BookCard: React.FC<BookCardProps> = ({
   isDragging = false,
   dragOffset = { x: 0, y: 0 },
   swipeDirection = null,
-  onReserve: _onReserve,
-  showReserveButton: _showReserveButton = false,
+  onReserve,
+  showReserveButton = false,
   onInterest,
   showInterestButton = true,
   showUndoButton = false,
@@ -152,7 +153,7 @@ export const BookCard: React.FC<BookCardProps> = ({
         {book.imageUrl ? (
           <img
             key={book.id}
-            src={book.imageUrl}
+            src={getFileUrl(book.imageUrl)}
             alt={book.title}
             className={imageSwipeClassName}
             style={style}
@@ -236,19 +237,34 @@ export const BookCard: React.FC<BookCardProps> = ({
             </button>
           )}
 
-          {showInterestButton && onInterest && (
+          {((showInterestButton && onInterest) || (showReserveButton && onReserve)) && (
             <div className="catalog-card-footer">
-              {/* Botón Me Interesa (Intercambio / Swipe Like) */}
-              <button
-                type="button"
-                className="catalog-interest-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onInterest(book.id, book.title);
-                }}
-              >
-                Me Interesa <i className="fa-solid fa-heart"></i>
-              </button>
+              <div className="catalog-actions-row">
+                {showInterestButton && onInterest && (
+                  <button
+                    type="button"
+                    className="catalog-interest-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onInterest(book.id, book.title);
+                    }}
+                  >
+                    Me Interesa <i className="fa-solid fa-heart"></i>
+                  </button>
+                )}
+                {showReserveButton && onReserve && (
+                  <button
+                    type="button"
+                    className="catalog-reserve-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReserve(book.id, book.title);
+                    }}
+                  >
+                    Reservar <i className="fa-solid fa-lock"></i>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
