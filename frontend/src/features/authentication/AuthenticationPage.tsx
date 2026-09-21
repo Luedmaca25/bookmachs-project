@@ -432,6 +432,17 @@ export const AuthenticationPage: React.FC = () => {
               )}
             </div>
 
+            <Link to="/ayuda" className="profile-help-link-btn">
+              <div className="profile-help-link-content">
+                <i className="fa-solid fa-shield-halved profile-help-icon"></i>
+                <div className="profile-help-text">
+                  <strong>Ayuda y seguridad</strong>
+                  <small>Centro de ayuda, soporte 24/7 y reportes</small>
+                </div>
+              </div>
+              <i className="fa-solid fa-chevron-right profile-help-arrow"></i>
+            </Link>
+
             <button 
               onClick={handleLogout} 
               className="modal-submit-btn profile-logout-btn"

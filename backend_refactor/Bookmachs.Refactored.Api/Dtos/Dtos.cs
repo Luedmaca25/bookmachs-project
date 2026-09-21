@@ -298,3 +298,27 @@ public class ExchangeQuotaDto
     public DateTime CycleStartDate { get; set; }
     public DateTime CycleEndDate { get; set; }
 }
+
+public class CreateSupportTicketDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public string Category { get; set; } = "general";
+    public string Subject { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public Guid? TransactionId { get; set; }
+    public bool IsUrgent { get; set; }
+}
+
+public class SupportTicketResponseDto
+{
+    public bool Success { get; set; }
+    public string TicketId { get; set; } = string.Empty;
+    public string Priority { get; set; } = "Normal";
+    public string EstimatedResponseTime { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public bool HasWhatsAppAccess { get; set; }
+    public string? WhatsAppUrl { get; set; }
+}
+

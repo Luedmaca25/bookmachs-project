@@ -9,6 +9,7 @@ import { SocialPage } from '../../features/social/SocialPage';
 import { AuthenticationPage } from '../../features/authentication/AuthenticationPage';
 import { AdminSettingsPage } from '../../features/admin/AdminSettingsPage';
 import { PlansPage } from '../../features/subscriptions/PlansPage';
+import { HelpCenterPage } from '../../features/support/HelpCenterPage';
 import { useAuthStore } from '../../features/authentication/store/authStore';
 
 // Componente para proteger las rutas
@@ -64,6 +65,7 @@ export const AppRouter: React.FC = () => {
           } />
           
           <Route path="planes" element={<PlansPage />} />
+          <Route path="ayuda" element={<HelpCenterPage />} />
           
           <Route path="social" element={
             <ProtectedRoute>
