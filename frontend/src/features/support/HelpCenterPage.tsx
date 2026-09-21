@@ -57,7 +57,7 @@ const FAQS_DATA: FaqItem[] = [
     id: 'f7',
     category: 'profile',
     question: '¿Cómo accedo al canal de Soporte Premium 24/7?',
-    answer: 'Los usuarios Premium cuentan con acceso directo vía WhatsApp las 24 horas del día, los 7 días de la semana, además de atención preferencial en tickets con respuesta en menos de 15 minutos. Puedes activarlo pulsando el botón "Chatear por WhatsApp 24/7" en este Centro de Ayuda.'
+    answer: 'Los usuarios Premium cuentan con acceso directo vía WhatsApp las 24 horas del día, los 7 días de la semana, además de atención preferencial en tickets con respuesta en menos de 15 minutos. Puedes activarlo pulsando el botón "WhatsApp" en este Centro de Ayuda.'
   },
   {
     id: 'f8',
@@ -264,7 +264,7 @@ export const HelpCenterPage: React.FC = () => {
                       rel="noopener noreferrer" 
                       className="help-btn-whatsapp"
                     >
-                      <i className="fa-brands fa-whatsapp"></i> Chatear por WhatsApp 24/7
+                      <i className="fa-brands fa-whatsapp"></i> WhatsApp
                     </a>
                     <button 
                       onClick={() => openContactModal('priority_support', 'Consulta Prioritaria 24/7')} 
@@ -1020,7 +1020,7 @@ export const HelpCenterPage: React.FC = () => {
                         <i className="fa-solid fa-crown icon-gold"></i> Beneficio Premium 24/7
                       </div>
                       <p>
-                        Tu ticket ingresará con <strong>Prioridad Alta</strong> al equipo de guardia 24/7. También puedes hablar de forma inmediata por WhatsApp:
+                        Tu ticket ingresará con <strong>Prioridad Alta</strong>. También puedes hablar de forma inmediata por WhatsApp:
                       </p>
                       <a 
                         href={getPremiumWhatsAppUrl()} 
@@ -1028,7 +1028,7 @@ export const HelpCenterPage: React.FC = () => {
                         rel="noopener noreferrer" 
                         className="btn-whatsapp-quick"
                       >
-                        <i className="fa-brands fa-whatsapp"></i> Chatear directo por WhatsApp 24/7
+                        <i className="fa-brands fa-whatsapp"></i> WhatsApp
                       </a>
                     </div>
                   ) : (

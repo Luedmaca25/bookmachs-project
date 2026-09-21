@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
+import { CancelSubscriptionModal } from './components/CancelSubscriptionModal';
 
 interface Plan {
   id: string;
@@ -19,6 +20,7 @@ export const PlansPage: React.FC = () => {
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const { data: globalSettings } = useQuery<{ premiumPlanPriceUsd: number }>({
     queryKey: ['globalSettings'],
@@ -102,19 +104,38 @@ export const PlansPage: React.FC = () => {
       return;
     }
 
-    // Si ya tiene el plan actual
-    const currentPlan = user.isPremium ? 'premium' : 'free';
-    if (plan.id === currentPlan) {
-      setSuccessMessage(`Ya estás suscrito al ${plan.name}.`);
-      return;
-    }
-
-    setLoadingPlanId(plan.id);
     setSuccessMessage(null);
     setErrorMessage(null);
 
-    try {
-      if (plan.id === 'premium') {
+    // Si el usuario es Premium y hace clic en Plan Gratuito (o en Cancelar), abrimos el modal de doble check
+    if (user.isPremium && plan.id === 'free') {
+      if (user.isSubscriptionCancelled) {
+        setSuccessMessage(`Tu suscripción ya se encuentra cancelada. Seguirás teniendo acceso a todos tus beneficios Premium hasta el final de tu período de facturación${user.subscriptionEndDate ? ` (${new Date(user.subscriptionEndDate).toLocaleDateString('es-CL')})` : ''}.`);
+        return;
+      }
+      setShowCancelModal(true);
+      return;
+    }
+
+    // Si es Free y hace clic en Free
+    if (!user.isPremium && plan.id === 'free') {
+      setSuccessMessage('Ya te encuentras en el Plan Gratuito.');
+      return;
+    }
+
+    // Si el usuario contrata Premium vía Webpay
+    if (plan.id === 'premium') {
+      if (user.isPremium) {
+        if (user.isSubscriptionCancelled) {
+          setSuccessMessage(`Tu suscripción ya se encuentra cancelada. Seguirás teniendo acceso a todos tus beneficios Premium hasta el ${user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('es-CL') : 'fin de periodo'}.`);
+          return;
+        }
+        setShowCancelModal(true);
+        return;
+      }
+
+      setLoadingPlanId('premium');
+      try {
         const returnUrl = `${window.location.origin}/planes`;
         const response = await apiClient.post<{ success: boolean; token: string; redirectUrl: string; message?: string }>(
           '/subscriptions/webpay-start',
@@ -137,39 +158,12 @@ export const PlansPage: React.FC = () => {
         } else {
           setErrorMessage(response.message || 'No se pudo iniciar la transacción en Transbank Webpay Plus.');
         }
-      } else if (plan.id === 'free' && user.isPremium) {
-        if (user.isSubscriptionCancelled) {
-          setSuccessMessage(`Tu suscripción ya se encuentra cancelada. Seguirás teniendo acceso a todos tus beneficios Premium hasta el final de tu período de facturación${user.subscriptionEndDate ? ` (${new Date(user.subscriptionEndDate).toLocaleDateString('es-CL')})` : ''}.`);
-          return;
-        }
-
-        const confirmCancel = window.confirm(
-          `¿Estás seguro de que deseas cancelar tu suscripción Premium?\n\nAl cancelar, podrás seguir usando tu membresía con todos los beneficios Premium hasta la cancelación automática al final de tu período de facturación${user.subscriptionEndDate ? ` (${new Date(user.subscriptionEndDate).toLocaleDateString('es-CL')})` : ''}.`
-        );
-
-        if (!confirmCancel) {
-          return;
-        }
-
-        const response = await apiClient.post<any>('/subscriptions/cancel');
-
-        if (response.success) {
-          const updatedProfile = await apiClient.get<any>('/auth/me');
-          const token = localStorage.getItem('token') || '';
-          login(updatedProfile, token);
-
-          setSuccessMessage(response.message || 'Suscripción cancelada con éxito. Tu membresía permanecerá activa hasta el final de tu período de facturación.');
-        } else {
-          setErrorMessage(response.message || 'Error al cancelar la suscripción.');
-        }
-      } else {
-        setSuccessMessage(`Has seleccionado el ${plan.name}.`);
+      } catch (err: any) {
+        console.error(err);
+        setErrorMessage('Hubo un error de red al procesar tu membresía.');
+      } finally {
+        setLoadingPlanId(null);
       }
-    } catch (err: any) {
-      console.error(err);
-      setErrorMessage('Hubo un error de red al procesar tu membresía.');
-    } finally {
-      setLoadingPlanId(null);
     }
   };
 
@@ -188,19 +182,24 @@ export const PlansPage: React.FC = () => {
           const isUserCurrent = user 
             ? (plan.id === 'premium' && user.isPremium) || (plan.id === 'free' && !user.isPremium)
             : plan.id === 'free';
+          const isCancelledPremium = isUserCurrent && user?.isSubscriptionCancelled && plan.id === 'premium';
 
           return (
-            <div key={plan.id} className={`plan-card ${plan.recommended ? 'recommended' : ''} ${isUserCurrent ? 'current-active' : ''}`}>
-              {plan.recommended && <div className="plan-badge-recommended">RECOMENDADO</div>}
-              {isUserCurrent && (
-                user?.isSubscriptionCancelled && plan.id === 'premium' ? (
-                  <div className="plan-badge-warning" style={{ backgroundColor: '#e67e22', color: '#fff', position: 'absolute', top: '-12px', right: '20px', padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold', zIndex: 2 }}>
-                    CANCELACIÓN PROGRAMADA
-                  </div>
-                ) : (
-                  <div className="plan-badge-active">TU PLAN ACTUAL</div>
-                )
-              )}
+            <div key={plan.id} className={`plan-card ${plan.recommended && !isCancelledPremium ? 'recommended' : ''} ${isUserCurrent ? 'current-active' : ''}`}>
+              {/* Badge superior único jerárquico para evitar superposición */}
+              {isCancelledPremium ? (
+                <div className="plan-badge-warning">
+                  <i className="fa-solid fa-clock-rotate-left"></i> CANCELACIÓN PROGRAMADA
+                </div>
+              ) : isUserCurrent ? (
+                <div className="plan-badge-active">
+                  <i className="fa-solid fa-circle-check"></i> TU PLAN ACTUAL
+                </div>
+              ) : plan.recommended ? (
+                <div className="plan-badge-recommended">
+                  <i className="fa-solid fa-star"></i> RECOMENDADO
+                </div>
+              ) : null}
               
               <div className="plan-card-header">
                 <h3>{plan.name}</h3>
@@ -231,30 +230,77 @@ export const PlansPage: React.FC = () => {
               </ul>
 
               <div className="plan-card-action">
-                <button
-                  onClick={() => handleSelectPlan(plan)}
-                  disabled={loadingPlanId !== null || (plan.id === 'premium' && !!user?.isSubscriptionCancelled)}
-                  className={`plan-action-btn ${isUserCurrent ? 'btn-current' : plan.recommended ? 'btn-premium' : 'btn-normal'}`}
-                >
-                  {loadingPlanId === plan.id ? (
-                    <span className="spinner">Procesando...</span>
-                  ) : isUserCurrent ? (
-                    plan.id === 'free' ? (
-                      <><>Plan Activo</> <i className="fa-solid fa-circle-check"></i></>
-                    ) : user?.isSubscriptionCancelled ? (
-                      <><>Activo hasta {user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('es-CL') : 'fin de periodo'}</> <i className="fa-solid fa-clock"></i></>
+                {plan.id === 'free' ? (
+                  !user?.isPremium ? (
+                    // Usuario Free en tarjeta Free
+                    <button
+                      disabled
+                      className="plan-action-btn btn-active-current"
+                    >
+                      <i className="fa-solid fa-circle-check"></i> Plan Actual Activo
+                    </button>
+                  ) : (
+                    // Usuario Premium en tarjeta Free
+                    <button
+                      onClick={() => handleSelectPlan(plan)}
+                      disabled={loadingPlanId !== null || !!user?.isSubscriptionCancelled}
+                      className="plan-action-btn btn-downgrade-plan"
+                      title="Cancelar suscripción para volver al Plan Gratuito"
+                    >
+                      <i className="fa-solid fa-arrow-down"></i> Bajar a Plan Gratuito
+                    </button>
+                  )
+                ) : (
+                  // Tarjeta Premium
+                  user?.isPremium ? (
+                    user.isSubscriptionCancelled ? (
+                      // Premium con cancelación programada
+                      <button
+                        disabled
+                        className="plan-action-btn btn-scheduled-cancel"
+                        title="Tu membresía permanecerá activa hasta el fin de este ciclo"
+                      >
+                        <i className="fa-solid fa-clock"></i> Activo hasta {user.subscriptionEndDate ? new Date(user.subscriptionEndDate).toLocaleDateString('es-CL') : 'fin de ciclo'}
+                      </button>
                     ) : (
-                      <><>Cancelar Suscripción</> <i className="fa-solid fa-circle-xmark"></i></>
+                      // Premium activo sin cancelar -> Botón Cancelar Suscripción
+                      <button
+                        onClick={() => setShowCancelModal(true)}
+                        disabled={loadingPlanId !== null}
+                        className="plan-action-btn btn-cancel-plan"
+                      >
+                        <i className="fa-solid fa-circle-xmark"></i> Cancelar Suscripción
+                      </button>
                     )
                   ) : (
-                    `Suscribirse al plan`
-                  )}
-                </button>
+                    // Usuario Free queriendo contratar Premium
+                    <button
+                      onClick={() => handleSelectPlan(plan)}
+                      disabled={loadingPlanId !== null}
+                      className="plan-action-btn btn-premium"
+                    >
+                      {loadingPlanId === 'premium' ? (
+                        <span className="spinner"><i className="fa-solid fa-spinner fa-spin"></i> Conectando con Webpay...</span>
+                      ) : (
+                        <span><i className="fa-solid fa-crown icon-gold"></i> Contratar Plan Premium</span>
+                      )}
+                    </button>
+                  )
+                )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Modal de Cancelación con doble check */}
+      <CancelSubscriptionModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onSuccess={(msg) => setSuccessMessage(msg)}
+        subscriptionEndDate={user?.subscriptionEndDate}
+      />
+
 
       <div className="plans-legal-footer">
         <h3>Información Importante de Facturación</h3>

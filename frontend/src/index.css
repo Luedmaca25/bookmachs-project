@@ -1586,10 +1586,12 @@ p {
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(4px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 999999 !important;
-  padding: 1rem;
+  padding: 2.5rem 1rem 2rem 1rem;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 /* Executive Edit / Create Tag Modal Styling (.admin-modal-card) */
@@ -2482,16 +2484,17 @@ body.swipe-page-active .app-footer {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   /* Fondo completamente sólido de alta opacidad sin transparencia distorsionadora */
   background-color: rgba(5, 8, 16, 0.8);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 100000 !important;
   /* Estilo Bootstrap 5: Por encima de todo incluyendo navbar y footer */
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 1.5rem;
+  padding: 2.5rem 1.5rem 2rem 1.5rem;
   box-sizing: border-box;
   animation: fadeIn 0.2s ease-out;
 }
@@ -2503,6 +2506,10 @@ body.swipe-page-active .app-footer {
   padding: 2.5rem;
   width: 90%;
   max-width: 460px;
+  max-height: calc(100vh - 4.5rem);
+  max-height: calc(100dvh - 4.5rem);
+  overflow-y: auto;
+  box-sizing: border-box;
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
@@ -3851,8 +3858,11 @@ body.swipe-page-active .app-footer {
 .match-modal-card {
   position: relative;
   top: 0 !important;
-  margin: auto !important;
+  margin: 0 auto !important;
   max-width: 580px !important;
+  max-height: calc(100vh - 4.5rem) !important;
+  max-height: calc(100dvh - 4.5rem) !important;
+  overflow-y: auto !important;
   padding: 2.5rem 2rem !important;
   text-align: center;
   align-items: center;
@@ -4948,7 +4958,12 @@ body.swipe-page-active .app-footer {
   font-weight: 700;
   padding: 0.35rem 1.2rem;
   border-radius: var(--radius-full);
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
 }
 
 .plan-badge-active {
@@ -4956,13 +4971,38 @@ body.swipe-page-active .app-footer {
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--accent-success);
-  color: #070a13;
+  background: #0f9d58;
+  color: #ffffff;
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.35rem 1.2rem;
   border-radius: var(--radius-full);
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+}
+
+.plan-badge-warning {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 1.2rem;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+  z-index: 2;
 }
 
 .plan-card-header {
@@ -8800,6 +8840,10 @@ body.swipe-page-active .app-footer {
 .match-modal-card-custom {
   max-width: 680px;
   width: 92%;
+  max-height: calc(100vh - 4.5rem) !important;
+  max-height: calc(100dvh - 4.5rem) !important;
+  overflow-y: auto !important;
+  margin: 0 auto !important;
   padding: 2rem 1.75rem;
 }
 
@@ -13141,41 +13185,53 @@ body.swipe-page-active .app-footer {
   bottom: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-  background: rgba(10, 25, 18, 0.5) !important;
+  height: 100dvh !important;
+  background: rgba(10, 25, 18, 0.55) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-start !important; /* Posicionado desde arriba */
   justify-content: center !important;
   z-index: 9999999 !important; /* Supera navbar superior y bottom-nav móvil */
-  padding: 1.5rem !important;
+  padding: 2.5rem 1.25rem 2rem 1.25rem !important;
   box-sizing: border-box !important;
   overflow-y: auto !important;
   animation: helpModalFadeIn 0.2s ease-out;
 }
 
-.help-modal-card.support-modal {
+/* Tarjeta base unificada para todos los modales help-modal */
+.help-modal-card {
   background: #ffffff !important;
-  border: 1.5px solid #e1e8e4 !important;
-  border-radius: 24px !important;
-  max-width: 540px !important;
-  width: 100% !important;
-  box-shadow: 0 25px 50px -12px rgba(15, 157, 88, 0.2), 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 16px !important;
   display: flex !important;
   flex-direction: column !important;
+  max-height: calc(100vh - 4.5rem) !important;
+  max-height: calc(100dvh - 4.5rem) !important;
   overflow: hidden !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  margin: 0 auto !important;
+  width: 100% !important;
   animation: helpModalScaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  margin: auto !important;
+}
+
+.help-modal-card.support-modal {
+  border: 1.5px solid #e1e8e4 !important;
+  max-width: 540px !important;
+  box-shadow: 0 20px 45px -10px rgba(15, 157, 88, 0.2), 0 8px 24px rgba(0, 0, 0, 0.08) !important;
 }
 
 .help-modal-header {
   background: #ffffff !important;
-  padding: 20px 24px !important;
+  padding: 18px 24px !important;
   border-bottom: 1px solid #f0f4f2 !important;
+  border-top-left-radius: 16px !important;
+  border-top-right-radius: 16px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
   gap: 16px !important;
+  flex-shrink: 0 !important; /* Siempre fijo arriba dentro de la tarjeta del modal */
 }
 
 .help-modal-header-title {
@@ -13232,9 +13288,12 @@ body.swipe-page-active .app-footer {
 
 .help-modal-body {
   padding: 24px !important;
-  max-height: 80vh !important;
+  flex: 1 1 auto !important;
   overflow-y: auto !important;
+  max-height: none !important; /* La altura se contiene por .help-modal-card */
   background: #ffffff !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 .modal-premium-perk-box {
@@ -13592,11 +13651,318 @@ body.swipe-page-active .app-footer {
   }
 
   .help-modal-overlay {
-    padding: 1rem !important;
+    padding: 1rem 0.75rem !important;
+    align-items: flex-start !important;
   }
 
-  .help-modal-card.support-modal {
-    border-radius: 20px !important;
+  .help-modal-card {
+    max-height: calc(100dvh - 2rem) !important;
+    border-radius: 16px !important;
   }
+
+  .help-modal-card.support-modal,
+  .help-modal-card.cancel-sub-modal {
+    border-radius: 16px !important;
+  }
+}
+
+/* ============================================================ */
+/* PLANES Y MEMBRESÍAS - BOTONES Y MODAL DE CANCELACIÓN         */
+/* ============================================================ */
+
+.plan-action-btn.btn-cancel-plan {
+  background: #ffffff !important;
+  border: 1.5px solid #ef4444 !important;
+  color: #dc2626 !important;
+  cursor: pointer !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.plan-action-btn.btn-cancel-plan:hover {
+  background: #fef2f2 !important;
+  border-color: #dc2626 !important;
+  color: #b91c1c !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15) !important;
+}
+
+.plan-action-btn.btn-active-current {
+  background: #f0fdf4 !important;
+  border: 1.5px solid #a7f3d0 !important;
+  color: #0b7a44 !important;
+  font-weight: 700 !important;
+  cursor: default !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.plan-action-btn.btn-scheduled-cancel {
+  background: #fffbeb !important;
+  border: 1.5px solid #fde68a !important;
+  color: #b45309 !important;
+  font-weight: 700 !important;
+  cursor: default !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.plan-action-btn.btn-downgrade-plan {
+  background: #ffffff !important;
+  border: 1.5px solid #d2dcd7 !important;
+  color: #4a5d55 !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.plan-action-btn.btn-downgrade-plan:hover {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Modal de Cancelación de Suscripción */
+.help-modal-card.cancel-sub-modal {
+  max-width: 520px !important;
+  width: 100% !important;
+  background: #ffffff !important;
+  border: 1.5px solid #e1e8e4 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 45px -10px rgba(217, 119, 6, 0.18), 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  overflow: hidden !important;
+}
+
+.cancel-sub-header {
+  background: #ffffff !important;
+  border-bottom: 1px solid #f0f4f2 !important;
+  border-top-left-radius: 16px !important;
+  border-top-right-radius: 16px !important;
+}
+
+.cancel-sub-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.cancel-sub-subtitle {
+  font-size: 0.82rem;
+  color: #b45309;
+  font-weight: 600;
+}
+
+.cancel-sub-body {
+  padding: 24px !important;
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.cancel-sub-notice-box {
+  background: #f8faf9;
+  border: 1.5px solid #e1e8e4;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.cancel-notice-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a2621;
+  margin: 0 0 6px;
+}
+
+.cancel-notice-text {
+  font-size: 0.88rem;
+  color: #4a5d55;
+  margin: 0 0 12px;
+}
+
+.cancel-notice-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cancel-notice-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.86rem;
+  color: #2d3748;
+  line-height: 1.4;
+}
+
+.cancel-notice-list li i {
+  font-size: 1rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.text-green {
+  color: #0f9d58;
+}
+
+.text-amber {
+  color: #d97706;
+}
+
+.cancel-double-check-box {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cancel-double-check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #78350f;
+}
+
+.cancel-double-check-label strong {
+  color: #b45309;
+  background: #fef3c7;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-weight: 800;
+}
+
+.cancel-confirm-input {
+  width: 100% !important;
+  padding: 12px 16px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #d2dcd7 !important;
+  border-radius: 12px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.cancel-confirm-input:focus {
+  border-color: #d97706 !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15) !important;
+}
+
+.cancel-feedback-row {
+  min-height: 20px;
+  font-size: 0.82rem;
+}
+
+.cancel-confirm-valid {
+  color: #059669;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cancel-confirm-pending {
+  color: #92400e;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cancel-sub-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-keep-premium {
+  flex: 1;
+  min-width: 180px;
+  padding: 13px 18px;
+  background: linear-gradient(135deg, #0f9d58 0%, #0b7a44 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(15, 157, 88, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-keep-premium:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0b7a44 0%, #085c33 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 157, 88, 0.35);
+}
+
+.btn-confirm-cancel-sub {
+  flex: 1;
+  min-width: 180px;
+  padding: 13px 18px;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-confirm-cancel-sub:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
+}
+
+.btn-confirm-cancel-sub:disabled {
+  background: #f3f4f6 !important;
+  color: #9ca3af !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  transform: none !important;
 }
 
