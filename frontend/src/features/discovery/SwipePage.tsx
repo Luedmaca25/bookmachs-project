@@ -7,6 +7,7 @@ import { MatchModal } from '../transactions/components/MatchModal';
 import { BookCard } from './components/BookCard';
 import { StepByStepTutorialModal } from './components/StepByStepTutorialModal';
 import { GuestLimitModal } from './components/GuestLimitModal';
+import { UndoSwipePremiumModal } from './components/UndoSwipePremiumModal';
 import { apiClient } from '../../lib/apiClient';
 
 const COUNTRIES_LIST = [
@@ -148,6 +149,7 @@ export const SwipePage: React.FC = () => {
   // Control de cuota y contador de swipes persisitido en base de datos
   const [swipesConsumed, setSwipesConsumed] = useState(user?.dailySwipesConsumed ?? 0);
   const [swipeLimit, setSwipeLimit] = useState(user?.dailySwipeLimit ?? (user?.isPremium ? 1000 : 40));
+  const [showUndoPremiumModal, setShowUndoPremiumModal] = useState(false);
 
   // Bloquear el scroll y el rebote de pantalla en dispositivos móviles durante la experiencia de Swipe
   useEffect(() => {
@@ -387,6 +389,14 @@ export const SwipePage: React.FC = () => {
     }
   };
 
+  const handleUndoClick = () => {
+    if (!user?.isPremium) {
+      setShowUndoPremiumModal(true);
+      return;
+    }
+    handleUndoSwipe();
+  };
+
   const triggerSwipe = async (direction: 'left' | 'right') => {
     // Si la acción es "like" (derecha) y ya se alcanzó el límite de likes, no permitir más likes
     if (direction === 'right' && limitReached) return;
@@ -568,7 +578,8 @@ export const SwipePage: React.FC = () => {
               book={currentBook}
               showUndoButton={true}
               canUndo={currentBookIndex > 0 || swipedHistory.length > 0}
-              onUndo={handleUndoSwipe}
+              onUndo={handleUndoClick}
+              isPremium={!!user?.isPremium}
               isDragging={isDragging}
               dragOffset={dragOffset}
               swipeDirection={swipeDirection}
@@ -711,6 +722,11 @@ export const SwipePage: React.FC = () => {
       <GuestLimitModal
         isOpen={showGuestLimitModal}
         onClose={() => setShowGuestLimitModal(false)}
+      />
+
+      <UndoSwipePremiumModal
+        isOpen={showUndoPremiumModal}
+        onClose={() => setShowUndoPremiumModal(false)}
       />
     </div>
   );

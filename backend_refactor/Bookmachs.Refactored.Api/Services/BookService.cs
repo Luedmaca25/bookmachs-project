@@ -724,6 +724,11 @@ public class BookService : IBookService
             throw new KeyNotFoundException("Usuario no encontrado.");
         }
 
+        if (!user.IsPremium)
+        {
+            throw new InvalidOperationException("La opción de regresar al libro anterior es una funcionalidad exclusiva del Plan Premium.");
+        }
+
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
         int baseLimit = user.IsPremium ? 1000 : 40;
         if (settings != null)

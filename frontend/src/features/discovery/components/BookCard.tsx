@@ -33,6 +33,7 @@ interface BookCardProps {
   showUndoButton?: boolean;
   canUndo?: boolean;
   onUndo?: () => void;
+  isPremium?: boolean;
   onTouchStart?: (e: React.TouchEvent) => void;
   onTouchMove?: (e: React.TouchEvent) => void;
   onTouchEnd?: () => void;
@@ -57,6 +58,7 @@ export const BookCard: React.FC<BookCardProps> = ({
   showUndoButton = false,
   canUndo = false,
   onUndo,
+  isPremium = false,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -109,17 +111,28 @@ export const BookCard: React.FC<BookCardProps> = ({
       {showUndoButton && onUndo && (
         <button
           type="button"
-          className={`swipe-undo-btn ${!canUndo ? 'disabled' : ''}`}
+          className={`swipe-undo-btn ${!canUndo ? 'disabled' : ''} ${!isPremium ? 'premium-feature-btn' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
             if (canUndo) onUndo();
           }}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
-          title={canUndo ? "Retroceder al libro anterior" : "No hay libro anterior"}
+          title={
+            !canUndo
+              ? "No hay libro anterior"
+              : !isPremium
+              ? "Función Premium: Retroceder al libro anterior"
+              : "Retroceder al libro anterior"
+          }
           disabled={!canUndo}
         >
           <i className="fa-solid fa-rotate-left"></i>
+          {!isPremium && (
+            <span className="undo-crown-badge" title="Beneficio Exclusivo Premium">
+              <i className="fa-solid fa-crown"></i>
+            </span>
+          )}
         </button>
       )}
 

@@ -208,6 +208,10 @@ public class BooksController : ControllerBase
         {
             return NotFound(ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+        }
         catch (Exception ex)
         {
             return BadRequest(new { message = ex.Message });
@@ -231,6 +235,10 @@ public class BooksController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
         }
         catch (Exception ex)
         {
