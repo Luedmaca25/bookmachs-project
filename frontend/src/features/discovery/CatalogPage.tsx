@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
 import { BookCard } from './components/BookCard';
+import { MatchModal } from '../transactions/components/MatchModal';
 
 interface BookItem {
   id: string;
@@ -74,6 +76,12 @@ export const CatalogPage: React.FC = () => {
     queryFn: () => apiClient.get<BookItem[]>('/books/my-reservations'),
     enabled: isAuthenticated && user?.isPremium === true,
   });
+
+  // Estados para MatchModal e iniciar intercambio directo
+  const [matchedBook, setMatchedBook] = useState<BookItem | null>(null);
+  const [matchTransactionId, setMatchTransactionId] = useState<string | null>(null);
+  const [matchOpen, setMatchOpen] = useState(false);
+  const [actionLoadingBookId, setActionLoadingBookId] = useState<string | null>(null);
 
   // Categorías de lectura (tags activos de la BD)
   const [tags, setTags] = useState<string[]>([]);
@@ -229,14 +237,46 @@ export const CatalogPage: React.FC = () => {
       }
       const response = await apiClient.post<SwipeResponse>(`/books/${bookId}/swipe`, { action: 'like' });
 
-      if (response && response.isMatch) {
-        alert(`¡ES UN MATCH! 🎉 Te ha interesado "${bookTitle}" y ambos coinciden en el intercambio.`);
+      if (response && response.isMatch && response.matchTransactionId) {
+        const found = books.find((b) => b.id === bookId);
+        setMatchedBook(found || null);
+        setMatchTransactionId(response.matchTransactionId);
+        setMatchOpen(true);
       } else {
-        alert(`Has marcado "${bookTitle}" como "Me Interesa" ❤️.`);
+        alert(`Has marcado "${bookTitle}" como "Me Interesa" ❤️. Se ha guardado en tu libreta.`);
       }
     } catch (err: any) {
       console.error('Error al marcar me interesa:', err);
       alert(err.message || 'No se pudo registrar tu interés por el libro.');
+    }
+  };
+
+  const handleInitiateExchange = async (book: BookItem) => {
+    try {
+      setActionLoadingBookId(book.id);
+      interface SwipeResponse {
+        success: boolean;
+        isMatch: boolean;
+        matchTransactionId?: string;
+      }
+      // Damos "like" al libro para registrarlo en la libreta y buscar match inmediato
+      const response = await apiClient.post<SwipeResponse>(`/books/${book.id}/swipe`, { action: 'like' });
+
+      setShowReservationsModal(false);
+
+      if (response && response.isMatch && response.matchTransactionId) {
+        setMatchedBook(book);
+        setMatchTransactionId(response.matchTransactionId);
+        setMatchOpen(true);
+      } else {
+        alert(`¡Excelente! "${book.title}" ha sido añadido a tu lista de libros deseados ❤️. Te llevamos a tu Libreta para que selecciones con qué libro intercambiarlo.`);
+        navigate('/libreta');
+      }
+    } catch (err: any) {
+      console.error('Error al iniciar intercambio:', err);
+      alert(err.message || 'No se pudo iniciar el intercambio para este libro.');
+    } finally {
+      setActionLoadingBookId(null);
     }
   };
 
@@ -391,7 +431,7 @@ export const CatalogPage: React.FC = () => {
             <i className={`fa-solid fa-chevron-${showFilters ? 'up' : 'down'} chevron-icon`}></i>
           </button>
 
-          {/* <button
+          <button
             type="button"
             className="toggle-filters-btn my-reservations-btn"
             onClick={() => { refetchReservations(); setShowReservationsModal(true); }}
@@ -402,7 +442,7 @@ export const CatalogPage: React.FC = () => {
             {myReservations && myReservations.length > 0 && (
               <span className="active-filters-count-badge">{myReservations.length}</span>
             )}
-          </button> */}
+          </button>
         </div>
       </div>
 
@@ -583,61 +623,117 @@ export const CatalogPage: React.FC = () => {
         </>
       )}
 
-      {/* Modal de Mis Reservas Activas */}
-      {showReservationsModal && (
-        <div className="modal-overlay animated-fade-in" onClick={() => setShowReservationsModal(false)}>
-          <div className="modal-content catalog-reservations-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3><i className="fa-solid fa-bookmark text-accent"></i> Mis Reservas Activas (48 hrs)</h3>
-              <button type="button" className="close-modal-btn" onClick={() => setShowReservationsModal(false)}>
-                <i className="fa-solid fa-xmark"></i>
-              </button>
+      {/* Modal de Mis Reservas Activas (Portal a document.body) */}
+      {showReservationsModal && createPortal(
+        <div className="modal-overlay tutorial-modal-overlay animated-fade-in" onClick={() => setShowReservationsModal(false)}>
+          <div className="tutorial-modal-card catalog-reservations-modal-card" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="tutorial-close-btn"
+              onClick={() => setShowReservationsModal(false)}
+              title="Cerrar modal"
+              aria-label="Cerrar modal"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
+            <div className="reservations-modal-header">
+              <div className="reservations-icon-circle">
+                <i className="fa-solid fa-bookmark"></i>
+              </div>
+              <h3 className="reservations-modal-title font-heading">
+                Mis Reservas Activas (48 hrs)
+              </h3>
+              <p className="reservations-modal-subtitle">
+                Estos libros están apartados exclusivamente para ti. Nadie más puede tomarlos ni reservarlos mientras continúe tu reserva activa.
+              </p>
             </div>
-            <div className="modal-body">
+
+            <div className="reservations-modal-body">
               {!myReservations || myReservations.length === 0 ? (
-                <div className="empty-reservations-state" style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                  <i className="fa-solid fa-book-bookmark" style={{ fontSize: '3rem', color: 'var(--text-muted)', marginBottom: '1rem', display: 'block' }}></i>
+                <div className="empty-reservations-state">
+                  <div className="empty-reservations-icon">
+                    <i className="fa-solid fa-book-bookmark"></i>
+                  </div>
                   <h4>No tienes ninguna reserva activa</h4>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                    Cuando encuentres un libro de tu interés en el catálogo, puedes usar la función de reserva para asegurar tu stock durante 48 horas.
+                  <p>
+                    Cuando encuentres un libro de tu interés en el catálogo, usa el botón <strong>Reservar</strong> para congelar el stock a tu favor durante 48 horas.
                   </p>
                 </div>
               ) : (
-                <div className="reservations-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="reservations-list">
                   {myReservations.map((item) => (
-                    <div key={item.id} className="reservation-item-card" style={{ display: 'flex', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '12px', alignItems: 'center' }}>
-                      <div className="reservation-item-cover" style={{ width: '60px', height: '80px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden' }}>
+                    <div key={item.id} className="reservation-item-card">
+                      <div className="reservation-item-cover">
                         {item.imageUrl ? (
-                          <img src={item.imageUrl} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={item.imageUrl} alt={item.title} />
                         ) : (
-                          <div style={{ width: '100%', height: '100%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div className="reservation-item-fallback">
                             <i className="fa-solid fa-book"></i>
                           </div>
                         )}
                       </div>
-                      <div className="reservation-item-details" style={{ flex: 1 }}>
-                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', color: '#fff' }}>{item.title}</h4>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--accent-secondary)', display: 'block', marginBottom: '6px' }}>por {item.author}</span>
-                        <span className="reservation-timer-pill" style={{ fontSize: '0.78rem', background: 'rgba(255, 209, 102, 0.15)', color: 'var(--accent-primary)', padding: '3px 8px', borderRadius: '6px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <i className="fa-solid fa-clock"></i> Reserva Activa (48 hrs)
-                        </span>
+
+                      <div className="reservation-item-details">
+                        <h4 className="reservation-item-title font-heading">{item.title}</h4>
+                        <span className="reservation-item-author">por {item.author}</span>
+                        <div className="reservation-pills-row">
+                          <span className="reservation-timer-pill">
+                            <i className="fa-solid fa-clock"></i> Reserva Activa (48 hrs)
+                          </span>
+                          {item.condition && (
+                            <span className="reservation-condition-pill">
+                              {item.condition}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        className="cancel-reservation-btn"
-                        style={{ background: 'rgba(239, 71, 111, 0.15)', border: '1px solid rgba(239, 71, 111, 0.3)', color: '#ef476f', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}
-                        onClick={() => handleCancelReservation(item.id)}
-                      >
-                        Liberar <i className="fa-solid fa-trash-can"></i>
-                      </button>
+
+                      <div className="reservation-item-actions">
+                        <button
+                          type="button"
+                          className="reservation-exchange-btn font-heading"
+                          onClick={() => handleInitiateExchange(item)}
+                          disabled={actionLoadingBookId === item.id}
+                          title="Iniciar propuesta de intercambio para este libro"
+                        >
+                          {actionLoadingBookId === item.id ? (
+                            <><i className="fa-solid fa-circle-notch fa-spin"></i> Conectando...</>
+                          ) : (
+                            <><i className="fa-solid fa-arrows-rotate"></i> Iniciar Intercambio</>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="reservation-cancel-btn"
+                          onClick={() => handleCancelReservation(item.id)}
+                          title="Liberar reserva"
+                        >
+                          <i className="fa-solid fa-trash-can"></i> Liberar
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
+      {/* Modal de Match al concretarse el intercambio */}
+      <MatchModal
+        isOpen={matchOpen}
+        onClose={() => setMatchOpen(false)}
+        book={matchedBook}
+        matchTransactionId={matchTransactionId}
+        onProceedToCheckout={(txId) => {
+          navigate(`/transacciones?checkout=${txId}`);
+          setMatchOpen(false);
+        }}
+      />
     </div>
   );
 };
