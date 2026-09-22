@@ -227,12 +227,12 @@ export const SwipePage: React.FC = () => {
   const [matchedBook, setMatchedBook] = useState<BookItem | null>(null);
   const [matchTransactionId, setMatchTransactionId] = useState<string | null>(null);
 
-  // Control de swipes para usuarios invitados (hasta 5 swipes gratis acumulando me gusta)
   const [guestSwipesCount, setGuestSwipesCount] = useState<number>(() => {
     const saved = localStorage.getItem('guest_swipes_count');
     return saved ? parseInt(saved, 10) : 0;
   });
   const [showGuestLimitModal, setShowGuestLimitModal] = useState<boolean>(false);
+  const [matchAnimationBookId, setMatchAnimationBookId] = useState<string | null>(null);
 
   const handleOnboardingComplete = () => {
     setOnboardingCompleted(true);
@@ -242,7 +242,7 @@ export const SwipePage: React.FC = () => {
 
   // Gestos de arrastre Touch (Móvil) y Mouse (Escritorio)
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (limitReached || !currentBook || swipeDirection) return;
+    if (limitReached || !currentBook || swipeDirection || matchAnimationBookId) return;
     setIsDragging(true);
     dragModeRef.current = 'none';
     setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
@@ -297,7 +297,7 @@ export const SwipePage: React.FC = () => {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (limitReached || !currentBook || swipeDirection) return;
+    if (limitReached || !currentBook || swipeDirection || matchAnimationBookId) return;
     setIsDragging(true);
     dragModeRef.current = 'none';
     setDragStart({ x: e.clientX, y: e.clientY });
@@ -399,14 +399,17 @@ export const SwipePage: React.FC = () => {
 
   const triggerSwipe = async (direction: 'left' | 'right') => {
     // Si la acción es "like" (derecha) y ya se alcanzó el límite de likes, no permitir más likes
+    if (matchAnimationBookId) return;
     if (direction === 'right' && limitReached) return;
     if (!currentBook) return;
+
+    const swipedBook = currentBook;
+    const isInternalMatch = direction === 'right' && swipedBook.isInternalStock !== false;
 
     // Guardar el índice del libro actual en el historial antes de avanzar
     setSwipedHistory((prev) => [...prev, currentBookIndex]);
 
     if (!isAuthenticated) {
-      const swipedBook = currentBook;
       let newCount = guestSwipesCount;
 
       // Los invitados solo consumen su cuota de 5 swipes al dar LIKE a la derecha
@@ -433,36 +436,59 @@ export const SwipePage: React.FC = () => {
         }
       }
 
-      setSwipeDirection(direction);
-
-      setTimeout(() => {
-        setSwipeDirection(null);
-        setCurrentBookIndex((prev) => prev + 1);
-        if (direction === 'right' && newCount >= 5) {
-          setShowGuestLimitModal(true);
-        }
-      }, 220);
+      if (isInternalMatch) {
+        // Mostrar animación del sello ¡Match! al confirmar antes de deslizar la tarjeta
+        setMatchAnimationBookId(swipedBook.id);
+        setTimeout(() => {
+          setSwipeDirection('right');
+          setTimeout(() => {
+            setMatchAnimationBookId(null);
+            setSwipeDirection(null);
+            setCurrentBookIndex((prev) => prev + 1);
+            if (direction === 'right' && newCount >= 5) {
+              setShowGuestLimitModal(true);
+            }
+          }, 220);
+        }, 550);
+      } else {
+        setSwipeDirection(direction);
+        setTimeout(() => {
+          setSwipeDirection(null);
+          setCurrentBookIndex((prev) => prev + 1);
+          if (direction === 'right' && newCount >= 5) {
+            setShowGuestLimitModal(true);
+          }
+        }, 220);
+      }
 
       return;
     }
 
-    const swipedBook = currentBook;
-
-    // 1. Iniciar animación de deslizamiento de forma optimista
-    setSwipeDirection(direction);
-
-    // 2. Incrementar el contador local de swipes únicamente al dar "like" (derecha)
+    // 1. Incrementar el contador local de swipes únicamente al dar "like" (derecha)
     if (direction === 'right' && !user?.isPremium) {
       setSwipesConsumed((prev) => prev + 1);
     }
 
-    // 3. Programar el cambio de tarjeta al finalizar la animación de salida (220ms)
-    setTimeout(() => {
-      setSwipeDirection(null);
-      setCurrentBookIndex((prev) => prev + 1);
-    }, 220);
+    // 2. Si es match interno confirmado, mostrar animación de sello ¡Match! antes del deslizamiento
+    if (isInternalMatch) {
+      setMatchAnimationBookId(swipedBook.id);
+      setTimeout(() => {
+        setSwipeDirection('right');
+        setTimeout(() => {
+          setMatchAnimationBookId(null);
+          setSwipeDirection(null);
+          setCurrentBookIndex((prev) => prev + 1);
+        }, 220);
+      }, 550);
+    } else {
+      setSwipeDirection(direction);
+      setTimeout(() => {
+        setSwipeDirection(null);
+        setCurrentBookIndex((prev) => prev + 1);
+      }, 220);
+    }
 
-    // 4. Enviar el registro del swipe al servidor en segundo plano
+    // 3. Enviar el registro del swipe al servidor en segundo plano
     try {
       const action = direction === 'right' ? 'like' : 'dislike';
       
@@ -576,6 +602,7 @@ export const SwipePage: React.FC = () => {
           {currentBook && (
             <BookCard
               book={currentBook}
+              isMatchAnimation={matchAnimationBookId === currentBook.id}
               showUndoButton={true}
               canUndo={currentBookIndex > 0 || swipedHistory.length > 0}
               onUndo={handleUndoClick}
@@ -608,7 +635,7 @@ export const SwipePage: React.FC = () => {
             <button 
               className="control-btn dislike-btn" 
               onClick={() => triggerSwipe('left')}
-              disabled={!currentBook}
+              disabled={!currentBook || !!matchAnimationBookId}
               title="No me interesa (Infinito)"
             >
               <i className="fa-solid fa-xmark"></i>
@@ -616,7 +643,7 @@ export const SwipePage: React.FC = () => {
             <button 
               className="control-btn like-btn" 
               onClick={() => triggerSwipe('right')}
-              disabled={limitReached}
+              disabled={limitReached || !currentBook || !!matchAnimationBookId}
               title={limitReached ? "Límite de me gusta alcanzado" : "Me interesa"}
             >
               <i className="fa-solid fa-heart"></i>

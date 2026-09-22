@@ -34,6 +34,7 @@ interface BookCardProps {
   canUndo?: boolean;
   onUndo?: () => void;
   isPremium?: boolean;
+  isMatchAnimation?: boolean;
   onTouchStart?: (e: React.TouchEvent) => void;
   onTouchMove?: (e: React.TouchEvent) => void;
   onTouchEnd?: () => void;
@@ -59,6 +60,7 @@ export const BookCard: React.FC<BookCardProps> = ({
   canUndo = false,
   onUndo,
   isPremium = false,
+  isMatchAnimation = false,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -78,8 +80,8 @@ export const BookCard: React.FC<BookCardProps> = ({
   const isSwipedLeft = className.includes('swiped-left') || swipeDirection === 'left';
   const isBlurred = className.includes('blurred-card');
 
-  // Cálculo dinámico de opacidad de los sellos durante el arrastre
-  const likeOpacity = isSwipedRight 
+  // Cálculo dinámico de opacidad de los sellos durante el arrastre o confirmación
+  const likeOpacity = isSwipedRight || isMatchAnimation
     ? 1 
     : isDragging && dragOffset.x > 20 
       ? Math.min(1, (dragOffset.x - 20) / 60) 
@@ -163,6 +165,13 @@ export const BookCard: React.FC<BookCardProps> = ({
         >
           <i className="fa-solid fa-xmark"></i>
         </div>
+
+        {/* Tercer sello: ¡Match! con letras grandes en color verde al centro únicamente al confirmar match exitoso */}
+        {isMatchAnimation && (
+          <div className="swipe-stamp stamp-match">
+            <span>¡Match!</span>
+          </div>
+        )}
         {book.imageUrl ? (
           <img
             key={book.id}
