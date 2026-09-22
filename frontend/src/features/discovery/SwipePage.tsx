@@ -8,6 +8,7 @@ import { BookCard } from './components/BookCard';
 import { StepByStepTutorialModal } from './components/StepByStepTutorialModal';
 import { GuestLimitModal } from './components/GuestLimitModal';
 import { UndoSwipePremiumModal } from './components/UndoSwipePremiumModal';
+import { SearchPremiumModal } from './components/SearchPremiumModal';
 import { apiClient } from '../../lib/apiClient';
 
 const COUNTRIES_LIST = [
@@ -233,6 +234,32 @@ export const SwipePage: React.FC = () => {
   });
   const [showGuestLimitModal, setShowGuestLimitModal] = useState<boolean>(false);
   const [matchAnimationBookId, setMatchAnimationBookId] = useState<string | null>(null);
+
+  // Estados y lógica del buscador superior de BookCard
+  const [searchInput, setSearchInput] = useState<string>('');
+  const [showSearchPremiumModal, setShowSearchPremiumModal] = useState<boolean>(false);
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!user?.isPremium) {
+      setShowSearchPremiumModal(true);
+      return;
+    }
+    const query = searchInput.trim();
+    if (query) {
+      navigate(`/catalogo?search=${encodeURIComponent(query)}`);
+    } else {
+      navigate('/catalogo');
+    }
+  };
+
+  const handleSearchInputInteraction = (e: React.MouseEvent | React.FocusEvent) => {
+    if (!user?.isPremium) {
+      e.preventDefault();
+      (e.target as HTMLElement).blur?.();
+      setShowSearchPremiumModal(true);
+    }
+  };
 
   const handleOnboardingComplete = () => {
     setOnboardingCompleted(true);
@@ -597,7 +624,74 @@ export const SwipePage: React.FC = () => {
         </div>
       ) : (
         <div className="swipe-card-wrapper">
-
+          {/* Buscador idéntico al de CatalogPage en la parte superior de la BookCard */}
+          <div className="swipe-search-container spotify-search-bar-container">
+            <form onSubmit={handleSearchSubmit} className="spotify-search-form">
+              <div
+                className="spotify-search-input-wrapper"
+                onClick={!user?.isPremium ? (e) => {
+                  e.preventDefault();
+                  setShowSearchPremiumModal(true);
+                } : undefined}
+              >
+                <button
+                  type="submit"
+                  className="search-submit-btn"
+                  title="Buscar (Presiona Enter)"
+                  aria-label="Buscar"
+                  onClick={!user?.isPremium ? (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowSearchPremiumModal(true);
+                  } : undefined}
+                >
+                  <i className="fa-solid fa-magnifying-glass search-icon"></i>
+                </button>
+                <input
+                  id="swipe-search-input"
+                  type="text"
+                  placeholder="¿Qué libro, autor o palabra clave quieres buscar?"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  readOnly={!user?.isPremium}
+                  onFocus={handleSearchInputInteraction}
+                  onClick={handleSearchInputInteraction}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSearchSubmit();
+                    }
+                  }}
+                  autoComplete="off"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    className="spotify-search-clear-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchInput('');
+                    }}
+                    title="Limpiar texto"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className="spotify-search-action-btn font-heading"
+                  title="Buscar libro"
+                  onClick={!user?.isPremium ? (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowSearchPremiumModal(true);
+                  } : undefined}
+                >
+                  Buscar
+                </button>
+              </div>
+            </form>
+          </div>
 
           {currentBook && (
             <BookCard
@@ -754,6 +848,11 @@ export const SwipePage: React.FC = () => {
       <UndoSwipePremiumModal
         isOpen={showUndoPremiumModal}
         onClose={() => setShowUndoPremiumModal(false)}
+      />
+
+      <SearchPremiumModal
+        isOpen={showSearchPremiumModal}
+        onClose={() => setShowSearchPremiumModal(false)}
       />
     </div>
   );

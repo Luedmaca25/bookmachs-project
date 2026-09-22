@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
@@ -57,12 +57,24 @@ export const CatalogPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
+  const [searchParams] = useSearchParams();
+  const initialSearchParam = searchParams.get('search') || searchParams.get('searchTerm') || '';
+
   // Estados de filtros
-  const [searchInput, setSearchInput] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState(initialSearchParam);
+  const [searchTerm, setSearchTerm] = useState(initialSearchParam);
   const [category, setCategory] = useState('');
   const [condition, setCondition] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
+
+  // Sincronizar con parámetros de búsqueda de la URL si cambian
+  useEffect(() => {
+    const query = searchParams.get('search') || searchParams.get('searchTerm');
+    if (query !== null) {
+      setSearchInput(query);
+      setSearchTerm(query);
+    }
+  }, [searchParams]);
 
   const hasSearchCriteria = searchTerm.trim().length > 0 || !!category || !!condition;
 

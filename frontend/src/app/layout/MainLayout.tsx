@@ -120,14 +120,24 @@ export const MainLayout: React.FC = () => {
           )}
         </nav>
 
-        {/* BOTÓN HAMBURGUESA MÓVIL */}
-        <button 
-          className="mobile-hamburger-btn"
-          onClick={() => setMobileMenuOpen(true)}
-          aria-label="Abrir menú de navegación"
-        >
-          <i className="fa-solid fa-bars"></i>
-        </button>
+        {/* ACCIONES MÓVIL: PERFIL Y MENÚ HAMBURGUESA */}
+        <div className="header-mobile-actions">
+          <Link 
+            to="/auth" 
+            className={`mobile-profile-btn ${location.pathname === '/auth' ? 'active' : ''}`}
+            aria-label="Mi perfil"
+            title="Mi perfil"
+          >
+            <i className="fa-solid fa-user"></i>
+          </Link>
+          <button 
+            className="mobile-hamburger-btn"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Abrir menú de navegación"
+          >
+            <i className="fa-solid fa-bars"></i>
+          </button>
+        </div>
       </header>
 
       {/* OVERLAY & PANEL OFFCANVAS MÓVIL (ESTILO BOOTSTRAP 5 - FUERA DEL HEADER PARA COBRIR 100% DE LA PANTALLA) */}
@@ -212,11 +222,11 @@ export const MainLayout: React.FC = () => {
       {/* BARRA DE NAVEGACIÓN INFERIOR MÓVIL ESTILO APP NATIVA (5 OPCIONES) */}
       <nav className="mobile-bottom-nav" aria-label="Navegación móvil">
         <Link 
-          to="/auth" 
-          className={`bottom-nav-item ${location.pathname === '/auth' ? 'active' : ''}`}
+          to="/catalogo" 
+          className={`bottom-nav-item ${location.pathname === '/catalogo' ? 'active' : ''}`}
         >
-          <i className="fa-solid fa-user"></i>
-          <span>Perfil</span>
+          <i className="fa-solid fa-magnifying-glass"></i>
+          <span>Buscar</span>
         </Link>
 
         <Link 
