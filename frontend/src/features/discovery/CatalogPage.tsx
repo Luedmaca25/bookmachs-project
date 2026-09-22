@@ -6,6 +6,7 @@ import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
 import { BookCard } from './components/BookCard';
 import { MatchModal } from '../transactions/components/MatchModal';
+import { FiltersModal, type FilterOptions } from './components/FiltersModal';
 
 interface BookItem {
   id: string;
@@ -66,6 +67,18 @@ export const CatalogPage: React.FC = () => {
   const [category, setCategory] = useState('');
   const [condition, setCondition] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
+
+  const defaultFilterOptions: FilterOptions = {
+    category: '',
+    condition: '',
+    author: '',
+    sortBy: 'createdAt',
+    isNewlyArrived: false,
+    availableNow: false,
+    showFallbackOptions: false,
+  };
+
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>(defaultFilterOptions);
 
   // Sincronizar con parámetros de búsqueda de la URL si cambian
   useEffect(() => {
@@ -348,16 +361,48 @@ export const CatalogPage: React.FC = () => {
     setPageNumber(1);
   };
 
-  const clearAllFilters = () => {
-    setSearchInput('');
-    setSearchTerm('');
+  const handleApplyFilters = (newFilters: FilterOptions) => {
+    setFilterOptions(newFilters);
+    setCategory(newFilters.category || '');
+    setCondition(newFilters.condition || '');
+    if (newFilters.author) {
+      setSearchTerm(newFilters.author);
+      setSearchInput(newFilters.author);
+    }
+    if (newFilters.isNewlyArrived) {
+      setSortBy('createdAt');
+    } else if (newFilters.sortBy) {
+      setSortBy(newFilters.sortBy);
+    }
+    setShowFilters(false);
+    setPageNumber(1);
+  };
+
+  const handleResetFilters = () => {
+    setFilterOptions(defaultFilterOptions);
     setCategory('');
     setCondition('');
     setSortBy('createdAt');
     setPageNumber(1);
   };
 
-  const activeFiltersCount = (category ? 1 : 0) + (condition ? 1 : 0) + (sortBy !== 'createdAt' ? 1 : 0);
+  const clearAllFilters = () => {
+    setSearchInput('');
+    setSearchTerm('');
+    setCategory('');
+    setCondition('');
+    setSortBy('createdAt');
+    setFilterOptions(defaultFilterOptions);
+    setPageNumber(1);
+  };
+
+  const activeFiltersCount =
+    (filterOptions.category ? 1 : 0) +
+    (filterOptions.condition ? 1 : 0) +
+    (filterOptions.author ? 1 : 0) +
+    (filterOptions.sortBy && filterOptions.sortBy !== 'createdAt' ? 1 : 0) +
+    (filterOptions.isNewlyArrived ? 1 : 0) +
+    (filterOptions.availableNow ? 1 : 0);
 
   return (
     <div className="catalog-page-container">
@@ -428,19 +473,20 @@ export const CatalogPage: React.FC = () => {
         </div>
       )}
 
-      {/* Barra Superior de Control: Botón Filtros + Mis Reservas + Toggles Grid/List */}
+      {/* Barra Superior de Control: Botón Filtros + Mis Reservas */}
       <div className="catalog-controls-top-bar">
         <div className="left-controls-group" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             type="button"
             className={`toggle-filters-btn ${showFilters ? 'active' : ''}`}
-            onClick={() => setShowFilters(!showFilters)}
+            onClick={() => setShowFilters(true)}
+            title="Abrir filtros de búsqueda"
           >
             <i className="fa-solid fa-sliders"></i>
+            <span>Filtros</span>
             {activeFiltersCount > 0 && (
               <span className="active-filters-count-badge">{activeFiltersCount}</span>
             )}
-            <i className={`fa-solid fa-chevron-${showFilters ? 'up' : 'down'} chevron-icon`}></i>
           </button>
 
           <button
@@ -458,71 +504,8 @@ export const CatalogPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Panel de Filtros Colapsable (Oculto de Primera Instancia) */}
-      {showFilters && (
-        <div className="catalog-filters-collapsible animated-fade-in">
-          <div className="catalog-filters-grid">
-            <div className="filter-group">
-              <label htmlFor="category-select"><i className="fa-solid fa-filter"></i> Categoría</label>
-              <select
-                id="category-select"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">Todas las categorías</option>
-                {tags.map((tag) => (
-                  <option key={tag} value={tag}>
-                    {tag}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label htmlFor="condition-select"><i className="fa-solid fa-sparkles"></i> Estado Físico</label>
-              <select
-                id="condition-select"
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-              >
-                <option value="">Todos los estados</option>
-                <option value="Excelente">Excelente</option>
-                <option value="Muy bueno">Muy bueno</option>
-                <option value="Bueno">Bueno</option>
-                <option value="Aceptable">Aceptable</option>
-                <option value="Desgastado">Desgastado</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label htmlFor="sort-select"><i className="fa-solid fa-arrow-down-short-wide"></i> Ordenar Por</label>
-              <select
-                id="sort-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="createdAt">Recién Llegados (Más recientes)</option>
-                <option value="title">Título (A-Z)</option>
-              </select>
-            </div>
-
-            {(category || condition || sortBy !== 'createdAt') && (
-              <div className="filter-group filter-actions-group">
-                <button 
-                  type="button" 
-                  className="drawer-reset-btn" 
-                  onClick={() => { setCategory(''); setCondition(''); setSortBy('createdAt'); }}
-                >
-                  <i className="fa-solid fa-rotate-left"></i> Restablecer
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Chips de Filtros Activos para fácil limpieza */}
-      {(searchTerm || category || condition) && (
+      {(searchTerm || category || condition || filterOptions.author || (filterOptions.sortBy && filterOptions.sortBy !== 'createdAt') || filterOptions.isNewlyArrived || filterOptions.availableNow) && (
         <div className="active-filters-bar">
           <span className="active-filters-label">Filtros aplicados:</span>
           {searchTerm && (
@@ -530,7 +513,7 @@ export const CatalogPage: React.FC = () => {
               Búsqueda: "{searchTerm}"
               <button 
                 type="button"
-                onClick={() => { setSearchTerm(''); setSearchInput(''); setPageNumber(1); }}
+                onClick={() => { setSearchTerm(''); setSearchInput(''); setFilterOptions(prev => ({ ...prev, author: '' })); setPageNumber(1); }}
                 title="Quitar búsqueda"
               >
                 <i className="fa-solid fa-xmark"></i>
@@ -540,15 +523,46 @@ export const CatalogPage: React.FC = () => {
           {category && (
             <span className="active-filter-chip">
               Categoría: {category}
-              <button type="button" onClick={() => setCategory('')} title="Quitar categoría"><i className="fa-solid fa-xmark"></i></button>
+              <button type="button" onClick={() => { setCategory(''); setFilterOptions(prev => ({ ...prev, category: '' })); }} title="Quitar categoría"><i className="fa-solid fa-xmark"></i></button>
             </span>
           )}
           {condition && (
             <span className="active-filter-chip">
               Estado: {condition}
-              <button type="button" onClick={() => setCondition('')} title="Quitar estado"><i className="fa-solid fa-xmark"></i></button>
+              <button type="button" onClick={() => { setCondition(''); setFilterOptions(prev => ({ ...prev, condition: '' })); }} title="Quitar estado"><i className="fa-solid fa-xmark"></i></button>
             </span>
           )}
+          {filterOptions.author && !searchTerm.includes(filterOptions.author) && (
+            <span className="active-filter-chip">
+              Autor: {filterOptions.author}
+              <button type="button" onClick={() => setFilterOptions(prev => ({ ...prev, author: '' }))} title="Quitar autor"><i className="fa-solid fa-xmark"></i></button>
+            </span>
+          )}
+          {filterOptions.sortBy && filterOptions.sortBy !== 'createdAt' && (
+            <span className="active-filter-chip">
+              Orden: {filterOptions.sortBy === 'title' ? 'Título (A-Z)' : 'Precio'}
+              <button type="button" onClick={() => { setSortBy('createdAt'); setFilterOptions(prev => ({ ...prev, sortBy: 'createdAt' })); }} title="Restablecer orden"><i className="fa-solid fa-xmark"></i></button>
+            </span>
+          )}
+          {filterOptions.isNewlyArrived && (
+            <span className="active-filter-chip">
+              Recién llegados
+              <button type="button" onClick={() => setFilterOptions(prev => ({ ...prev, isNewlyArrived: false }))} title="Quitar recién llegados"><i className="fa-solid fa-xmark"></i></button>
+            </span>
+          )}
+          {filterOptions.availableNow && (
+            <span className="active-filter-chip">
+              Disponibles ahora
+              <button type="button" onClick={() => setFilterOptions(prev => ({ ...prev, availableNow: false }))} title="Quitar disponibles ahora"><i className="fa-solid fa-xmark"></i></button>
+            </span>
+          )}
+          <button 
+            type="button" 
+            className="clear-all-filters-btn"
+            onClick={clearAllFilters}
+          >
+            Limpiar todo
+          </button>
         </div>
       )}
 
@@ -745,6 +759,17 @@ export const CatalogPage: React.FC = () => {
           navigate(`/transacciones?checkout=${txId}`);
           setMatchOpen(false);
         }}
+      />
+
+      {/* Modal de Filtros Avanzados y Básicos estilo mockup filtros.jpeg */}
+      <FiltersModal
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        isPremium={!!user?.isPremium}
+        tags={tags}
+        initialFilters={filterOptions}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
       />
     </div>
   );
