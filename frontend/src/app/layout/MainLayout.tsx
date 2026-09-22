@@ -1,12 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../features/authentication/store/authStore';
+import { GlobalPremiumModal } from '../../features/subscriptions/components/GlobalPremiumModal';
 import { apiClient } from '../../lib/apiClient';
 
 export const MainLayout: React.FC = () => {
   const { user, isAuthenticated, login, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [premiumModalOpen, setPremiumModalOpen] = useState(false);
+  const [premiumModalInfo, setPremiumModalInfo] = useState<{ featureName?: string; icon?: string } | null>(null);
   const location = useLocation();
+
+  const handleOpenPremiumModal = (featureName: string, icon: string) => {
+    setPremiumModalInfo({ featureName, icon });
+    setPremiumModalOpen(true);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -84,7 +92,23 @@ export const MainLayout: React.FC = () => {
           
           {isAuthenticated && user && (
             <>
-              <Link to="/catalogo" className="nav-link">Catálogo</Link>
+              <Link 
+                to="/catalogo" 
+                className="nav-link"
+                onClick={(e) => {
+                  if (!user?.isPremium) {
+                    e.preventDefault();
+                    handleOpenPremiumModal('el Catálogo Avanzado', 'fa-solid fa-book');
+                  }
+                }}
+              >
+                Catálogo
+                {!user?.isPremium && (
+                  <span className="canva-crown-badge-inline" title="Función Premium">
+                    <i className="fa-solid fa-crown"></i>
+                  </span>
+                )}
+              </Link>
               <Link to="/libreta" className="nav-link">Tu libreta</Link>
               <Link to="/transacciones" className="nav-link">Matches</Link>
             </>
@@ -158,7 +182,24 @@ export const MainLayout: React.FC = () => {
 
               {isAuthenticated && user && (
                 <>
-                  <Link to="/catalogo" className="offcanvas-link"><i className="fa-solid fa-book"></i>Catálogo</Link>
+                  <Link 
+                    to="/catalogo" 
+                    className="offcanvas-link"
+                    onClick={(e) => {
+                      if (!user?.isPremium) {
+                        e.preventDefault();
+                        setMobileMenuOpen(false);
+                        handleOpenPremiumModal('el Catálogo Avanzado', 'fa-solid fa-book');
+                      }
+                    }}
+                  >
+                    <i className="fa-solid fa-book"></i>Catálogo
+                    {!user?.isPremium && (
+                      <span className="canva-crown-badge-inline" title="Función Premium">
+                        <i className="fa-solid fa-crown"></i>
+                      </span>
+                    )}
+                  </Link>
                   <Link to="/libreta" className="offcanvas-link"><i className="fa-solid fa-book-bookmark"></i> Tu libreta</Link>
                   <Link to="/transacciones" className="offcanvas-link"><i className="fa-solid fa-handshake"></i> Matches</Link>
                 </>
@@ -224,8 +265,21 @@ export const MainLayout: React.FC = () => {
         <Link 
           to="/catalogo" 
           className={`bottom-nav-item ${location.pathname === '/catalogo' ? 'active' : ''}`}
+          onClick={(e) => {
+            if (!user?.isPremium) {
+              e.preventDefault();
+              handleOpenPremiumModal('la Búsqueda y el Catálogo', 'fa-solid fa-magnifying-glass');
+            }
+          }}
         >
-          <i className="fa-solid fa-magnifying-glass"></i>
+          <div className="bottom-nav-icon-wrapper">
+            <i className="fa-solid fa-magnifying-glass"></i>
+            {!user?.isPremium && (
+              <span className="undo-crown-badge" title="Función Premium">
+                <i className="fa-solid fa-crown"></i>
+              </span>
+            )}
+          </div>
           <span>Buscar</span>
         </Link>
 
@@ -263,6 +317,14 @@ export const MainLayout: React.FC = () => {
           <span>Planes</span>
         </Link>
       </nav>
+
+      {/* MODAL GLOBAL PARA FUNCIONES PREMIUM */}
+      <GlobalPremiumModal
+        isOpen={premiumModalOpen}
+        onClose={() => setPremiumModalOpen(false)}
+        featureName={premiumModalInfo?.featureName}
+        icon={premiumModalInfo?.icon}
+      />
     </div>
   );
 };

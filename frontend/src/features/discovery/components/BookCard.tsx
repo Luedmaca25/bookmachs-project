@@ -283,7 +283,13 @@ export const BookCard: React.FC<BookCardProps> = ({
                       onReserve(book.id, book.title);
                     }}
                   >
-                    Reservar <i className="fa-solid fa-lock"></i>
+                    <span>Reservar</span>
+                    {!isPremium && (
+                      <span className="canva-crown-badge-inline" title="Función Premium">
+                        <i className="fa-solid fa-crown"></i>
+                      </span>
+                    )}
+                    <i className="fa-solid fa-lock"></i>
                   </button>
                 )}
               </div>

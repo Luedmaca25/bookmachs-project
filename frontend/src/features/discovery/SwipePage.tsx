@@ -687,7 +687,12 @@ export const SwipePage: React.FC = () => {
                     setShowSearchPremiumModal(true);
                   } : undefined}
                 >
-                  Buscar
+                  <span>Buscar</span>
+                  {!user?.isPremium && (
+                    <span className="canva-crown-pill" title="Beneficio Exclusivo Premium">
+                      <i className="fa-solid fa-crown"></i>
+                    </span>
+                  )}
                 </button>
               </div>
             </form>

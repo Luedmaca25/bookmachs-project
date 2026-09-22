@@ -2135,7 +2135,8 @@ body.swipe-page-active .app-footer {
   transform: none !important;
 }
 
-.undo-crown-badge {
+.undo-crown-badge,
+.canva-crown-badge {
   position: absolute;
   bottom: -2px;
   right: -2px;
@@ -2150,6 +2151,80 @@ body.swipe-page-active .app-footer {
   font-size: 0.58rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   border: 1.5px solid #ffffff;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.canva-crown-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  font-size: 0.58rem;
+  box-shadow: 0 2px 5px rgba(245, 158, 11, 0.35);
+  border: 1px solid #ffffff;
+  margin-left: 6px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.canva-crown-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  font-size: 0.58rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  border: 1.2px solid #ffffff;
+  margin-left: 5px;
+  pointer-events: none;
+}
+
+.bottom-nav-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+}
+
+.bottom-nav-icon-wrapper .undo-crown-badge,
+.bottom-nav-icon-wrapper .canva-crown-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  bottom: auto;
+  left: auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.bottom-nav-icon-wrapper .undo-crown-badge i,
+.bottom-nav-icon-wrapper .canva-crown-badge i {
+  font-size: 0.46rem !important;
+  color: #ffffff !important;
+  line-height: 1 !important;
+  transform: none !important;
+  text-shadow: none !important;
 }
 
 .swipe-undo-btn.premium-feature-btn:hover:not(:disabled) {
