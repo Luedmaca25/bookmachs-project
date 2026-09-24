@@ -413,9 +413,70 @@ export const AuthenticationPage: React.FC = () => {
                   <div className="profile-plan-title-premium">
                     <span><i className="fa-solid fa-crown icon-gold"></i> Suscripción Premium Activa</span>
                   </div>
+
+                  {user.isSubscriptionCancelled ? (
+                    <div className="profile-premium-badge warning">
+                      <i className="fa-solid fa-clock-rotate-left"></i> Cancelación programada
+                    </div>
+                  ) : (
+                    <div className="profile-premium-badge">
+                      <i className="fa-solid fa-gem"></i> Beneficios Exclusivos
+                    </div>
+                  )}
+
                   <p className="profile-plan-desc">
-                    ¡Tienes swipes ilimitados y prioridad en matches de libros!
+                    {user.isSubscriptionCancelled && user.subscriptionEndDate
+                      ? `Tienes acceso a todos tus beneficios Premium hasta el ${new Date(user.subscriptionEndDate).toLocaleDateString('es-CL')}.`
+                      : '¡Cuentas con acceso total a todas las ventajas de la comunidad Bookmachs!'}
                   </p>
+
+                  <div className="profile-premium-benefits-title">Tus beneficios incluidos:</div>
+
+                  <ul className="profile-premium-benefits">
+                    <li className="profile-premium-benefit-item">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span><strong>Swipes ilimitados</strong> todos los días sin restricciones de cuota</span>
+                    </li>
+                    <li className="profile-premium-benefit-item">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span><strong>Hasta 5 intercambios</strong> de libros al mes</span>
+                    </li>
+                    <li className="profile-premium-benefit-item">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span><strong>Catálogo Avanzado en Grilla</strong> con filtros inteligentes por categoría y estado</span>
+                    </li>
+                    <li className="profile-premium-benefit-item">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span><strong>Búsqueda directa</strong> por título, autor o hasta 10 palabras clave simultáneas</span>
+                    </li>
+                    <li className="profile-premium-benefit-item">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span><strong>Early Access exclusivo</strong> a libros y títulos recién incorporados</span>
+                    </li>
+                    <li className="profile-premium-benefit-item">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span><strong>Reserva de libros por 48 horas</strong> para congelar stock antes de intercambiar</span>
+                    </li>
+                    <li className="profile-premium-benefit-item">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span><strong>Rebobinar / Deshacer swipe</strong> para recuperar libros deslizados por error</span>
+                    </li>
+                    <li className="profile-premium-benefit-item">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span><strong>Soporte prioritario 24/7</strong> y mediación preferencial en entregas</span>
+                    </li>
+                  </ul>
+
+                  {user.subscriptionEndDate && !user.isSubscriptionCancelled && (
+                    <div className="profile-premium-dates">
+                      <i className="fa-regular fa-calendar-check"></i>
+                      <span>Próxima renovación: {new Date(user.subscriptionEndDate).toLocaleDateString('es-CL')}</span>
+                    </div>
+                  )}
+
+                  <Link to="/planes" className="profile-plan-manage-link">
+                    Gestionar Membresía y Facturación <i className="fa-solid fa-arrow-right"></i>
+                  </Link>
                 </>
               ) : (
                 <>
