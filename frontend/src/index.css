@@ -10720,9 +10720,148 @@ body.swipe-page-active .app-footer {
   }
 }
 
-/* Ocultar barra de navegación móvil en pantallas grandes */
+/* ==========================================================================
+   FLOATING PILL BOTTOM NAVIGATION (Match Design Reference: menu-inferior.jpeg)
+   ========================================================================== */
+
 .mobile-bottom-nav {
-  display: none;
+  display: flex;
+  position: fixed;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(500px, calc(100% - 24px));
+  height: 74px;
+  background: #FFFFFF;
+  border-radius: 9999px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  z-index: 1000;
+  align-items: flex-end;
+  justify-content: space-around;
+  padding: 0 10px 10px 10px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1200px) {
+  .mobile-bottom-nav {
+    display: none;
+  }
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  color: #2D3748;
+  text-decoration: none;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease;
+}
+
+.bottom-nav-item:active {
+  transform: scale(0.96);
+}
+
+.bottom-nav-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+}
+
+.bottom-nav-item i {
+  font-size: 1.25rem;
+  color: #2D3748;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.bottom-nav-item.active i {
+  color: #0F9D58;
+}
+
+/* Badge de Corona Premium en Buscar */
+.pill-nav-crown-badge {
+  position: absolute;
+  top: -4px;
+  right: -5px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #F59E0B;
+  border: 2px solid #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.pill-nav-crown-badge i {
+  font-size: 8px !important;
+  color: #FFFFFF !important;
+  transform: none !important;
+  text-shadow: none !important;
+}
+
+/* Botón Central Destacado "Subir" */
+.bottom-nav-item.upload-highlight {
+  position: relative;
+  overflow: visible;
+}
+
+.pill-upload-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0F9D58;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(15, 157, 88, 0.38);
+  margin-bottom: 2px;
+  margin-top: -12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bottom-nav-item.upload-highlight:hover .pill-upload-circle,
+.bottom-nav-item.upload-highlight.active .pill-upload-circle {
+  transform: scale(1.06);
+  box-shadow: 0 6px 18px rgba(15, 157, 88, 0.48);
+}
+
+.pill-upload-circle i {
+  font-size: 1.35rem;
+  color: #FFFFFF !important;
+  display: block;
+}
+
+/* Etiquetas de Texto */
+.nav-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #2D3748;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease, font-weight 0.2s ease;
+}
+
+.bottom-nav-item.active .nav-label {
+  color: #0F9D58;
+  font-weight: 700;
 }
 
 /* 3. Mobile / Small Tablet Breakpoint (max-width: 767px) */
@@ -10750,96 +10889,10 @@ body.swipe-page-active .app-footer {
     font-size: 0.75rem;
   }
 
-  /* Barra de Navegación Inferior Móvil (App Style - 5 opciones) */
-  /* Barra de Navegación Inferior Móvil (App Style - 5 opciones) - Tema Claro */
-  /* Barra de Navegación Inferior Móvil (App Style - 5 opciones) - Tema Claro */
-  .mobile-bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: calc(60px + env(safe-area-inset-bottom, 0px));
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-top: 1px solid var(--border-color);
-    z-index: 1000;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 0.4rem env(safe-area-inset-bottom, 0px) 0.4rem;
-    box-shadow: 0 -4px 20px rgba(15, 157, 88, 0.08);
-    box-sizing: border-box;
-  }
-
-  .bottom-nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: 0.68rem;
-    font-weight: 500;
-    padding: 4px 6px;
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
-    flex: 1;
-    min-width: 0;
-  }
-
-  .bottom-nav-item i {
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-    transition: transform var(--transition-fast), color var(--transition-fast);
-  }
-
-  .bottom-nav-item.active {
-    color: var(--accent-primary);
-    font-weight: 600;
-  }
-
-  .bottom-nav-item.active i {
-    transform: scale(1.15);
-    color: var(--accent-primary);
-    text-shadow: 0 0 10px rgba(15, 157, 88, 0.25);
-  }
-
-  /* Centro destacado para el botón de Subir libro */
-  .bottom-nav-item.upload-highlight {
-    position: relative;
-  }
-
-  .upload-icon-circle {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: var(--gradient-accent);
-    color: #FFFFFF;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 14px rgba(15, 157, 88, 0.35);
-    margin-bottom: 2px;
-    transition: transform var(--transition-fast);
-  }
-
-  .upload-icon-circle i {
-    font-size: 1rem;
-    color: #FFFFFF !important;
-    text-shadow: none !important;
-  }
-
-  .bottom-nav-item.upload-highlight:hover .upload-icon-circle,
-  .bottom-nav-item.upload-highlight.active .upload-icon-circle {
-    transform: scale(1.1);
-  }
-
-  /* Ajuste de viewport inferior en vista Swipe para barra móvil */
+  /* Ajuste de viewport inferior en vista Swipe para barra flotante móvil */
   .app-main.swipe-main-active,
   .app-main:has(.swipe-page-container) {
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
     padding: 0.25rem 0.5rem !important;
   }
 
@@ -11110,7 +11163,7 @@ body.swipe-page-active .app-footer {
 
   /* Main Layout & Forms */
   .app-main {
-    padding: calc(68px + 1.25rem) 1rem calc(72px + env(safe-area-inset-bottom, 0px)) 1rem;
+    padding: calc(68px + 1.25rem) 1rem calc(96px + env(safe-area-inset-bottom, 0px)) 1rem;
   }
 
   h1 {

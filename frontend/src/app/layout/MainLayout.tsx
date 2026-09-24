@@ -260,8 +260,8 @@ export const MainLayout: React.FC = () => {
         <p>&copy; {new Date().getFullYear()} Intercambialibros - Red Social Cultural y Ambiental. Todos los derechos reservados.</p>
       </footer>
 
-      {/* BARRA DE NAVEGACIÓN INFERIOR MÓVIL ESTILO APP NATIVA (5 OPCIONES) */}
-      <nav className="mobile-bottom-nav" aria-label="Navegación móvil">
+      {/* BARRA DE NAVEGACIÓN INFERIOR ESTILO FLOATING PILL (5 OPCIONES) */}
+      <nav className="mobile-bottom-nav" aria-label="Navegación inferior">
         <Link 
           to="/catalogo" 
           className={`bottom-nav-item ${location.pathname === '/catalogo' ? 'active' : ''}`}
@@ -275,46 +275,52 @@ export const MainLayout: React.FC = () => {
           <div className="bottom-nav-icon-wrapper">
             <i className="fa-solid fa-magnifying-glass"></i>
             {!user?.isPremium && (
-              <span className="undo-crown-badge" title="Función Premium">
+              <span className="pill-nav-crown-badge" title="Función Premium">
                 <i className="fa-solid fa-crown"></i>
               </span>
             )}
           </div>
-          <span>Buscar</span>
+          <span className="nav-label">Buscar</span>
         </Link>
 
         <Link 
           to="/" 
           className={`bottom-nav-item ${location.pathname === '/' ? 'active' : ''}`}
         >
-          <i className="fa-solid fa-fire"></i>
-          <span>Descubre</span>
+          <div className="bottom-nav-icon-wrapper">
+            <i className="fa-solid fa-fire"></i>
+          </div>
+          <span className="nav-label">Descubre</span>
         </Link>
 
         <Link 
           to={isAuthenticated ? "/libreta?tab=offered&add=true" : "/auth"} 
           className={`bottom-nav-item upload-highlight ${location.pathname === '/libreta' && location.search.includes('add') ? 'active' : ''}`}
         >
-          <div className="upload-icon-circle">
+          <div className="pill-upload-circle">
             <i className="fa-solid fa-plus"></i>
           </div>
-          <span>Subir</span>
+          <span className="nav-label">Subir</span>
         </Link>
 
         <Link 
-          to={isAuthenticated ? "/libreta" : "/auth"} 
+          to={isAuthenticated ? "/transacciones" : "/auth"} 
           className={`bottom-nav-item ${(location.pathname === '/libreta' && !location.search.includes('add')) || location.pathname === '/transacciones' ? 'active' : ''}`}
         >
-          <i className="fa-solid fa-handshake"></i>
-          <span>Matchs</span>
+          <div className="bottom-nav-icon-wrapper">
+            <i className="fa-solid fa-handshake"></i>
+          </div>
+          <span className="nav-label">Matchs</span>
         </Link>
 
         <Link 
           to="/planes" 
           className={`bottom-nav-item ${location.pathname === '/planes' ? 'active' : ''}`}
         >
-          <i className="fa-solid fa-tags"></i>
-          <span>Planes</span>
+          <div className="bottom-nav-icon-wrapper">
+            <i className="fa-solid fa-tags"></i>
+          </div>
+          <span className="nav-label">Planes</span>
         </Link>
       </nav>
 
