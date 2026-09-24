@@ -170,7 +170,7 @@ export const PlansPage: React.FC = () => {
   return (
     <div className="plans-page-container">
       <div className="plans-header">
-        <h1>Planes y Membresías</h1>
+        {/* <h1>Planes y Membresías</h1> */}
         <p>Elige el plan que mejor se adapte a tus necesidades de lectura y ayuda a mitigar la huella de carbono.</p>
       </div>
 
