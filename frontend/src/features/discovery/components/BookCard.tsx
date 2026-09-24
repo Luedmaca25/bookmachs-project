@@ -166,10 +166,29 @@ export const BookCard: React.FC<BookCardProps> = ({
           <i className="fa-solid fa-xmark"></i>
         </div>
 
-        {/* Tercer sello: ¡Match! con letras grandes en color verde al centro únicamente al confirmar match exitoso */}
+        {/* Celebración de Match: Sello ¡Match! con aura pulsante y lluvia ascendente de corazones verdes */}
         {isMatchAnimation && (
-          <div className="swipe-stamp stamp-match">
-            <span>¡Match!</span>
+          <div className="match-celebration-container">
+            <div className="match-aura-pulse"></div>
+
+            <div className="match-floating-particles">
+              <span className="floating-heart heart-1"><i className="fa-solid fa-heart"></i></span>
+              <span className="floating-heart heart-2"><i className="fa-solid fa-heart"></i></span>
+              <span className="floating-heart heart-3"><i className="fa-solid fa-heart"></i></span>
+              <span className="floating-heart heart-4"><i className="fa-solid fa-heart"></i></span>
+              <span className="floating-heart heart-5"><i className="fa-solid fa-heart"></i></span>
+              <span className="floating-heart heart-6"><i className="fa-solid fa-heart"></i></span>
+              <span className="floating-heart heart-7"><i className="fa-solid fa-heart"></i></span>
+              <span className="floating-heart heart-8"><i className="fa-solid fa-heart"></i></span>
+              <span className="floating-sparkle sparkle-1"><i className="fa-solid fa-star"></i></span>
+              <span className="floating-sparkle sparkle-2"><i className="fa-solid fa-star"></i></span>
+            </div>
+
+            <div className="swipe-stamp stamp-match">
+              <i className="fa-solid fa-heart match-stamp-heart"></i>
+              <span>¡Match!</span>
+              <i className="fa-solid fa-heart match-stamp-heart"></i>
+            </div>
           </div>
         )}
         {book.imageUrl ? (

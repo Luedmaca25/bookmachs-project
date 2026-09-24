@@ -476,7 +476,7 @@ export const SwipePage: React.FC = () => {
               setShowGuestLimitModal(true);
             }
           }, 220);
-        }, 550);
+        }, 700);
       } else {
         setSwipeDirection(direction);
         setTimeout(() => {
@@ -506,7 +506,7 @@ export const SwipePage: React.FC = () => {
           setSwipeDirection(null);
           setCurrentBookIndex((prev) => prev + 1);
         }, 220);
-      }, 550);
+      }, 700);
     } else {
       setSwipeDirection(direction);
       setTimeout(() => {
