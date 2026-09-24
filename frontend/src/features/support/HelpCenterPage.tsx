@@ -18,14 +18,14 @@ const FAQS_DATA: FaqItem[] = [
   {
     id: 'f1',
     category: 'exchange',
-    question: '¿Cómo funciona el intercambio de libros en Bookmachs?',
+    question: '¿Cómo funciona el intercambio de libros en Intercambialibros?',
     answer: 'El intercambio se basa en el sistema de Trueque Circular. Desliza hacia la derecha en "Descubrir" en los libros que te interesen o explora el Catálogo. Cuando dos usuarios coinciden o solicitas un ejemplar disponible, se genera un Match en "Matches". Puedes coordinar entrega presencial o despacho y confirmar la recepción del libro.'
   },
   {
     id: 'f2',
     category: 'exchange',
     question: '¿Qué pasa si el libro no llega o no coincide con la descripción?',
-    answer: 'Cuentas con la Garantía de Intercambio Seguro de Bookmachs. Si la contraparte no acude a la cita o el libro recibido tiene fallas graves no declaradas, puedes solicitar mediación desde la sección "Problemas con un intercambio". Reintegraremos tu cuota mensual o gestionaremos la reposición.'
+    answer: 'Cuentas con la Garantía de Intercambio Seguro de Intercambialibros. Si la contraparte no acude a la cita o el libro recibido tiene fallas graves no declaradas, puedes solicitar mediación desde la sección "Problemas con un intercambio". Reintegraremos tu cuota mensual o gestionaremos la reposición.'
   },
   {
     id: 'f3',
@@ -63,7 +63,7 @@ const FAQS_DATA: FaqItem[] = [
     id: 'f8',
     category: 'profile',
     question: '¿Cómo se calculan los árboles salvados y la huella de CO2 de mi impacto?',
-    answer: 'Cada intercambio en Bookmachs reutiliza papel y evita la fabricación de un libro nuevo. Calculamos el ahorro ambiental promedio en 1,2 kg de CO2 evitado por ejemplar y un factor equivalente de árboles preservados que puedes consultar en la pestaña "Impacto".'
+    answer: 'Cada intercambio en Intercambialibros reutiliza papel y evita la fabricación de un libro nuevo. Calculamos el ahorro ambiental promedio en 1,2 kg de CO2 evitado por ejemplar y un factor equivalente de árboles preservados que puedes consultar en la pestaña "Impacto".'
   },
   {
     id: 'f9',
@@ -83,7 +83,7 @@ const FAQS_DATA: FaqItem[] = [
     id: 'f11',
     category: 'safety',
     question: '¿Cómo funciona la pasarela de pagos Webpay Plus?',
-    answer: 'Todas las transacciones de tarifas y suscripciones se procesan a través de la pasarela oficial de Transbank Webpay Plus bajo estándares bancarios y cifrado SSL. Bookmachs nunca almacena datos de tus tarjetas de crédito o débito.'
+    answer: 'Todas las transacciones de tarifas y suscripciones se procesan a través de la pasarela oficial de Transbank Webpay Plus bajo estándares bancarios y cifrado SSL. Intercambialibros nunca almacena datos de tus tarjetas de crédito o débito.'
   },
   {
     id: 'f12',
@@ -216,7 +216,7 @@ export const HelpCenterPage: React.FC = () => {
   const getPremiumWhatsAppUrl = () => {
     const userName = user?.name || 'Lector';
     const userEmail = user?.email || '';
-    const text = `Hola equipo de soporte Bookmachs. Soy usuario Premium (${userName} - ${userEmail}) y requiero atención prioritaria 24/7 con el siguiente tema: `;
+    const text = `Hola equipo de soporte Intercambialibros. Soy usuario Premium (${userName} - ${userEmail}) y requiero atención prioritaria 24/7 con el siguiente tema: `;
     return `https://wa.me/56987654321?text=${encodeURIComponent(text)}`;
   };
 
@@ -535,7 +535,7 @@ export const HelpCenterPage: React.FC = () => {
               <div className="service-item">
                 <i className="fa-solid fa-circle-check icon-green"></i>
                 <div>
-                  <strong>Motor de Trueque Bookmachs</strong>
+                  <strong>Motor de Trueque Intercambialibros</strong>
                   <small>Emparejamiento y Swipes al 100%</small>
                 </div>
               </div>
@@ -648,7 +648,7 @@ export const HelpCenterPage: React.FC = () => {
               <div className="safety-card-content">
                 <h4>Comunícate por canales oficiales</h4>
                 <p>
-                  Mantén los acuerdos de fecha y lugar dentro de la mensajería de Bookmachs. Dejar constancia formal permite a nuestro equipo respaldarte y actuar con precisión ante cualquier controversia.
+                  Mantén los acuerdos de fecha y lugar dentro de la mensajería de Intercambialibros. Dejar constancia formal permite a nuestro equipo respaldarte y actuar con precisión ante cualquier controversia.
                 </p>
               </div>
             </div>
@@ -692,7 +692,7 @@ export const HelpCenterPage: React.FC = () => {
 
           <div className="help-report-footer-card">
             <h4>¿Detectaste una actitud sospechosa o irregular?</h4>
-            <p>Reportar oportunamente protege a toda la comunidad de lectores de Bookmachs.</p>
+            <p>Reportar oportunamente protege a toda la comunidad de lectores de Intercambialibros.</p>
             <button 
               onClick={() => openContactModal('safety_report', 'Reporte de seguridad o usuario sospechoso')}
               className="btn-warning-outline"
@@ -714,7 +714,7 @@ export const HelpCenterPage: React.FC = () => {
 
           <h1 className="help-subview-title">Problemas con un intercambio</h1>
           <p className="help-subview-subtitle">
-            Selecciona la situación que estás experimentando para brindarte una solución guiada y activar la mediación de Bookmachs:
+            Selecciona la situación que estás experimentando para brindarte una solución guiada y activar la mediación de Intercambialibros:
           </p>
 
           <div className="guided-issues-list">
@@ -880,7 +880,7 @@ export const HelpCenterPage: React.FC = () => {
               <div className="rule-content">
                 <h4>Respeto y cordialidad en todo momento</h4>
                 <p>
-                  Bookmachs es un espacio inclusivo y seguro. No toleramos discriminación, acoso, lenguaje hostil ni actitudes descalificadoras en mensajes o citas presenciales.
+                  Intercambialibros es un espacio inclusivo y seguro. No toleramos discriminación, acoso, lenguaje hostil ni actitudes descalificadoras en mensajes o citas presenciales.
                 </p>
               </div>
             </div>
@@ -900,7 +900,7 @@ export const HelpCenterPage: React.FC = () => {
               <div className="rule-content">
                 <h4>Economía circular sin fines de reventa</h4>
                 <p>
-                  El propósito fundamental de Bookmachs es fomentar la lectura circular y el trueque cultural. Está prohibido el uso masivo de la plataforma con fines comerciales o de reventa abusiva.
+                  El propósito fundamental de Intercambialibros es fomentar la lectura circular y el trueque cultural. Está prohibido el uso masivo de la plataforma con fines comerciales o de reventa abusiva.
                 </p>
               </div>
             </div>
@@ -950,7 +950,7 @@ export const HelpCenterPage: React.FC = () => {
                   <i className="fa-solid fa-headset"></i>
                 </div>
                 <div>
-                  <h3 className="help-modal-title">Canal de Soporte Bookmachs</h3>
+                  <h3 className="help-modal-title">Canal de Soporte Intercambialibros</h3>
                   <span className="help-modal-subtitle">
                     {user?.isPremium 
                       ? 'Atención Prioritaria 24/7 (Plan Premium)' 

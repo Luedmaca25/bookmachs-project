@@ -57,7 +57,7 @@ export const StepByStepTutorialModal: React.FC<StepByStepTutorialModalProps> = (
         <div className="tutorial-single-image-wrapper">
           <img
             src="/como-funciona.jpeg"
-            alt="¿Cómo funciona Bookmachs?"
+            alt="¿Cómo funciona Intercambialibros?"
             className="tutorial-single-image"
           />
         </div>

@@ -427,7 +427,7 @@ export const AuthenticationPage: React.FC = () => {
                   <p className="profile-plan-desc">
                     {user.isSubscriptionCancelled && user.subscriptionEndDate
                       ? `Tienes acceso a todos tus beneficios Premium hasta el ${new Date(user.subscriptionEndDate).toLocaleDateString('es-CL')}.`
-                      : '¡Cuentas con acceso total a todas las ventajas de la comunidad Bookmachs!'}
+                      : '¡Cuentas con acceso total a todas las ventajas de la comunidad Intercambialibros!'}
                   </p>
 
                   <div className="profile-premium-benefits-title">Tus beneficios incluidos:</div>
