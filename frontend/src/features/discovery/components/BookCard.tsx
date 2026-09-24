@@ -206,7 +206,7 @@ export const BookCard: React.FC<BookCardProps> = ({
             </span>
           ) : book.isInternalStock !== false ? (
             <span className="stock-type-badge internal">
-              <i className="fa-solid fa-shield-halved"></i> Intercambia libros
+              <img src="/icon-paquete.png" alt="Intercambia libros" /> Intercambia libros
             </span>
           ) : (
             <span className="stock-type-badge external">

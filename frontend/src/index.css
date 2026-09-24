@@ -2281,6 +2281,14 @@ body.swipe-page-active .app-footer {
   -webkit-backdrop-filter: blur(8px);
 }
 
+.stock-type-badge img {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
 .stock-type-badge.internal {
   color: var(--accent-primary);
   background-color: rgba(255, 255, 255, 0.94);
