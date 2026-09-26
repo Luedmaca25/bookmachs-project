@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using Bookmachs.Refactored.Api.Domain.Entities;
 using Bookmachs.Refactored.Api.Dtos;
 using Bookmachs.Refactored.Api.Infrastructure.Persistence;
@@ -15,6 +16,7 @@ public interface IAuthService
 {
     Task<AuthResponseDto> RegisterAsync(string email, string password, string name, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default);
     Task<bool> IsPhoneAvailableAsync(string phone, CancellationToken cancellationToken = default);
+    Task<bool> IsEmailAvailableAsync(string email, CancellationToken cancellationToken = default);
     Task<AuthResponseDto> RegisterOnboardingAsync(
         string email,
         string password,
@@ -111,6 +113,36 @@ public class AuthService : IAuthService
         return !inUse;
     }
 
+    public async Task<bool> IsEmailAvailableAsync(string email, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !IsValidEmail(email))
+            return false;
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var inUse = await _dbContext.Users.AnyAsync(u => u.Email == normalizedEmail, cancellationToken);
+        return !inUse;
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        try
+        {
+            var trimmed = email.Trim();
+            if (!Regex.IsMatch(trimmed, @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
+                return false;
+
+            var addr = new System.Net.Mail.MailAddress(trimmed);
+            return addr.Address == trimmed;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<AuthResponseDto> RegisterOnboardingAsync(
         string email,
         string password,
@@ -128,6 +160,9 @@ public class AuthService : IAuthService
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("El correo electrónico es requerido.");
+
+        if (!IsValidEmail(email))
+            throw new ArgumentException("El formato del correo electrónico no es válido.");
 
         if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
             throw new ArgumentException("La contraseña debe tener al menos 6 caracteres.");

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using Bookmachs.Refactored.Api.Dtos;
 using Bookmachs.Refactored.Api.Services;
 using Google.Apis.Auth;
@@ -48,6 +49,52 @@ public class AuthController : ControllerBase
         }
 
         return Ok(new { available = true, message = "Número de teléfono disponible." });
+    }
+
+    /// <summary>
+    /// Verifica si un correo electrónico es válido y está disponible (no duplicado).
+    /// </summary>
+    [HttpPost("email/check")]
+    public async Task<IActionResult> CheckEmail([FromBody] CheckEmailRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequest(new { available = false, message = "Debes ingresar un correo electrónico." });
+        }
+
+        var trimmed = request.Email.Trim();
+        if (!IsValidEmail(trimmed))
+        {
+            return BadRequest(new { available = false, message = "Ingresa un correo electrónico con formato válido (ej. usuario@ejemplo.com)." });
+        }
+
+        var isAvailable = await _authService.IsEmailAvailableAsync(trimmed);
+        if (!isAvailable)
+        {
+            return Conflict(new { available = false, message = "Este correo electrónico ya está registrado en otra cuenta. Debe ser único." });
+        }
+
+        return Ok(new { available = true, message = "Correo electrónico disponible." });
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        try
+        {
+            var trimmed = email.Trim();
+            if (!Regex.IsMatch(trimmed, @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
+                return false;
+
+            var addr = new System.Net.Mail.MailAddress(trimmed);
+            return addr.Address == trimmed;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>
@@ -404,6 +451,11 @@ public class RegisterRequest
 public class CheckPhoneRequest
 {
     public string Phone { get; set; } = string.Empty;
+}
+
+public class CheckEmailRequest
+{
+    public string Email { get; set; } = string.Empty;
 }
 
 public class SendPhoneCodeRequest

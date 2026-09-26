@@ -57,6 +57,40 @@ const extractErrorMessage = (err: unknown, fallback: string): string => {
   return fallback;
 };
 
+const formatPhoneNumber = (value: string, pattern: string, prefix?: string): string => {
+  let digits = value.replace(/\D/g, '');
+
+  if (prefix) {
+    const cleanPrefix = prefix.replace(/\D/g, '');
+    const maxDigits = pattern.replace(/\D/g, '').length;
+    if (digits.startsWith(cleanPrefix) && digits.length > maxDigits) {
+      digits = digits.slice(cleanPrefix.length);
+    }
+  }
+
+  const maxDigits = pattern.replace(/\D/g, '').length;
+  const trimmedDigits = digits.slice(0, maxDigits);
+
+  let formatted = '';
+  let digitIndex = 0;
+
+  for (let i = 0; i < pattern.length && digitIndex < trimmedDigits.length; i++) {
+    if (pattern[i] === ' ') {
+      formatted += ' ';
+    } else {
+      formatted += trimmedDigits[digitIndex];
+      digitIndex++;
+    }
+  }
+
+  return formatted;
+};
+
+const isValidEmail = (value: string): boolean => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(value.trim());
+};
+
 export const RegisterWizard: React.FC<RegisterWizardProps> = ({
   onComplete,
   onGoToLogin,
@@ -78,12 +112,14 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(COUNTRIES[0]);
   const [phoneRaw, setPhoneRaw] = useState('');
   const [email, setEmail] = useState(user?.email || '');
+  const [emailTouched, setEmailTouched] = useState(false);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [channel, setChannel] = useState<'whatsapp' | 'sms'>('whatsapp');
   const [otpCode, setOtpCode] = useState('');
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
 
   // Estados de control
   const [loading, setLoading] = useState(false);
@@ -185,6 +221,10 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
         onGoToLogin();
         return;
       }
+      if (isGoogleCompletion && step === 7) {
+        setStep(5);
+        return;
+      }
       setStep(step - 1);
     } else if (onClose) {
       onClose();
@@ -232,8 +272,9 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
   const handleStep5Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanNumber = phoneRaw.replace(/\D/g, '');
-    if (cleanNumber.length < 7) {
-      setError('Por favor ingresa un número de teléfono móvil válido.');
+    const requiredDigits = selectedCountry.placeholder.replace(/\D/g, '').length;
+    if (cleanNumber.length < requiredDigits) {
+      setError(`Por favor ingresa los ${requiredDigits} dígitos de tu número de teléfono móvil.`);
       return;
     }
 
@@ -262,19 +303,45 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
     }
   };
 
-  // Validar y avanzar en Paso 6: Contraseña y Email
-  const handleStep6Submit = (e: React.FormEvent) => {
+  // Validar y avanzar en Paso 6: Correo y Contraseña
+  const handleStep6Submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !email.includes('@')) {
-      setError('Por favor ingresa un correo electrónico válido.');
+    if (!email.trim()) {
+      setError('Por favor ingresa tu correo electrónico.');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError('Por favor ingresa un correo electrónico con formato válido (ej. usuario@ejemplo.com).');
       return;
     }
     if (!password || password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres.');
       return;
     }
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden. Por favor verifica que sean iguales.');
+      return;
+    }
+
     setError(null);
-    setStep(7);
+    setLoading(true);
+
+    try {
+      // Verificar que el correo electrónico esté disponible (único)
+      const checkRes = await apiClient.post<{ available: boolean; message?: string }>('/auth/email/check', {
+        email: email.trim()
+      });
+
+      if (checkRes.available) {
+        setStep(7);
+      } else {
+        setError(checkRes.message || 'Este correo electrónico ya está registrado en otra cuenta. Debe ser único.');
+      }
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, 'Este correo electrónico ya está registrado en otra cuenta. Debe ser único.'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Enviar código OTP en Paso 7
@@ -326,13 +393,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
     }
   };
 
-  // Paso 8: Guardar sesión
-  const handleStep8Decision = (save: boolean) => {
-    setRememberMe(save);
-    setStep(9);
-  };
-
-  // Paso 9: Aceptar condiciones y crear cuenta
+  // Paso 8: Aceptar condiciones y crear cuenta
   const handleFinalSubmit = async () => {
     setError(null);
     setLoading(true);
@@ -368,12 +429,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
           pais: selectedCountry.name
         });
 
-        // Manejo de persistencia según rememberMe
-        if (rememberMe) {
-          localStorage.setItem('token', response.token);
-        } else {
-          sessionStorage.setItem('token', response.token);
-        }
+        localStorage.setItem('token', response.token);
 
         const profile = await apiClient.get<any>('/auth/me', {
           headers: { Authorization: `Bearer ${response.token}` }
@@ -687,7 +743,12 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                     value={selectedCountry.code}
                     onChange={(e) => {
                       const found = COUNTRIES.find((c) => c.code === e.target.value);
-                      if (found) setSelectedCountry(found);
+                      if (found) {
+                        setSelectedCountry(found);
+                        if (phoneRaw) {
+                          setPhoneRaw(formatPhoneNumber(phoneRaw, found.placeholder, found.prefix));
+                        }
+                      }
                     }}
                   >
                     {COUNTRIES.map((c) => (
@@ -701,9 +762,13 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                 <input
                   type="tel"
                   placeholder={selectedCountry.placeholder}
+                  maxLength={selectedCountry.placeholder.length}
                   className="register-clean-input register-phone-input"
                   value={phoneRaw}
-                  onChange={(e) => setPhoneRaw(e.target.value)}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value, selectedCountry.placeholder, selectedCountry.prefix);
+                    setPhoneRaw(formatted);
+                  }}
                   autoFocus
                   required
                 />
@@ -715,7 +780,11 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
             </div>
 
             <div className="register-footer-actions">
-              <button type="submit" className="register-primary-btn" disabled={loading}>
+              <button 
+                type="submit" 
+                className="register-primary-btn" 
+                disabled={loading || phoneRaw.replace(/\D/g, '').length < selectedCountry.placeholder.replace(/\D/g, '').length}
+              >
                 {loading ? 'Verificando disponibilidad...' : 'Siguiente'}
               </button>
               
@@ -735,14 +804,14 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
         )}
 
         {/* =========================================================================
-            PANTALLA 6: CREA UNA CONTRASEÑA
+            PANTALLA 6: CORREO Y CONTRASEÑA
            ========================================================================= */}
         {step === 6 && (
           <form onSubmit={handleStep6Submit} className="register-step-screen">
             <div className="register-step-header">
-              <h2 className="register-step-title">Crea una contraseña</h2>
+              <h2 className="register-step-title">Correo y contraseña</h2>
               <p className="register-step-subtitle">
-                Usa al menos 6 caracteres. Combina letras, números y símbolos para mayor seguridad.
+                Ingresa tu correo electrónico y define una contraseña segura de al menos 6 caracteres.
               </p>
             </div>
 
@@ -754,8 +823,15 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                   className="register-clean-input"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmailTouched(true)}
+                  autoFocus
                   required
                 />
+                {emailTouched && email.trim() && !isValidEmail(email) && (
+                  <p className="register-footnote-text" style={{ color: '#EF4444' }}>
+                    Ingresa un correo con formato válido (ej. usuario@ejemplo.com).
+                  </p>
+                )}
               </div>
 
               <div className="register-input-with-icon">
@@ -765,7 +841,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                   className="register-clean-input"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  autoFocus
                   required
                 />
                 <button
@@ -777,11 +852,40 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                   <i className={`fa-regular ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>
               </div>
+
+              <div className="register-input-with-icon">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Confirmar contraseña"
+                  className="register-clean-input"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="register-eye-toggle-btn"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label="Ver confirmar contraseña"
+                >
+                  <i className={`fa-regular ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                </button>
+              </div>
+
+              {confirmPassword && password !== confirmPassword && (
+                <p className="register-footnote-text" style={{ color: '#EF4444' }}>
+                  Las contraseñas no coinciden.
+                </p>
+              )}
             </div>
 
             <div className="register-footer-actions">
-              <button type="submit" className="register-primary-btn">
-                Siguiente
+              <button 
+                type="submit" 
+                className="register-primary-btn"
+                disabled={loading || !email.trim() || !isValidEmail(email) || !password || !confirmPassword || password.length < 6 || password !== confirmPassword}
+              >
+                {loading ? 'Verificando correo...' : 'Siguiente'}
               </button>
               <button type="button" className="register-link-btn" onClick={onGoToLogin}>
                 Ya tengo una cuenta
@@ -798,7 +902,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
             <div className="register-step-header">
               <h2 className="register-step-title">Confirma tu número de móvil</h2>
               <p className="register-step-subtitle">
-                Elige cómo quieres recibir el código de verificación para {getFullPhone()}.
+                Elige cómo quieres recibir el código de verificación para {selectedCountry.prefix} {phoneRaw}.
               </p>
             </div>
 
@@ -852,7 +956,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
             <div className="register-step-header">
               <h2 className="register-step-title">Ingresa el código</h2>
               <p className="register-step-subtitle">
-                Enviamos un código de 6 dígitos vía {channel.toUpperCase()} a {getFullPhone()}.
+                Enviamos un código de 6 dígitos vía {channel.toUpperCase()} a {selectedCountry.prefix} {phoneRaw}.
               </p>
             </div>
 
@@ -908,62 +1012,9 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
         )}
 
         {/* =========================================================================
-            PANTALLA 8: ¿GUARDAR TU INFORMACIÓN DE INICIO DE SESIÓN?
+            PANTALLA 8: ACEPTA LAS CONDICIONES Y POLÍTICAS
            ========================================================================= */}
         {step === 8 && (
-          <div className="register-step-screen register-step-centered">
-            {/* Ilustración de Libro con corazón */}
-            <div className="register-book-heart-illustration">
-              <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
-                {/* Rayos / Brillos de emoción */}
-                <line x1="26" y1="36" x2="38" y2="44" stroke="#0F9D58" strokeWidth="3" strokeLinecap="round" />
-                <line x1="114" y1="36" x2="102" y2="44" stroke="#0F9D58" strokeWidth="3" strokeLinecap="round" />
-                <line x1="124" y1="64" x2="110" y2="66" stroke="#0F9D58" strokeWidth="3" strokeLinecap="round" />
-                {/* Libro inclinado */}
-                <g transform="translate(32, 24) rotate(8)">
-                  <rect x="0" y="0" width="66" height="88" rx="6" fill="#FFFFFF" stroke="#1F2937" strokeWidth="3.2" />
-                  <line x1="10" y1="0" x2="10" y2="88" stroke="#E5E7EB" strokeWidth="2.5" />
-                  {/* Corazón verde */}
-                  <path d="M36 40 C36 34, 44 32, 48 37 C52 32, 60 34, 60 40 C60 49, 48 57, 48 57 C48 57, 36 49, 36 40 Z" fill="#0F9D58" />
-                </g>
-              </svg>
-            </div>
-
-            <div className="register-step-header text-center">
-              <h2 className="register-step-title">¿Guardar tu información de inicio de sesión?</h2>
-              <p className="register-step-subtitle">
-                Así no tendrás que ingresarla la próxima vez que uses intercambialibros.
-              </p>
-            </div>
-
-            <div className="register-footer-actions">
-              <button 
-                type="button" 
-                className="register-primary-btn" 
-                onClick={() => handleStep8Decision(true)}
-              >
-                Guardar
-              </button>
-
-              <button 
-                type="button" 
-                className="register-secondary-btn" 
-                onClick={() => handleStep8Decision(false)}
-              >
-                Ahora no
-              </button>
-
-              <button type="button" className="register-link-btn" onClick={onGoToLogin}>
-                Ya tengo una cuenta
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* =========================================================================
-            PANTALLA 9: ACEPTA LAS CONDICIONES Y POLÍTICAS
-           ========================================================================= */}
-        {step === 9 && (
           <div className="register-step-screen register-step-centered">
             {/* Ilustración de Documento con checkmark */}
             <div className="register-document-check-illustration">
