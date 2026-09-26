@@ -12357,8 +12357,139 @@ body.swipe-page-active .app-footer {
 }
 
 /* ==========================================================================
-   Guest Limit Modal (Alcanzaste el límite de swipes como invitado)
+   Guest Limit Modal (Estilo Bottom Sheet / Bumble - Referencia: guest-limit-modal-body.jpeg)
    ========================================================================== */
+.guest-limit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.32);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 1rem;
+  box-sizing: border-box;
+  animation: fadeIn 0.2s ease;
+}
+
+@media (min-width: 1200px) {
+  .guest-limit-modal-overlay {
+    padding: 1rem 1rem 2.8rem;
+  }
+}
+
+.guest-limit-modal-overlay .guest-limit-modal-card {
+  max-width: 440px;
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 28px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28), 0 4px 12px rgba(0, 0, 0, 0.12);
+  animation: slideUpBottom 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes slideUpBottom {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.guest-limit-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.15s ease;
+  z-index: 2;
+}
+
+.guest-limit-close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #111827;
+}
+
+.guest-limit-modal-overlay .guest-limit-modal-body {
+  padding: 1.6rem 1.8rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.guest-limit-illustration {
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guest-limit-modal-overlay .guest-limit-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.5rem;
+  line-height: 1.25;
+}
+
+.guest-limit-modal-overlay .guest-limit-description {
+  font-size: 0.94rem;
+  color: #374151;
+  line-height: 1.48;
+  margin: 0 0 1.4rem;
+  max-width: 380px;
+}
+
+.guest-limit-btn-bumble {
+  width: 100%;
+  height: 52px;
+  border-radius: 9999px;
+  background: #18181B;
+  color: #FFFFFF;
+  border: none;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guest-limit-btn-bumble:hover {
+  background: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.guest-limit-btn-bumble:active {
+  transform: scale(0.98);
+}
+
+/* Fallback para otros modales de tutorial/premium */
 .guest-limit-modal-card {
   max-width: 480px;
   width: 92%;

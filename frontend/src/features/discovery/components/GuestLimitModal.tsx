@@ -29,16 +29,15 @@ export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
 
   const modalContent = (
     <div
-      className="modal-overlay tutorial-modal-overlay"
+      className="guest-limit-modal-overlay"
       onClick={onClose}
     >
       <div
-        className="tutorial-modal-card guest-limit-modal-card"
+        className="guest-limit-modal-card"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Botón flotante para cerrar */}
         <button
-          className="tutorial-close-btn"
+          className="guest-limit-close-btn"
           onClick={onClose}
           title="Cerrar modal"
           aria-label="Cerrar modal"
@@ -62,21 +61,13 @@ export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
           <div className="guest-limit-actions">
             <button
               type="button"
-              className="guest-limit-btn-primary font-heading"
+              className="guest-limit-btn-bumble font-heading"
               onClick={() => {
                 onClose();
                 navigate('/auth');
               }}
             >
-              🚀 Registrarme / Iniciar Sesión
-            </button>
-
-            <button
-              type="button"
-              className="guest-limit-btn-cancel font-heading"
-              onClick={onClose}
-            >
-              Continuar explorando
+              Conseguir más me gusta
             </button>
           </div>
         </div>

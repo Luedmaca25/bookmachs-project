@@ -65,7 +65,11 @@ export const AppRouter: React.FC = () => {
           } />
           
           <Route path="planes" element={<PlansPage />} />
-          <Route path="ayuda" element={<HelpCenterPage />} />
+          <Route path="ayuda" element={
+            <ProtectedRoute>
+              <HelpCenterPage />
+            </ProtectedRoute>
+          } />
           
           <Route path="social" element={
             <ProtectedRoute>

@@ -122,10 +122,9 @@ export const MainLayout: React.FC = () => {
               {user.role === 'Admin' && (
                 <Link to="/admin" className="nav-link">Configuración</Link>
               )}
+              <Link to="/ayuda" className="nav-link">Ayuda</Link>
             </>
           )}
-
-          <Link to="/ayuda" className="nav-link">Ayuda</Link>
           
           {isAuthenticated && user ? (
             <div className="user-nav-container">
@@ -213,10 +212,9 @@ export const MainLayout: React.FC = () => {
                   {user.role === 'Admin' && (
                     <Link to="/admin" className="offcanvas-link"><i className="fa-solid fa-sliders"></i> Configuración</Link>
                   )}
+                  <Link to="/ayuda" className="offcanvas-link"><i className="fa-solid fa-shield-halved"></i> Ayuda y soporte</Link>
                 </>
               )}
-
-              <Link to="/ayuda" className="offcanvas-link"><i className="fa-solid fa-shield-halved"></i> Ayuda y soporte</Link>
 
               {/* <div className="offcanvas-divider" /> */}
 
@@ -251,11 +249,19 @@ export const MainLayout: React.FC = () => {
 
       <footer className="app-footer">
         <div className="footer-links-row">
-          <Link to="/ayuda" className="footer-link">Ayuda y Seguridad</Link>
-          <span className="footer-sep">•</span>
+          {isAuthenticated && user && (
+            <>
+              <Link to="/ayuda" className="footer-link">Ayuda y Seguridad</Link>
+              <span className="footer-sep">•</span>
+            </>
+          )}
           <Link to="/planes" className="footer-link">Planes Premium</Link>
-          <span className="footer-sep">•</span>
-          <Link to="/ayuda?v=community_rules" className="footer-link">Normas de la Comunidad</Link>
+          {isAuthenticated && user && (
+            <>
+              <span className="footer-sep">•</span>
+              <Link to="/ayuda?v=community_rules" className="footer-link">Normas de la Comunidad</Link>
+            </>
+          )}
         </div>
         {/* <p>&copy; {new Date().getFullYear()} Intercambialibros - Red Social Cultural y Ambiental. Todos los derechos reservados.</p> */}
       </footer>
