@@ -73,6 +73,8 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
   const [lastName, setLastName] = useState(user?.lastName || (user?.name && user.name.split(' ').length > 1 ? user.name.split(' ').slice(1).join(' ') : ''));
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState<string>('');
+  const [genderOption, setGenderOption] = useState<'Mujer' | 'Hombre' | 'Otro' | ''>('');
+  const [customGender, setCustomGender] = useState<string>('');
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(COUNTRIES[0]);
   const [phoneRaw, setPhoneRaw] = useState('');
   const [email, setEmail] = useState(user?.email || '');
@@ -214,10 +216,14 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
   // Validar y avanzar en Paso 4: Género
   const handleStep4Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!gender) {
+    if (!genderOption) {
       setError('Por favor selecciona una opción de género.');
       return;
     }
+    const finalGender = genderOption === 'Otro'
+      ? (customGender.trim() ? customGender.trim() : 'No especificar')
+      : genderOption;
+    setGender(finalGender);
     setError(null);
     setStep(5);
   };
@@ -520,6 +526,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                   className="register-clean-input"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                  required
                 />
               </div>
             </div>
@@ -587,41 +594,70 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
 
             <div className="register-options-list">
               <label 
-                className={`register-option-card ${gender === 'Mujer' ? 'selected' : ''}`}
-                onClick={() => setGender('Mujer')}
+                className={`register-option-card ${genderOption === 'Mujer' ? 'selected' : ''}`}
+                onClick={() => {
+                  setGenderOption('Mujer');
+                  setGender('Mujer');
+                }}
               >
                 <span className="register-option-text">Mujer</span>
                 <span className="register-radio-circle">
-                  {gender === 'Mujer' && <span className="register-radio-dot"></span>}
+                  {genderOption === 'Mujer' && <span className="register-radio-dot"></span>}
                 </span>
               </label>
 
               <label 
-                className={`register-option-card ${gender === 'Hombre' ? 'selected' : ''}`}
-                onClick={() => setGender('Hombre')}
+                className={`register-option-card ${genderOption === 'Hombre' ? 'selected' : ''}`}
+                onClick={() => {
+                  setGenderOption('Hombre');
+                  setGender('Hombre');
+                }}
               >
                 <span className="register-option-text">Hombre</span>
                 <span className="register-radio-circle">
-                  {gender === 'Hombre' && <span className="register-radio-dot"></span>}
+                  {genderOption === 'Hombre' && <span className="register-radio-dot"></span>}
                 </span>
               </label>
 
               <label 
-                className={`register-option-card ${gender === 'Otro' ? 'selected' : ''}`}
-                onClick={() => setGender('Otro')}
+                className={`register-option-card ${genderOption === 'Otro' ? 'selected' : ''}`}
+                onClick={() => {
+                  setGenderOption('Otro');
+                  setGender(customGender.trim() ? customGender.trim() : 'No especificar');
+                }}
               >
                 <div className="register-option-subgroup">
                   <span className="register-option-text">Más opciones</span>
                   <span className="register-option-hint">Elige otro género o prefiere no especificar.</span>
                 </div>
                 <span className="register-radio-circle">
-                  {gender === 'Otro' && <span className="register-radio-dot"></span>}
+                  {genderOption === 'Otro' && <span className="register-radio-dot"></span>}
                 </span>
               </label>
+
+              {genderOption === 'Otro' && (
+                <div className="register-custom-gender-field">
+                  <input
+                    type="text"
+                    className="register-clean-input"
+                    placeholder="Escribe tu género (opcional)"
+                    value={customGender}
+                    onChange={(e) => {
+                      setCustomGender(e.target.value);
+                      setGender(e.target.value.trim() ? e.target.value.trim() : 'No especificar');
+                    }}
+                    autoFocus
+                    maxLength={30}
+                  />
+                  <p className="register-footnote-text">
+                    Si no ingresas nada, se guardará como &quot;No especificar&quot;.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="register-footer-actions">
-              <button type="submit" className="register-primary-btn" disabled={!gender}>
+              <button type="submit" className="register-primary-btn" disabled={!genderOption}>
                 Siguiente
               </button>
               <button type="button" className="register-link-btn" onClick={onGoToLogin}>

@@ -15476,6 +15476,14 @@ body.swipe-page-active .app-footer {
   background: #0F9D58;
 }
 
+.register-custom-gender-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  animation: fadeIn 0.2s ease-in;
+}
+
 .register-channel-lead {
   display: flex;
   align-items: center;
