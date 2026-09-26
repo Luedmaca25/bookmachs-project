@@ -33,7 +33,7 @@ interface BookItem {
 
 export const SwipePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, token, logout } = useAuthStore();
+  const { user, isAuthenticated, token } = useAuthStore();
   
   // Control de Onboarding
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
@@ -562,14 +562,7 @@ export const SwipePage: React.FC = () => {
 
   if (showWizard) {
     return (
-      <div className="swipe-page-container">
-        <div className="swipe-header">
-          <h1>Completar Onboarding</h1>
-          <div className="user-auth-badge">
-            <span>Hola, <strong>{user?.name}</strong></span>
-            <button onClick={logout} className="logout-btn">Cerrar Sesión</button>
-          </div>
-        </div>
+      <div className="onboarding-page-wrapper swipe-onboarding-wrapper">
         <OnboardingWizard onComplete={handleOnboardingComplete} />
       </div>
     );

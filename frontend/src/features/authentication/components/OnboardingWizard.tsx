@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { PreferencesCard } from './PreferencesCard';
 import { apiClient } from '../../../lib/apiClient';
-import { formatRut, formatPhoneByCountry, getPhonePlaceholder } from '../../../lib/formatters';
+import { formatRut } from '../../../lib/formatters';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -17,14 +17,13 @@ interface PreferenceTag {
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
   const { user, login } = useAuthStore();
   
-  // Determinar el paso inicial
-  const needsProfileUpdate = !user?.pais || !user?.documentoIdentidad || !user?.telefono;
+  // Determinar el paso inicial (solo país y documento si faltan, el teléfono se gestiona en registro)
+  const needsProfileUpdate = !user?.pais || !user?.documentoIdentidad;
   const [step, setStep] = useState(needsProfileUpdate ? 1 : 2);
   
-  // Paso 1: Datos faltantes (SSO Google)
+  // Paso 1: Datos faltantes
   const [pais, setPais] = useState(user?.pais || 'Chile');
   const [documento, setDocumento] = useState(user?.documentoIdentidad || '');
-  const [telefono, setTelefono] = useState(user?.telefono || '');
   
   // Paso 2: Cuestionario de gustos
   const [tags, setTags] = useState<PreferenceTag[]>([]);
@@ -77,7 +76,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
       }>('/auth/update-profile', {
         pais,
         documentoIdentidad: documento,
-        telefono
+        telefono: user?.telefono
       });
 
       // Actualizar el store de auth
@@ -162,7 +161,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 onChange={(e) => {
                   const newPais = e.target.value;
                   setPais(newPais);
-                  setTelefono(formatPhoneByCountry(telefono, newPais));
                   if (newPais === 'Chile') {
                     setDocumento(formatRut(documento));
                   }
@@ -184,17 +182,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 placeholder={pais === 'Chile' ? '12.345.678-9' : 'Número de Documento'}
                 value={documento}
                 onChange={(e) => setDocumento(pais === 'Chile' ? formatRut(e.target.value) : e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="wizard-field">
-              <label>Teléfono Celular ({pais})</label>
-              <input
-                type="tel"
-                placeholder={getPhonePlaceholder(pais)}
-                value={telefono}
-                onChange={(e) => setTelefono(formatPhoneByCountry(e.target.value, pais))}
                 required
               />
             </div>

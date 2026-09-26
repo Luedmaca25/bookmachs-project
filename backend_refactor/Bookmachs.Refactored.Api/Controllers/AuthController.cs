@@ -44,7 +44,7 @@ public class AuthController : ControllerBase
         var isAvailable = await _authService.IsPhoneAvailableAsync(request.Phone);
         if (!isAvailable)
         {
-            return Conflict(new { available = false, message = "Este número de teléfono ya está registrado en otra cuenta. Debe ser único." });
+            return Conflict(new { available = false, message = "El número de teléfono ingresado ya ha sido registrado." });
         }
 
         return Ok(new { available = true, message = "Número de teléfono disponible." });

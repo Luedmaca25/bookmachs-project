@@ -384,7 +384,10 @@ public class AuthService : IAuthService
 
         user.DocumentoIdentidad = documentoIdentidad;
         user.Pais = pais;
-        user.Telefono = telefono;
+        if (!string.IsNullOrWhiteSpace(telefono))
+        {
+            user.Telefono = telefono;
+        }
 
         _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync(cancellationToken);

@@ -222,7 +222,8 @@ body {
   padding: 3rem 2rem;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   background-color: #fff;
 }
 
@@ -1892,8 +1893,8 @@ body.swipe-page-active .app-container {
 }
 
 /* Pantalla Swipe tipo Tinder a pantalla completa sin scroll vertical */
-.app-main.swipe-main-active,
-.app-main:has(.swipe-page-container) {
+.app-main.swipe-main-active:not(:has(.onboarding-wizard-container)):not(:has(.onboarding-page-wrapper)):not(:has(.register-wizard-container)),
+.app-main:has(.swipe-page-container):not(:has(.onboarding-wizard-container)):not(:has(.onboarding-page-wrapper)):not(:has(.register-wizard-container)) {
   position: fixed !important;
   top: 68px !important;
   left: 0 !important;
@@ -1910,6 +1911,36 @@ body.swipe-page-active .app-container {
   box-sizing: border-box !important;
   z-index: 10 !important;
   overscroll-behavior: none !important;
+}
+
+/* Permitir scroll y espacio adecuado bajo el header cuando el onboarding o registro se renderizan en app-main */
+.app-main:has(.onboarding-wizard-container),
+.app-main:has(.onboarding-page-wrapper),
+.app-main:has(.register-wizard-container) {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  height: auto !important;
+  min-height: calc(100vh - 120px) !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 3rem 1.5rem 6rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .app-main:has(.onboarding-wizard-container),
+  .app-main:has(.onboarding-page-wrapper),
+  .app-main:has(.register-wizard-container) {
+    padding: calc(68px + 1.75rem) 1rem 1rem !important;
+  }
 }
 
 .swipe-page-container {
@@ -3195,8 +3226,9 @@ body.swipe-page-active .app-footer {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   animation: fadeIn var(--transition-normal);
+  box-sizing: border-box;
 }
 
 .wizard-progress-bar {
@@ -3208,6 +3240,7 @@ body.swipe-page-active .app-footer {
   padding: 0.5rem 1.5rem;
   position: relative;
   overflow: hidden;
+  margin-top: 0.5rem;
 }
 
 .progress-step {
@@ -8352,8 +8385,22 @@ body.swipe-page-active .app-footer {
 
 .onboarding-page-wrapper {
   display: flex;
-  justify-content: center;
-  padding: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.swipe-onboarding-wrapper {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem 0.5rem 6rem !important;
 }
 
 .profile-container {

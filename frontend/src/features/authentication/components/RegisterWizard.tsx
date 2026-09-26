@@ -29,6 +29,34 @@ const COUNTRIES: CountryOption[] = [
   { code: 'EC', name: 'Ecuador', flag: '🇪🇨', prefix: '+593', placeholder: '99 123 4567' }
 ];
 
+const extractErrorMessage = (err: unknown, fallback: string): string => {
+  if (err instanceof Error) {
+    const raw = err.message;
+    if (!raw) return fallback;
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        if (typeof parsed.message === 'string' && parsed.message.trim()) {
+          return parsed.message;
+        }
+        if (typeof parsed.detail === 'string' && parsed.detail.trim()) {
+          return parsed.detail;
+        }
+        if (typeof parsed.title === 'string' && parsed.title.trim()) {
+          return parsed.title;
+        }
+        if (typeof parsed.error === 'string' && parsed.error.trim()) {
+          return parsed.error;
+        }
+      }
+    } catch {
+      // Raw string
+    }
+    return raw;
+  }
+  return fallback;
+};
+
 export const RegisterWizard: React.FC<RegisterWizardProps> = ({
   onComplete,
   onGoToLogin,
@@ -102,9 +130,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                 setStep(3);
               }
             } catch (err: unknown) {
-              if (err instanceof Error) {
-                setError(err.message || 'Error al iniciar sesión con Google.');
-              }
+              setError(extractErrorMessage(err, 'Error al iniciar sesión con Google.'));
             } finally {
               setLoading(false);
             }
@@ -224,11 +250,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
         }
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'Este número de teléfono ya está registrado en otra cuenta.');
-      } else {
-        setError('Este número de teléfono ya está en uso. Debe ser único.');
-      }
+      setError(extractErrorMessage(err, 'Este número de teléfono ya está registrado en otra cuenta. Debe ser único.'));
     } finally {
       setLoading(false);
     }
@@ -265,9 +287,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
       setIsVerifyingOtp(true);
       setResendTimer(60);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'Error al enviar el código de verificación.');
-      }
+      setError(extractErrorMessage(err, 'Error al enviar el código de verificación.'));
     } finally {
       setLoading(false);
     }
@@ -294,9 +314,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
       setIsVerifyingOtp(false);
       setStep(8);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'Código incorrecto o expirado.');
-      }
+      setError(extractErrorMessage(err, 'Código incorrecto o expirado.'));
     } finally {
       setLoading(false);
     }
@@ -359,11 +377,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
         onComplete();
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message || 'Ocurrió un error al crear tu cuenta.');
-      } else {
-        setError('Error inesperado al crear la cuenta.');
-      }
+      setError(extractErrorMessage(err, 'Ocurrió un error al crear tu cuenta.'));
     } finally {
       setLoading(false);
     }
