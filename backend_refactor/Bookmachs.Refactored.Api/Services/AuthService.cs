@@ -14,6 +14,30 @@ namespace Bookmachs.Refactored.Api.Services;
 public interface IAuthService
 {
     Task<AuthResponseDto> RegisterAsync(string email, string password, string name, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default);
+    Task<bool> IsPhoneAvailableAsync(string phone, CancellationToken cancellationToken = default);
+    Task<AuthResponseDto> RegisterOnboardingAsync(
+        string email,
+        string password,
+        string firstName,
+        string? lastName,
+        DateTime? birthDate,
+        string? gender,
+        string phone,
+        string? verificationCode,
+        string? verificationChannel,
+        bool termsAccepted,
+        string? documentoIdentidad = null,
+        string? pais = null,
+        CancellationToken cancellationToken = default);
+    Task<AuthResponseDto> CompleteOnboardingAsync(
+        Guid userId,
+        string phone,
+        string? code,
+        DateTime? birthDate,
+        string? gender,
+        string? documentoIdentidad,
+        string? pais,
+        CancellationToken cancellationToken = default);
     Task<AuthResponseDto> LoginAsync(string email, string password, CancellationToken cancellationToken = default);
     Task<AuthResponseDto> GoogleLoginAsync(string googleSub, string email, string name, CancellationToken cancellationToken = default);
     Task<bool> SavePreferencesAsync(Guid userId, List<string> preferenceTags, CancellationToken cancellationToken = default);
@@ -27,15 +51,18 @@ public class AuthService : IAuthService
     private readonly BookmachsDbContext _dbContext;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly ITwilioVerifyService _twilioVerifyService;
 
     public AuthService(
         BookmachsDbContext dbContext,
         IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        ITwilioVerifyService twilioVerifyService)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _twilioVerifyService = twilioVerifyService;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(string email, string password, string name, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default)
@@ -69,6 +96,162 @@ public class AuthService : IAuthService
         var token = _jwtTokenGenerator.GenerateToken(user);
 
         return MapToAuthResponse(user, token);
+    }
+
+    public async Task<bool> IsPhoneAvailableAsync(string phone, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+            return false;
+
+        var normalized = _twilioVerifyService.NormalizePhoneNumber(phone);
+        if (string.IsNullOrWhiteSpace(normalized))
+            return false;
+
+        var inUse = await _dbContext.Users.AnyAsync(u => u.Telefono == normalized, cancellationToken);
+        return !inUse;
+    }
+
+    public async Task<AuthResponseDto> RegisterOnboardingAsync(
+        string email,
+        string password,
+        string firstName,
+        string? lastName,
+        DateTime? birthDate,
+        string? gender,
+        string phone,
+        string? verificationCode,
+        string? verificationChannel,
+        bool termsAccepted,
+        string? documentoIdentidad = null,
+        string? pais = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("El correo electrónico es requerido.");
+
+        if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
+            throw new ArgumentException("La contraseña debe tener al menos 6 caracteres.");
+
+        if (string.IsNullOrWhiteSpace(firstName))
+            throw new ArgumentException("El nombre es requerido.");
+
+        if (string.IsNullOrWhiteSpace(phone))
+            throw new ArgumentException("El número de teléfono móvil es requerido.");
+
+        if (!termsAccepted)
+            throw new InvalidOperationException("Debes aceptar las condiciones de uso y políticas de privacidad para continuar.");
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var existingEmail = await _dbContext.Users.AnyAsync(u => u.Email == normalizedEmail, cancellationToken);
+        if (existingEmail)
+            throw new InvalidOperationException("El correo electrónico ya está registrado.");
+
+        var normalizedPhone = _twilioVerifyService.NormalizePhoneNumber(phone);
+        var existingPhone = await _dbContext.Users.AnyAsync(u => u.Telefono == normalizedPhone, cancellationToken);
+        if (existingPhone)
+            throw new InvalidOperationException("Este número de teléfono ya está registrado en otra cuenta.");
+
+        // Validar código si se especificó
+        if (!string.IsNullOrWhiteSpace(verificationCode))
+        {
+            var verifyResult = await _twilioVerifyService.CheckVerificationCodeAsync(normalizedPhone, verificationCode, cancellationToken);
+            if (!verifyResult.Verified)
+            {
+                throw new InvalidOperationException(verifyResult.Message);
+            }
+        }
+
+        var fullName = string.IsNullOrWhiteSpace(lastName) 
+            ? firstName.Trim() 
+            : $"{firstName.Trim()} {lastName.Trim()}";
+
+        var finalPais = !string.IsNullOrWhiteSpace(pais) ? pais : DetectCountryFromPhone(normalizedPhone);
+
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = normalizedEmail,
+            Name = fullName,
+            LastName = lastName?.Trim(),
+            BirthDate = birthDate,
+            Gender = gender?.Trim(),
+            Telefono = normalizedPhone,
+            IsPhoneVerified = true,
+            PhoneVerificationChannel = verificationChannel ?? "whatsapp",
+            TermsAccepted = true,
+            TermsAcceptedAt = DateTime.UtcNow,
+            DocumentoIdentidad = documentoIdentidad?.Trim() ?? string.Empty,
+            Pais = finalPais,
+            PasswordHash = _passwordHasher.HashPassword(password),
+            Role = "User",
+            DailySwipesConsumed = 0,
+            LastSwipeResetDate = DateTime.UtcNow,
+            IsPremium = false,
+            SubscriptionPlan = "Free",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _dbContext.Users.AddAsync(user, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var token = _jwtTokenGenerator.GenerateToken(user);
+        return MapToAuthResponse(user, token);
+    }
+
+    public async Task<AuthResponseDto> CompleteOnboardingAsync(
+        Guid userId,
+        string phone,
+        string? code,
+        DateTime? birthDate,
+        string? gender,
+        string? documentoIdentidad,
+        string? pais,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+            throw new KeyNotFoundException("Usuario no encontrado.");
+
+        var normalizedPhone = _twilioVerifyService.NormalizePhoneNumber(phone);
+        if (string.IsNullOrWhiteSpace(normalizedPhone))
+            throw new ArgumentException("Número de teléfono inválido.");
+
+        var phoneInUse = await _dbContext.Users.AnyAsync(u => u.Id != userId && u.Telefono == normalizedPhone, cancellationToken);
+        if (phoneInUse)
+            throw new InvalidOperationException("Este número de teléfono ya está registrado en otra cuenta.");
+
+        if (!string.IsNullOrWhiteSpace(code))
+        {
+            var verifyResult = await _twilioVerifyService.CheckVerificationCodeAsync(normalizedPhone, code, cancellationToken);
+            if (!verifyResult.Verified)
+                throw new InvalidOperationException(verifyResult.Message);
+        }
+
+        user.Telefono = normalizedPhone;
+        user.IsPhoneVerified = true;
+        if (birthDate.HasValue) user.BirthDate = birthDate;
+        if (!string.IsNullOrWhiteSpace(gender)) user.Gender = gender;
+        if (!string.IsNullOrWhiteSpace(documentoIdentidad)) user.DocumentoIdentidad = documentoIdentidad;
+        if (!string.IsNullOrWhiteSpace(pais)) user.Pais = pais;
+        else if (string.IsNullOrWhiteSpace(user.Pais)) user.Pais = DetectCountryFromPhone(normalizedPhone);
+
+        _dbContext.Users.Update(user);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var token = _jwtTokenGenerator.GenerateToken(user);
+        return MapToAuthResponse(user, token);
+    }
+
+    private static string DetectCountryFromPhone(string phone)
+    {
+        if (phone.StartsWith("+56")) return "Chile";
+        if (phone.StartsWith("+52")) return "México";
+        if (phone.StartsWith("+57")) return "Colombia";
+        if (phone.StartsWith("+54")) return "Argentina";
+        if (phone.StartsWith("+51")) return "Perú";
+        if (phone.StartsWith("+34")) return "España";
+        if (phone.StartsWith("+1")) return "Estados Unidos";
+        return "Chile";
     }
 
     public async Task<AuthResponseDto> LoginAsync(string email, string password, CancellationToken cancellationToken = default)
@@ -285,6 +468,10 @@ public class AuthService : IAuthService
             Id = user.Id,
             Email = user.Email,
             Name = user.Name,
+            LastName = user.LastName,
+            BirthDate = user.BirthDate,
+            Gender = user.Gender,
+            IsPhoneVerified = user.IsPhoneVerified,
             DocumentoIdentidad = user.DocumentoIdentidad,
             Pais = user.Pais,
             Telefono = user.Telefono,
@@ -307,6 +494,10 @@ public class AuthService : IAuthService
             Id = user.Id,
             Email = user.Email,
             Name = user.Name,
+            LastName = user.LastName,
+            BirthDate = user.BirthDate,
+            Gender = user.Gender,
+            IsPhoneVerified = user.IsPhoneVerified,
             DocumentoIdentidad = user.DocumentoIdentidad,
             Pais = user.Pais,
             Telefono = user.Telefono,

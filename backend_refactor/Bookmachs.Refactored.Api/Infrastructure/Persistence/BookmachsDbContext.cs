@@ -31,9 +31,15 @@ public class BookmachsDbContext : DbContext
             entity.Property(u => u.Email).IsRequired().HasMaxLength(150);
             entity.HasIndex(u => u.Email).IsUnique();
             entity.Property(u => u.Name).IsRequired().HasMaxLength(100);
-            entity.Property(u => u.DocumentoIdentidad).IsRequired().HasMaxLength(50);
-            entity.Property(u => u.Pais).IsRequired().HasMaxLength(50);
-            entity.Property(u => u.Telefono).IsRequired().HasMaxLength(30);
+            entity.Property(u => u.LastName).HasMaxLength(100);
+            entity.Property(u => u.DocumentoIdentidad).HasMaxLength(50).IsRequired(false);
+            entity.Property(u => u.Pais).HasMaxLength(50).IsRequired(false);
+            entity.Property(u => u.Telefono).HasMaxLength(30).IsRequired(false);
+            entity.HasIndex(u => u.Telefono)
+                .IsUnique()
+                .HasFilter("[Telefono] IS NOT NULL AND [Telefono] <> ''");
+            entity.Property(u => u.Gender).HasMaxLength(30);
+            entity.Property(u => u.PhoneVerificationChannel).HasMaxLength(20);
             entity.Property(u => u.ProfileImageUrl).HasMaxLength(500);
             entity.Property(u => u.SubscriptionPlan).IsRequired().HasMaxLength(20);
             entity.Property(u => u.Role).IsRequired().HasMaxLength(20);

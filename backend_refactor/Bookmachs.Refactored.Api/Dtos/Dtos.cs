@@ -7,9 +7,13 @@ public class AuthResponseDto
     public Guid Id { get; set; }
     public string Email { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string DocumentoIdentidad { get; set; } = string.Empty;
-    public string Pais { get; set; } = string.Empty;
-    public string Telefono { get; set; } = string.Empty;
+    public string? LastName { get; set; }
+    public DateTime? BirthDate { get; set; }
+    public string? Gender { get; set; }
+    public bool IsPhoneVerified { get; set; }
+    public string? DocumentoIdentidad { get; set; }
+    public string? Pais { get; set; }
+    public string? Telefono { get; set; }
     public string? ProfileImageUrl { get; set; }
     public string Role { get; set; } = string.Empty;
     public bool IsPremium { get; set; }
@@ -24,9 +28,13 @@ public class UserProfileDto
     public Guid Id { get; set; }
     public string Email { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string DocumentoIdentidad { get; set; } = string.Empty;
-    public string Pais { get; set; } = string.Empty;
-    public string Telefono { get; set; } = string.Empty;
+    public string? LastName { get; set; }
+    public DateTime? BirthDate { get; set; }
+    public string? Gender { get; set; }
+    public bool IsPhoneVerified { get; set; }
+    public string? DocumentoIdentidad { get; set; }
+    public string? Pais { get; set; }
+    public string? Telefono { get; set; }
     public string? ProfileImageUrl { get; set; }
     public bool IsPremium { get; set; }
     public string SubscriptionPlan { get; set; } = "Free";

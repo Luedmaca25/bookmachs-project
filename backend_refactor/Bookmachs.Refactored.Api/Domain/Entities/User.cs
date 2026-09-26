@@ -8,11 +8,24 @@ public class User
     public Guid Id { get; set; }
     public string Email { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string? LastName { get; set; }
+    
+    // Datos demográficos y de registro (Onboarding)
+    public DateTime? BirthDate { get; set; }
+    public string? Gender { get; set; }
+
+    // Verificación de Teléfono (WhatsApp / SMS con Twilio)
+    public bool IsPhoneVerified { get; set; } = false;
+    public string? PhoneVerificationChannel { get; set; } // "WhatsApp", "SMS"
+    
+    // Aceptación de Términos y Políticas
+    public bool TermsAccepted { get; set; } = false;
+    public DateTime? TermsAcceptedAt { get; set; }
     
     // Documento de identidad dinámico adaptable por país (ej. RUT en Chile, DNI en Argentina, etc.)
-    public string DocumentoIdentidad { get; set; } = string.Empty;
-    public string Pais { get; set; } = string.Empty;
-    public string Telefono { get; set; } = string.Empty;
+    public string? DocumentoIdentidad { get; set; }
+    public string? Pais { get; set; }
+    public string? Telefono { get; set; }
     public string? ProfileImageUrl { get; set; }
     
     // Control de cuota diaria de swipes

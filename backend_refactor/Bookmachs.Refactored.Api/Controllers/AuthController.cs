@@ -18,11 +18,83 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly ITwilioVerifyService _twilioVerifyService;
 
-    public AuthController(IAuthService authService, IFileStorageService fileStorageService)
+    public AuthController(
+        IAuthService authService, 
+        IFileStorageService fileStorageService,
+        ITwilioVerifyService twilioVerifyService)
     {
         _authService = authService;
         _fileStorageService = fileStorageService;
+        _twilioVerifyService = twilioVerifyService;
+    }
+
+    /// <summary>
+    /// Verifica si un número de teléfono está disponible (no duplicado).
+    /// </summary>
+    [HttpPost("phone/check")]
+    public async Task<IActionResult> CheckPhone([FromBody] CheckPhoneRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Phone))
+        {
+            return BadRequest(new { message = "Debes ingresar un número de teléfono móvil." });
+        }
+
+        var isAvailable = await _authService.IsPhoneAvailableAsync(request.Phone);
+        if (!isAvailable)
+        {
+            return Conflict(new { available = false, message = "Este número de teléfono ya está registrado en otra cuenta. Debe ser único." });
+        }
+
+        return Ok(new { available = true, message = "Número de teléfono disponible." });
+    }
+
+    /// <summary>
+    /// Envía un código de verificación vía WhatsApp o SMS con Twilio Verify.
+    /// </summary>
+    [HttpPost("phone/send-code")]
+    public async Task<IActionResult> SendPhoneCode([FromBody] SendPhoneCodeRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Phone))
+        {
+            return BadRequest(new { message = "Debes ingresar un número de teléfono móvil válido." });
+        }
+
+        // Validación estricta de unicidad previa al envío
+        var isAvailable = await _authService.IsPhoneAvailableAsync(request.Phone);
+        if (!isAvailable)
+        {
+            return Conflict(new { message = "Este número de teléfono ya está registrado en otra cuenta. Solo se permite un número por cuenta." });
+        }
+
+        var result = await _twilioVerifyService.SendVerificationCodeAsync(request.Phone, request.Channel);
+        if (!result.Success)
+        {
+            return BadRequest(new { message = result.Message });
+        }
+
+        return Ok(new { success = true, message = result.Message });
+    }
+
+    /// <summary>
+    /// Valida el código OTP provisto por el usuario.
+    /// </summary>
+    [HttpPost("phone/verify-code")]
+    public async Task<IActionResult> VerifyPhoneCode([FromBody] VerifyPhoneCodeRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Code))
+        {
+            return BadRequest(new { message = "Se requiere el número de teléfono y el código de verificación." });
+        }
+
+        var result = await _twilioVerifyService.CheckVerificationCodeAsync(request.Phone, request.Code);
+        if (!result.Verified)
+        {
+            return BadRequest(new { verified = false, message = result.Message });
+        }
+
+        return Ok(new { verified = true, message = result.Message });
     }
 
     [HttpPost("register")]
@@ -30,32 +102,98 @@ public class AuthController : ControllerBase
     {
         if (request == null)
         {
-            return BadRequest("Los datos de registro proporcionados no son válidos.");
+            return BadRequest(new { message = "Los datos de registro proporcionados no son válidos." });
         }
 
-        if (string.IsNullOrWhiteSpace(request.Email) || 
-            string.IsNullOrWhiteSpace(request.Password) ||
-            string.IsNullOrWhiteSpace(request.Name) ||
-            string.IsNullOrWhiteSpace(request.DocumentoIdentidad) ||
-            string.IsNullOrWhiteSpace(request.Pais))
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
         {
-            return BadRequest("Todos los campos obligatorios del registro deben estar completos.");
+            return BadRequest(new { message = "El correo electrónico y la contraseña son obligatorios." });
+        }
+
+        var firstName = !string.IsNullOrWhiteSpace(request.FirstName) 
+            ? request.FirstName 
+            : request.Name;
+
+        if (string.IsNullOrWhiteSpace(firstName))
+        {
+            return BadRequest(new { message = "El nombre es obligatorio." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Telefono))
+        {
+            return BadRequest(new { message = "El número de teléfono móvil es obligatorio y debe ser único." });
         }
 
         try
         {
-            var result = await _authService.RegisterAsync(
-                request.Email, 
-                request.Password, 
-                request.Name, 
-                request.DocumentoIdentidad, 
-                request.Pais,
-                request.Telefono ?? string.Empty);
+            var result = await _authService.RegisterOnboardingAsync(
+                email: request.Email,
+                password: request.Password,
+                firstName: firstName,
+                lastName: request.LastName,
+                birthDate: request.BirthDate,
+                gender: request.Gender,
+                phone: request.Telefono,
+                verificationCode: request.VerificationCode,
+                verificationChannel: request.VerificationChannel,
+                termsAccepted: request.TermsAccepted || true,
+                documentoIdentidad: request.DocumentoIdentidad,
+                pais: request.Pais);
+
             return Ok(result);
         }
         catch (InvalidOperationException ex)
         {
             return Conflict(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Completa el onboarding para usuarios de Google SSO o perfiles pendientes de validar teléfono.
+    /// </summary>
+    [Authorize]
+    [HttpPost("complete-onboarding")]
+    public async Task<ActionResult<AuthResponseDto>> CompleteOnboarding([FromBody] CompleteOnboardingRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Phone))
+        {
+            return BadRequest(new { message = "El número de teléfono móvil es obligatorio." });
+        }
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { message = "Sesión no válida o expirada." });
+        }
+
+        try
+        {
+            var result = await _authService.CompleteOnboardingAsync(
+                userId: userId,
+                phone: request.Phone,
+                code: request.Code,
+                birthDate: request.BirthDate,
+                gender: request.Gender,
+                documentoIdentidad: request.DocumentoIdentidad,
+                pais: request.Pais);
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
         }
     }
 
@@ -250,10 +388,44 @@ public class RegisterRequest
 {
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string DocumentoIdentidad { get; set; } = string.Empty;
-    public string Pais { get; set; } = string.Empty;
+    public string? Name { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public DateTime? BirthDate { get; set; }
+    public string? Gender { get; set; }
     public string Telefono { get; set; } = string.Empty;
+    public string? VerificationCode { get; set; }
+    public string? VerificationChannel { get; set; } // "whatsapp" o "sms"
+    public bool TermsAccepted { get; set; }
+    public string? DocumentoIdentidad { get; set; }
+    public string? Pais { get; set; }
+}
+
+public class CheckPhoneRequest
+{
+    public string Phone { get; set; } = string.Empty;
+}
+
+public class SendPhoneCodeRequest
+{
+    public string Phone { get; set; } = string.Empty;
+    public string Channel { get; set; } = "whatsapp"; // "whatsapp" o "sms"
+}
+
+public class VerifyPhoneCodeRequest
+{
+    public string Phone { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+}
+
+public class CompleteOnboardingRequest
+{
+    public string Phone { get; set; } = string.Empty;
+    public string? Code { get; set; }
+    public DateTime? BirthDate { get; set; }
+    public string? Gender { get; set; }
+    public string? DocumentoIdentidad { get; set; }
+    public string? Pais { get; set; }
 }
 
 public class LoginRequest

@@ -44,6 +44,7 @@ builder.Services.AddScoped<ISocialService, SocialService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<ICategoryHomologationService, CategoryHomologationService>();
 builder.Services.AddScoped<ISendGridEmailService, SendGridEmailService>();
+builder.Services.AddHttpClient<ITwilioVerifyService, TwilioVerifyService>();
 builder.Services.AddScoped<IExchangeFulfillmentJob, ExchangeFulfillmentJob>();
 builder.Services.AddScoped<Bookmachs.Refactored.Api.Jobs.CleanupBooksJob>();
 

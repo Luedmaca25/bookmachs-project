@@ -257,7 +257,7 @@ export const MainLayout: React.FC = () => {
           <span className="footer-sep">•</span>
           <Link to="/ayuda?v=community_rules" className="footer-link">Normas de la Comunidad</Link>
         </div>
-        <p>&copy; {new Date().getFullYear()} Intercambialibros - Red Social Cultural y Ambiental. Todos los derechos reservados.</p>
+        {/* <p>&copy; {new Date().getFullYear()} Intercambialibros - Red Social Cultural y Ambiental. Todos los derechos reservados.</p> */}
       </footer>
 
       {/* BARRA DE NAVEGACIÓN INFERIOR ESTILO FLOATING PILL (5 OPCIONES) */}

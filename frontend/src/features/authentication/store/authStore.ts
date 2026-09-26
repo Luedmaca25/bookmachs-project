@@ -1,13 +1,19 @@
 import { create } from 'zustand';
 import { apiClient } from '../../../lib/apiClient';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   name: string;
-  documentoIdentidad: string;
-  pais: string;
+  lastName?: string;
+  birthDate?: string;
+  gender?: string;
+  documentoIdentidad?: string;
+  pais?: string;
   telefono?: string;
+  isPhoneVerified?: boolean;
+  phoneVerificationChannel?: string;
+  termsAccepted?: boolean;
   profileImageUrl?: string;
   role: string;
   isPremium: boolean;

@@ -127,6 +127,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  padding-bottom: 60px;
 }
 
 .app-header {
@@ -8352,7 +8353,7 @@ body.swipe-page-active .app-footer {
 .onboarding-page-wrapper {
   display: flex;
   justify-content: center;
-  padding: 2rem 0;
+  padding: 0;
 }
 
 .profile-container {
@@ -11163,7 +11164,7 @@ body.swipe-page-active .app-footer {
 
   /* Main Layout & Forms */
   .app-main {
-    padding: calc(68px + 1.25rem) 1rem calc(96px + env(safe-area-inset-bottom, 0px)) 1rem;
+    padding: calc(68px + 1.25rem) 1rem 3rem 1rem;
   }
 
   h1 {
@@ -15109,5 +15110,557 @@ body.swipe-page-active .app-footer {
 
 .filters-modal-clear-below-btn:hover {
   color: #ef4444;
+}
+
+/* ==========================================================================
+   REGISTER WIZARD ONBOARDING (Mockup Design: evidencia-registro.jpeg)
+   ========================================================================== */
+
+.register-wizard-container {
+  display: flex;
+  width: 100%;
+  min-height: calc(100vh - 120px);
+  padding:0;
+  box-sizing: border-box;
+}
+
+.register-wizard-card {
+  background: #FFFFFF;
+  border-radius: 28px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.03);
+  border: 1px solid #F3F4F6;
+  width: 100%;
+  max-width: 420px;
+  min-height: 520px;
+  padding: 22px 26px 28px 26px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.register-wizard-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+  min-height: 36px;
+}
+
+.register-wizard-icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #111827;
+  cursor: pointer;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.15s ease;
+}
+
+.register-wizard-icon-btn:hover {
+  background: #F3F4F6;
+}
+
+.register-wizard-error-banner {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  margin-bottom: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.register-step-screen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.register-step-centered {
+  align-items: center;
+  text-align: center;
+}
+
+.register-hero-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 6px;
+  margin-bottom: 14px;
+}
+
+.register-books-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.register-brand-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #0F9D58;
+  letter-spacing: -0.02em;
+  margin: 4px 0;
+}
+
+.register-brand-slogan {
+  font-size: 0.92rem;
+  color: #4B5563;
+  max-width: 250px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.register-hands-illustration {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 6px 0 16px 0;
+}
+
+.register-hands-svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.register-book-heart-illustration,
+.register-document-check-illustration {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 14px 0 18px 0;
+}
+
+.register-step-header {
+  margin-bottom: 24px;
+}
+
+.register-step-header.text-center {
+  text-align: center;
+}
+
+.register-step-title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px 0;
+  line-height: 1.25;
+}
+
+.register-step-subtitle {
+  font-size: 0.92rem;
+  color: #4B5563;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.register-inputs-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: auto;
+}
+
+.register-clean-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 14px;
+  font-size: 1rem;
+  color: #111827;
+  background: #FFFFFF;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.register-clean-input:focus {
+  border-color: #0F9D58;
+  box-shadow: 0 0 0 3px rgba(15, 157, 88, 0.12);
+}
+
+.register-input-with-icon {
+  position: relative;
+  width: 100%;
+}
+
+.register-input-trailing-icon,
+.register-eye-toggle-btn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6B7280;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.register-eye-toggle-btn:hover {
+  color: #111827;
+}
+
+.register-phone-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+}
+
+.register-country-select-wrapper {
+  height: 52px;
+  background: #F9FAFB;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+.register-country-select {
+  background: none;
+  border: none;
+  font-size: 0.96rem;
+  color: #111827;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.register-phone-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.register-footnote-text {
+  font-size: 0.82rem;
+  color: #6B7280;
+  margin: 4px 0 0 2px;
+}
+
+.register-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: auto;
+}
+
+.register-option-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+  background: #FFFFFF;
+}
+
+.register-option-card:hover {
+  border-color: #D1D5DB;
+  background: #FAFAFA;
+}
+
+.register-option-card.selected {
+  border-color: #0F9D58;
+  background: #F0FDF4;
+  box-shadow: 0 0 0 2px rgba(15, 157, 88, 0.15);
+}
+
+.register-option-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.register-option-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.register-option-hint {
+  font-size: 0.82rem;
+  color: #6B7280;
+}
+
+.register-radio-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #D1D5DB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease;
+}
+
+.register-option-card.selected .register-radio-circle {
+  border-color: #0F9D58;
+}
+
+.register-radio-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #0F9D58;
+}
+
+.register-channel-lead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.register-channel-icon {
+  font-size: 1.6rem;
+}
+
+.register-channel-icon.whatsapp-green {
+  color: #25D366;
+}
+
+.register-channel-icon.sms-blue {
+  color: #3B82F6;
+}
+
+.register-otp-input {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-align: center;
+  height: 58px;
+}
+
+.register-resend-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.register-timer-text {
+  font-size: 0.88rem;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.register-resend-btn {
+  background: none;
+  border: none;
+  color: #0F9D58;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.register-footer-actions,
+.register-actions-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.register-primary-btn {
+  width: 100%;
+  height: 50px;
+  border-radius: 9999px;
+  background: #0F9D58;
+  color: #FFFFFF;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 14px rgba(15, 157, 88, 0.25);
+}
+
+.register-primary-btn:hover:not(:disabled) {
+  background: #0B8043;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(15, 157, 88, 0.35);
+}
+
+.register-primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.register-secondary-btn {
+  width: 100%;
+  height: 50px;
+  border-radius: 9999px;
+  background: #F3F4F6;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+}
+
+.register-secondary-btn:hover {
+  background: #E5E7EB;
+}
+
+.register-link-btn {
+  background: none;
+  border: none;
+  color: #4B5563;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.register-link-btn:hover {
+  color: #0F9D58;
+  text-decoration: underline;
+}
+
+.register-or-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 4px 0;
+  color: #9CA3AF;
+  font-size: 0.85rem;
+}
+
+.register-or-divider::before,
+.register-or-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.register-or-divider span {
+  padding: 0 12px;
+}
+
+.register-google-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+}
+
+.register-inline-legal-link {
+  background: none;
+  border: none;
+  color: #0F9D58;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+}
+
+.register-legal-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.register-legal-modal-card {
+  background: #FFFFFF;
+  border-radius: 20px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.register-legal-modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.register-legal-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.register-legal-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #6B7280;
+  cursor: pointer;
+}
+
+.register-legal-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  font-size: 0.92rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.register-legal-modal-body h4 {
+  margin: 14px 0 6px 0;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.register-legal-modal-body p {
+  margin: 0 0 10px 0;
+}
+
+.register-legal-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: flex-end;
 }
 

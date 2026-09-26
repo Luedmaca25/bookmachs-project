@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { OnboardingWizard } from './components/OnboardingWizard';
+import { RegisterWizard } from './components/RegisterWizard';
 import { PreferencesCard } from './components/PreferencesCard';
 import { apiClient } from '../../lib/apiClient';
-import { formatRut, formatPhoneByCountry, getPhonePlaceholder, getFileUrl } from '../../lib/formatters';
+import { getFileUrl } from '../../lib/formatters';
 
 export const AuthenticationPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isAuthenticated, login: loginAction, logout } = useAuthStore();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(() => searchParams.get('mode') !== 'register');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
@@ -17,10 +19,6 @@ export const AuthenticationPage: React.FC = () => {
   // Form fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [documento, setDocumento] = useState('');
-  const [pais, setPais] = useState('Chile');
-  const [telefono, setTelefono] = useState('');
 
   // Profile preferences states
   const [tags, setTags] = useState<any[]>([]);
@@ -77,10 +75,6 @@ export const AuthenticationPage: React.FC = () => {
   const resetFormFields = () => {
     setEmail('');
     setPassword('');
-    setName('');
-    setDocumento('');
-    setPais('Chile');
-    setTelefono('');
     setError(null);
   };
 
@@ -91,12 +85,18 @@ export const AuthenticationPage: React.FC = () => {
 
   // Redirigir a la pantalla principal (Swipe) si el usuario ya completó el perfil y preferencias
   const checkAndRedirect = (profileData: any) => {
+    if (!profileData?.isPhoneVerified || !profileData?.telefono) {
+      return;
+    }
     const hasProfileDetails = profileData?.pais && profileData?.documentoIdentidad;
     const hasPreferences = profileData?.preferences && profileData.preferences.length > 0;
     if (hasProfileDetails && hasPreferences) {
       navigate('/');
     }
   };
+
+  // Check if user needs phone verification (e.g. from Google SSO or existing account)
+  const needsPhoneVerification = isAuthenticated && user && (!user.isPhoneVerified || !user.telefono);
 
   // Determine if onboarding is required
   const needsOnboarding = isAuthenticated && (
@@ -105,7 +105,7 @@ export const AuthenticationPage: React.FC = () => {
     (!user?.preferences || user.preferences.length === 0)
   );
   
-  const showWizard = needsOnboarding && !onboardingCompleted;
+  const showWizard = !needsPhoneVerification && needsOnboarding && !onboardingCompleted;
 
   const handleOnboardingComplete = () => {
     setOnboardingCompleted(true);
@@ -215,51 +215,23 @@ export const AuthenticationPage: React.FC = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const response = await apiClient.post<{ 
-          id: string; 
-          email: string; 
-          name: string; 
-          documentoIdentidad: string; 
-          pais: string; 
-          role: string; 
-          isPremium: boolean; 
-          token: string 
-        }>('/auth/login', { email, password });
-        
-        const profile = await apiClient.get<any>('/auth/me', {
-          headers: { Authorization: `Bearer ${response.token}` }
-        });
-        loginAction(profile, response.token);
-        resetFormFields();
-        checkAndRedirect(profile);
-      } else {
-        const response = await apiClient.post<{ 
-          id: string; 
-          email: string; 
-          name: string; 
-          documentoIdentidad: string; 
-          pais: string; 
-          telefono?: string;
-          role: string; 
-          isPremium: boolean; 
-          token: string 
-        }>('/auth/register', {
-          email,
-          password,
-          name,
-          documentoIdentidad: documento,
-          pais,
-          telefono
-        });
-        
-        const profile = await apiClient.get<any>('/auth/me', {
-          headers: { Authorization: `Bearer ${response.token}` }
-        });
-        loginAction(profile, response.token);
-        resetFormFields();
-        checkAndRedirect(profile);
-      }
+      const response = await apiClient.post<{ 
+        id: string; 
+        email: string; 
+        name: string; 
+        documentoIdentidad: string; 
+        pais: string; 
+        role: string; 
+        isPremium: boolean; 
+        token: string 
+      }>('/auth/login', { email, password });
+      
+      const profile = await apiClient.get<any>('/auth/me', {
+        headers: { Authorization: `Bearer ${response.token}` }
+      });
+      loginAction(profile, response.token);
+      resetFormFields();
+      checkAndRedirect(profile);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || 'Ocurrió un error al procesar la solicitud.');
@@ -310,6 +282,32 @@ export const AuthenticationPage: React.FC = () => {
       setSavingPrefs(false);
     }
   };
+
+  // Render Phone Verification Wizard if authenticated but phone unverified
+  if (needsPhoneVerification) {
+    return (
+      <div className="onboarding-page-wrapper">
+        <RegisterWizard
+          isGoogleCompletion={true}
+          onComplete={async () => {
+            const token = localStorage.getItem('token') || '';
+            const profile = await apiClient.get<any>('/auth/me');
+            loginAction(profile, token);
+            if (!profile.preferences || profile.preferences.length === 0) {
+              // Proceed to preferences onboarding
+            } else {
+              navigate('/');
+            }
+          }}
+          onGoToLogin={() => {
+            handleLogout();
+            setIsLogin(true);
+          }}
+          onClose={() => navigate('/')}
+        />
+      </div>
+    );
+  }
 
   // Render Onboarding
   if (showWizard) {
@@ -529,98 +527,52 @@ export const AuthenticationPage: React.FC = () => {
     );
   }
 
-  // Render Login/Registration Form when NOT authenticated
+  // Render Register Wizard when NOT authenticated and NOT in login mode
+  if (!isAuthenticated && !isLogin) {
+    return (
+      <div className="onboarding-page-wrapper">
+        <RegisterWizard
+          onComplete={() => {
+            navigate('/');
+          }}
+          onGoToLogin={() => {
+            setIsLogin(true);
+          }}
+          onClose={() => {
+            navigate('/');
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Render Login Form when NOT authenticated
   return (
     <div className="auth-page-container">
       <div className="modal-footer">
-          <button 
-            type="button" 
-            className="toggle-auth-btn"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError(null);
-            }}
-          >
-            {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
-            <br/>
-            {isLogin ? 'Regístrate aquí' : 'Inicia sesión aquí'}
-          </button>
-        </div>
+        <button 
+          type="button" 
+          className="toggle-auth-btn"
+          onClick={() => {
+            setIsLogin(false);
+            setError(null);
+          }}
+        >
+          ¿No tienes cuenta?
+          <br/>
+          Regístrate aquí
+        </button>
+      </div>
         
       <div className="modal-card modal-card-no-anim">
         <div className="modal-header">
-          <h2>{isLogin ? 'Iniciar sesión' : 'Únete a Intercambialibros'}</h2>
-          <p>
-            {isLogin 
-              ? 'Ingresa a tu cuenta para continuar intercambiando libros.' 
-              : 'Para deslizar libros y empezar a intercambiar, debes tener una cuenta activa.'}
-          </p>
+          <h2>Iniciar sesión</h2>
+          <p>Ingresa a tu cuenta para continuar intercambiando libros.</p>
         </div>
 
         {error && <div className="modal-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="modal-form">
-          {!isLogin && (
-            <>
-              <div className="modal-field">
-                <label>Nombre Completo</label>
-                <input 
-                  type="text" 
-                  placeholder="Tu Nombre" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  required 
-                />
-              </div>
-
-              <div className="modal-field-group">
-                <div className="modal-field">
-                  <label>País</label>
-                  <select 
-                    value={pais} 
-                    onChange={(e) => {
-                      const newPais = e.target.value;
-                      setPais(newPais);
-                      setTelefono(formatPhoneByCountry(telefono, newPais));
-                      if (newPais === 'Chile') {
-                        setDocumento(formatRut(documento));
-                      }
-                    }} 
-                    required
-                  >
-                    <option value="Chile">Chile</option>
-                    <option value="Argentina">Argentina</option>
-                    <option value="Colombia">Colombia</option>
-                    <option value="México">México</option>
-                    <option value="Perú">Perú</option>
-                  </select>
-                </div>
-
-                <div className="modal-field">
-                  <label>{pais === 'Chile' ? 'RUT' : 'Documento'}</label>
-                  <input 
-                    type="text" 
-                    placeholder={pais === 'Chile' ? '12.345.678-9' : 'Número de Documento'} 
-                    value={documento} 
-                    onChange={(e) => setDocumento(pais === 'Chile' ? formatRut(e.target.value) : e.target.value)} 
-                    required 
-                  />
-                </div>
-              </div>
-
-              <div className="modal-field">
-                <label>Teléfono Celular ({pais})</label>
-                <input 
-                  type="tel" 
-                  placeholder={getPhonePlaceholder(pais)} 
-                  value={telefono} 
-                  onChange={(e) => setTelefono(formatPhoneByCountry(e.target.value, pais))} 
-                  required 
-                />
-              </div>
-            </>
-          )}
-
           <div className="modal-field">
             <label>Correo Electrónico</label>
             <input 
@@ -644,7 +596,7 @@ export const AuthenticationPage: React.FC = () => {
           </div>
 
           <button type="submit" className="modal-submit-btn" disabled={loading}>
-            {loading ? 'Procesando...' : isLogin ? 'Ingresar' : 'Crear Cuenta'}
+            {loading ? 'Procesando...' : 'Ingresar'}
           </button>
         </form>
 
