@@ -999,6 +999,49 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx)
   - [MatchDetailModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/components/MatchDetailModal.tsx)
 
+---
+
+## Entrada de Bitácora: Aleatorización Real del Catálogo Completo de Libros (Con y Sin Cuenta)
+
+* **Fecha:** 28 de Septiembre, 2026
+* **Observación del Cliente:** En distintos dispositivos móviles se mostraban prácticamente los mismos libros tanto para invitados como para usuarios registrados, dando la falsa impresión de que se trabajaba con una "base reducida".
+* **Diagnóstico Técnico:**
+  1. **Toda la base siempre estuvo conectada:** Se verificó directamente en SQL Server que la base de datos `db_a5dc9c_ecolecturavpstest` cuenta con **202.931 libros registrados** y **90.346 libros activos con stock disponible**.
+  2. **Cuello de botella en modo invitado (`GetGuestBooksAsync`):** La consulta realizaba un `OrderByDescending(p => p.FechaRegistro).Take(count * 3)` en SQL y solo barajaba en memoria los mismos 30 libros más recientes. En el primer swipe de invitado (`count = 1`), solo se barajaban 3 libros.
+  3. **Cuello de botella en recomendaciones (`GetRecommendationsAsync`):** Ni la etapa de preferencias ni la etapa de fallback contaban con `OrderBy` a nivel de base de datos antes del `Take(limit)`, por lo que SQL Server devolvía siempre el `TOP(75)` y `TOP(50)` en el orden físico del índice agrupado (los mismos libros iniciales de la tabla).
+* **Solución Implementada ([BookService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/BookService.cs)):**
+  1. Se implementó `.OrderBy(p => Guid.NewGuid())` directamente en la consulta EF Core de `GetGuestBooksAsync`, traduciéndose en SQL Server a `ORDER BY NEWID()`. Ahora cada solicitud de invitados selecciona libros aleatorios reales distribuidos entre los más de 90.000 títulos activos.
+  2. Se incorporó `.OrderBy(p => Guid.NewGuid())` en la etapa de categorías/preferencias de `GetRecommendationsAsync`, seleccionando candidatos aleatorios dentro de los géneros del usuario a lo largo de todo el universo de libros.
+
+---
+
+## Entrada de Bitácora: Corrección de Visibilidad y Estabilidad de Botones de Swipe en Móviles (.swipe-controls)
+
+* **Fecha:** 28 de Septiembre, 2026
+* **Observación del Cliente:** Los botones de swipe (corazón y cruz) no aparecían de forma estable ni en el home ni al crear una cuenta; a veces aparecían un instante y después desaparecían en dispositivos móviles debido a que el contenedor `.swipe-controls` no se estaba mostrando.
+* **Diagnóstico Técnico:**
+  1. **Conflicto de Especificidad CSS (`!important`):** La regla base `.app-main.swipe-main-active:not(:has(...)):not(:has(...)):not(:has(...))` contaba con una especificidad muy alta y establecía `bottom: 0 !important`. Esto anulaba por completo la media query móvil `@media (max-width: 767px) .app-main.swipe-main-active { bottom: calc(96px...) !important; }`. En consecuencia, en móviles `app-main` se extendía hasta el borde inferior de la pantalla (0px), quedando la botonera `.swipe-controls` posicionada por debajo o exactamente detrás del menú flotante `.mobile-bottom-nav` (`height: 74px; z-index: 1000`).
+  2. **Colapso y Recorte Flexbox:** Al cargar la tarjeta de libro (`BookCard`), el contenedor `.swipe-card-wrapper` (`overflow: hidden; justify-content: space-between`) forzaba al elemento `.swipe-controls` a quedar fuera de la ventana visible si la card consumía el espacio restante, recortándolo por overflow. Por ello, antes de que cargara la portada o al cambiar de ruta, los botones se veían fugazmente y luego desaparecían.
+  3. **Discrepancia de Breakpoint:** `.mobile-bottom-nav` se muestra en resoluciones menores a 1200px, pero el ajuste de margen inferior solo existía para `< 767px`.
+* **Solución Implementada ([index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)):**
+  1. Se reestructuró la regla de `app-main` para aplicar por defecto `bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important` en todos los viewports móviles y tablets (< 1200px), y reservar `bottom: 1rem !important` únicamente para escritorio (`min-width: 1200px`).
+  2. Se configuró `.swipe-controls` con `flex: 0 0 auto !important`, `flex-shrink: 0 !important`, `display: flex !important`, `visibility: visible !important`, `opacity: 1 !important` y `z-index: 50 !important`, impidiendo que sea recortado o comprimido por la tarjeta.
+  3. Se ajustó `.book-swipe-card` con `flex: 1 1 0` y `max-height: none`, permitiendo que la tarjeta se adapte automáticamente al espacio vertical disponible entre la barra de búsqueda y los botones de swipe sin desbordar el contenedor.
+
+---
+
+## Entrada de Bitácora: Corrección de Comportamiento del Botón "Ingresar" y Cierre del Menú Offcanvas
+
+* **Fecha:** 28 de Septiembre, 2026
+* **Observación del Cliente:** Al presionar "Ingresar" desde el menú superior, el sistema no reaccionaba ni llevaba a la sección de login cuando el usuario ya se encontraba en `/auth`, manteniendo el panel de menú desplegado sin cerrarse.
+* **Diagnóstico Técnico:**
+  1. **Ausencia de Evento `onClick` en Enlaces del Offcanvas:** En [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx), el cierre del menú dependía únicamente de `useEffect([location.pathname])`. Si el usuario ya estaba en `/auth` (por ejemplo en el wizard de registro o tras un redireccionamiento), `location.pathname` no sufría cambio alguno al presionar "Ingresar", impidiendo que `setMobileMenuOpen(false)` se ejecutara y dejando el panel offcanvas cubriendo la pantalla.
+  2. **Desconexión entre Parámetros de Ruta y Estado de Login:** En [AuthenticationPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/authentication/AuthenticationPage.tsx), el estado `isLogin` solo se inicializaba al montar el componente con `searchParams.get('mode') !== 'register'`, sin sincronizarse posteriormente mediante `useEffect`. Si el usuario estaba en modo registro (`mode=register`) y presionaba "Ingresar", el componente no conmutaba al formulario de inicio de sesión.
+* **Solución Implementada:**
+  1. En [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx), se asignó `onClick={() => setMobileMenuOpen(false)}` explícito a todos los enlaces del menú offcanvas y botones de acción (Descubrir, Catálogo, Libreta, Matches, Planes, Impacto, Configuración, Ayuda, Mi perfil e Ingresar).
+  2. Se configuró el enlace de "Ingresar" con la ruta explícita `/auth?mode=login` en la barra de escritorio, cabecera móvil y menú lateral offcanvas.
+  3. En [AuthenticationPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/authentication/AuthenticationPage.tsx), se agregó un efecto que escucha activamente `searchParams`, conmutando inmediatamente `isLogin` a `true` cada vez que el usuario presiona "Ingresar", asegurando que la vista de login se despliegue de inmediato.
+
 
 
 

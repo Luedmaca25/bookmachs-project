@@ -70,12 +70,30 @@ public class BookService : IBookService
 
     public async Task<IEnumerable<BookDto>> GetGuestBooksAsync(int count = 10, CancellationToken cancellationToken = default)
     {
+        // Consultar directamente a toda la base de datos (90.000+ libros con stock activo) con orden aleatorio real
         var productList = await _ecolecturaDbContext.Productos
             .AsNoTracking()
             .Where(p => p.Activo && p.Stock > 0)
-            .Include(p => p.Imagenes)
-            .OrderByDescending(p => p.FechaRegistro)
-            .Take(count * 3)
+            .OrderBy(p => Guid.NewGuid())
+            .Take(count)
+            .Select(p => new
+            {
+                p.IdProducto,
+                p.NombreLibro,
+                p.Autor,
+                p.Resena,
+                p.Precio,
+                p.IdCategoriaProducto,
+                p.IdSubcategoria,
+                p.IdEstadoProducto,
+                p.Activo,
+                p.Stock,
+                p.FechaRegistro,
+                RutaImagen = p.Imagenes
+                    .OrderByDescending(i => i.Principal)
+                    .Select(i => i.RutaImagen)
+                    .FirstOrDefault()
+            })
             .ToListAsync(cancellationToken);
 
         if (!productList.Any())
@@ -83,10 +101,31 @@ public class BookService : IBookService
             return new List<BookDto>();
         }
 
-        var random = new Random();
-        var selected = productList.OrderBy(_ => random.Next()).Take(count).ToList();
+        return productList.Select(prod =>
+        {
+            Guid bookId = Guid.TryParse(prod.IdProducto, out var parsedGuid) ? parsedGuid : Guid.Empty;
+            string? imageUrl = FormatImageUrl(prod.RutaImagen);
+            string? categoryName = _homologationService.GetConceptNameForProduct(
+                prod.IdCategoriaProducto,
+                prod.IdSubcategoria
+            );
 
-        return selected.Select(MapEcolecturaProductToBookDto).ToList();
+            return new BookDto
+            {
+                Id = bookId,
+                Title = prod.NombreLibro,
+                Author = prod.Autor ?? "Desconocido",
+                Description = prod.Resena,
+                Condition = MapEstadoProducto(prod.IdEstadoProducto),
+                Category = categoryName,
+                ImageUrl = imageUrl,
+                BaseValue = prod.Precio ?? 0.00m,
+                IsInternalStock = true,
+                IsAvailable = prod.Activo && (prod.Stock > 0),
+                CreatedAt = prod.FechaRegistro ?? DateTime.UtcNow,
+                IsFallbackCategory = false
+            };
+        }).ToList();
     }
 
     public async Task<IEnumerable<BookDto>> GetMyInventoryAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -266,6 +305,7 @@ public class BookService : IBookService
                     .Where(p => p.Activo && p.Stock > 0)
                     .Where(p => (p.IdCategoriaProducto.HasValue && categoryOnlyIds.Contains(p.IdCategoriaProducto.Value)) ||
                                 (p.IdSubcategoria.HasValue && subcategoryIds.Contains(p.IdSubcategoria.Value)))
+                    .OrderBy(p => Guid.NewGuid())
                     .Select(p => new
                     {
                         p.IdProducto,
@@ -335,6 +375,7 @@ public class BookService : IBookService
             var fallbackProducts = await _ecolecturaDbContext.Productos
                 .AsNoTracking()
                 .Where(p => p.Activo && p.Stock > 0)
+                .OrderBy(p => Guid.NewGuid())
                 .Select(p => new
                 {
                     p.IdProducto,
@@ -400,6 +441,7 @@ public class BookService : IBookService
             var localUserBooks = await _dbContext.Books
                 .AsNoTracking()
                 .Where(b => b.IsAvailable && b.OwnerId != userId && (!b.IsReserved || b.ReservedUntil < DateTime.UtcNow))
+                .OrderBy(b => Guid.NewGuid())
                 .Take(Math.Max(remaining * 2, 20))
                 .ToListAsync(cancellationToken);
 

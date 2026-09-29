@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { RegisterWizard } from './components/RegisterWizard';
@@ -10,11 +10,33 @@ import { getFileUrl } from '../../lib/formatters';
 export const AuthenticationPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { user, isAuthenticated, login: loginAction, logout } = useAuthStore();
   const [isLogin, setIsLogin] = useState(() => searchParams.get('mode') !== 'register');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+
+  // Sincronizar el modo de autenticación (login vs register) con los parámetros de la URL
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'register') {
+      setIsLogin(false);
+    } else {
+      setIsLogin(true);
+    }
+    setError(null);
+  }, [searchParams]);
+
+  // Forzar modo login cuando MainLayout navega con state.forceLogin
+  // (cubre el caso en que la URL no cambia pero el usuario presionó "Ingresar")
+  useEffect(() => {
+    if ((location.state as any)?.forceLogin) {
+      setIsLogin(true);
+      setError(null);
+    }
+  }, [(location.state as any)?.forceLogin]);
+
 
   // Form fields
   const [email, setEmail] = useState('');

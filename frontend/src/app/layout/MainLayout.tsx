@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../features/authentication/store/authStore';
 import { GlobalPremiumModal } from '../../features/subscriptions/components/GlobalPremiumModal';
 import { apiClient } from '../../lib/apiClient';
 
 export const MainLayout: React.FC = () => {
   const { user, isAuthenticated, login, logout } = useAuthStore();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [premiumModalInfo, setPremiumModalInfo] = useState<{ featureName?: string; icon?: string } | null>(null);
   const location = useLocation();
+
+  // Navega a /auth forzando el modo login incluso si ya estamos en esa ruta
+  const handleGoToLogin = () => {
+    setMobileMenuOpen(false);
+    navigate('/auth', { state: { forceLogin: Date.now() } });
+  };
 
   const handleOpenPremiumModal = (featureName: string, icon: string) => {
     setPremiumModalInfo({ featureName, icon });
@@ -139,20 +146,20 @@ export const MainLayout: React.FC = () => {
               </button>
             </div>
           ) : (
-            <Link to="/auth" className="nav-link login-button">Ingresar</Link>
+            <button onClick={handleGoToLogin} className="nav-link login-button">Ingresar</button>
           )}
         </nav>
 
         {/* ACCIONES MÓVIL: PERFIL Y MENÚ HAMBURGUESA */}
         <div className="header-mobile-actions">
-          <Link 
-            to="/auth" 
+          <button
             className={`mobile-profile-btn ${location.pathname === '/auth' ? 'active' : ''}`}
             aria-label="Mi perfil"
             title="Mi perfil"
+            onClick={handleGoToLogin}
           >
             <i className="fa-solid fa-user"></i>
-          </Link>
+          </button>
           <button 
             className="mobile-hamburger-btn"
             onClick={() => setMobileMenuOpen(true)}
@@ -168,7 +175,7 @@ export const MainLayout: React.FC = () => {
         <div className="offcanvas-backdrop" onClick={() => setMobileMenuOpen(false)}>
           <div className="offcanvas-panel" onClick={(e) => e.stopPropagation()}>
             <div className="offcanvas-header">
-              <Link to="/" className="header-logo-link">
+              <Link to="/" className="header-logo-link" onClick={() => setMobileMenuOpen(false)}>
                 <img src="/logo-intercambialibros.png" alt="Intercambialibros" className="brand-logo-img" />
               </Link>
               <button className="offcanvas-close-btn" onClick={() => setMobileMenuOpen(false)}>
@@ -177,7 +184,9 @@ export const MainLayout: React.FC = () => {
             </div>
 
             <div className="offcanvas-body">
-              <Link to="/" className="offcanvas-link"><i className="fa-solid fa-fire"></i> Descubrir</Link>
+              <Link to="/" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
+                <i className="fa-solid fa-fire"></i> Descubrir
+              </Link>
 
               {isAuthenticated && user && (
                 <>
@@ -185,9 +194,9 @@ export const MainLayout: React.FC = () => {
                     to="/catalogo" 
                     className="offcanvas-link"
                     onClick={(e) => {
+                      setMobileMenuOpen(false);
                       if (!user?.isPremium) {
                         e.preventDefault();
-                        setMobileMenuOpen(false);
                         handleOpenPremiumModal('el Catálogo Avanzado', 'fa-solid fa-book');
                       }
                     }}
@@ -199,20 +208,32 @@ export const MainLayout: React.FC = () => {
                       </span>
                     )}
                   </Link>
-                  <Link to="/libreta" className="offcanvas-link"><i className="fa-solid fa-book-bookmark"></i> Tu libreta</Link>
-                  <Link to="/transacciones" className="offcanvas-link"><i className="fa-solid fa-handshake"></i> Matches</Link>
+                  <Link to="/libreta" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
+                    <i className="fa-solid fa-book-bookmark"></i> Tu libreta
+                  </Link>
+                  <Link to="/transacciones" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
+                    <i className="fa-solid fa-handshake"></i> Matches
+                  </Link>
                 </>
               )}
 
-              <Link to="/planes" className="offcanvas-link"><i className="fa-solid fa-tags"></i> Planes</Link>
+              <Link to="/planes" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
+                <i className="fa-solid fa-tags"></i> Planes
+              </Link>
 
               {isAuthenticated && user && (
                 <>
-                  <Link to="/social" className="offcanvas-link"><i className="fa-solid fa-earth-americas"></i> Impacto</Link>
+                  <Link to="/social" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
+                    <i className="fa-solid fa-earth-americas"></i> Impacto
+                  </Link>
                   {user.role === 'Admin' && (
-                    <Link to="/admin" className="offcanvas-link"><i className="fa-solid fa-sliders"></i> Configuración</Link>
+                    <Link to="/admin" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
+                      <i className="fa-solid fa-sliders"></i> Configuración
+                    </Link>
                   )}
-                  <Link to="/ayuda" className="offcanvas-link"><i className="fa-solid fa-shield-halved"></i> Ayuda y soporte</Link>
+                  <Link to="/ayuda" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
+                    <i className="fa-solid fa-shield-halved"></i> Ayuda y soporte
+                  </Link>
                 </>
               )}
 
@@ -220,7 +241,7 @@ export const MainLayout: React.FC = () => {
 
               {isAuthenticated && user ? (
                 <div className="offcanvas-user-actions">
-                  <Link to="/auth" className="offcanvas-user-info">
+                  <Link to="/auth" className="offcanvas-user-info" onClick={() => setMobileMenuOpen(false)}>
                     Mi perfil
                   </Link>
                   <button 
@@ -234,9 +255,12 @@ export const MainLayout: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <Link to="/auth" className="offcanvas-login-btn">
+                <button
+                  className="offcanvas-login-btn"
+                  onClick={handleGoToLogin}
+                >
                   <i className="fa-solid fa-right-to-bracket"></i> Ingresar
-                </Link>
+                </button>
               )}
             </div>
           </div>
@@ -247,27 +271,29 @@ export const MainLayout: React.FC = () => {
         <Outlet />
       </main>
 
-      <footer className="app-footer">
-        <div className="footer-links-row">
-          {isAuthenticated && user && (
-            <>
-              <Link to="/ayuda" className="footer-link">Ayuda y Seguridad</Link>
-              <span className="footer-sep">•</span>
-            </>
-          )}
-          <Link to="/planes" className="footer-link">Planes Premium</Link>
-          {isAuthenticated && user && (
-            <>
-              <span className="footer-sep">•</span>
-              <Link to="/ayuda?v=community_rules" className="footer-link">Normas de la Comunidad</Link>
-            </>
-          )}
-        </div>
-        {/* <p>&copy; {new Date().getFullYear()} Intercambialibros - Red Social Cultural y Ambiental. Todos los derechos reservados.</p> */}
-      </footer>
+      {location.pathname !== '/auth' && (
+        <footer className="app-footer">
+          <div className="footer-links-row">
+            {isAuthenticated && user && (
+              <>
+                <Link to="/ayuda" className="footer-link">Ayuda y Seguridad</Link>
+                <span className="footer-sep">•</span>
+              </>
+            )}
+            <Link to="/planes" className="footer-link">Planes Premium</Link>
+            {isAuthenticated && user && (
+              <>
+                <span className="footer-sep">•</span>
+                <Link to="/ayuda?v=community_rules" className="footer-link">Normas de la Comunidad</Link>
+              </>
+            )}
+          </div>
+          {/* <p>&copy; {new Date().getFullYear()} Intercambialibros - Red Social Cultural y Ambiental. Todos los derechos reservados.</p> */}
+        </footer>
+      )}
 
       {/* BARRA DE NAVEGACIÓN INFERIOR ESTILO FLOATING PILL (5 OPCIONES) */}
-      <nav className="mobile-bottom-nav" aria-label="Navegación inferior">
+      {location.pathname !== '/auth' && <nav className="mobile-bottom-nav" aria-label="Navegación inferior">
         <Link 
           to="/catalogo" 
           className={`bottom-nav-item ${location.pathname === '/catalogo' ? 'active' : ''}`}
@@ -279,7 +305,11 @@ export const MainLayout: React.FC = () => {
           }}
         >
           <div className="bottom-nav-icon-wrapper">
-            <i className="fa-solid fa-magnifying-glass"></i>
+            <img
+              src={location.pathname === '/catalogo' ? '/icons/icon-buscar-verde.png' : '/icons/icon-buscar.png'}
+              alt="Buscar"
+              className="bottom-nav-icon-img"
+            />
             {!user?.isPremium && (
               <span className="pill-nav-crown-badge" title="Función Premium">
                 <i className="fa-solid fa-crown"></i>
@@ -294,7 +324,11 @@ export const MainLayout: React.FC = () => {
           className={`bottom-nav-item ${location.pathname === '/' ? 'active' : ''}`}
         >
           <div className="bottom-nav-icon-wrapper">
-            <i className="fa-solid fa-fire"></i>
+            <img
+              src={location.pathname === '/' ? '/icons/icon-descrubrir-verde.png' : '/icons/icon-descrubrir.png'}
+              alt="Descubrir"
+              className="bottom-nav-icon-img"
+            />
           </div>
           <span className="nav-label">Descubre</span>
         </Link>
@@ -314,7 +348,11 @@ export const MainLayout: React.FC = () => {
           className={`bottom-nav-item ${(location.pathname === '/libreta' && !location.search.includes('add')) || location.pathname === '/transacciones' ? 'active' : ''}`}
         >
           <div className="bottom-nav-icon-wrapper">
-            <i className="fa-solid fa-handshake"></i>
+            <img
+              src={(location.pathname === '/libreta' && !location.search.includes('add')) || location.pathname === '/transacciones' ? '/icons/icon-match-verde.png' : '/icons/icon-match.png'}
+              alt="Matchs"
+              className="bottom-nav-icon-img"
+            />
           </div>
           <span className="nav-label">Matchs</span>
         </Link>
@@ -324,11 +362,15 @@ export const MainLayout: React.FC = () => {
           className={`bottom-nav-item ${location.pathname === '/planes' ? 'active' : ''}`}
         >
           <div className="bottom-nav-icon-wrapper">
-            <i className="fa-solid fa-tags"></i>
+            <img
+              src={location.pathname === '/planes' ? '/icons/icon-plan-verde.png' : '/icons/icon-plan.png'}
+              alt="Planes"
+              className="bottom-nav-icon-img"
+            />
           </div>
           <span className="nav-label">Planes</span>
         </Link>
-      </nav>
+      </nav>}
 
       {/* MODAL GLOBAL PARA FUNCIONES PREMIUM */}
       <GlobalPremiumModal
