@@ -3159,22 +3159,37 @@ body.swipe-page-active .app-footer {
 
 .modal-footer {
   text-align: center;
+  width: 90%;
+  max-width: 460px;
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+}
+
+.toggle-auth-p {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 4px;
 }
 
 .toggle-auth-btn {
   background: transparent;
-  border: none;
+  border: 1px solid var(--accent-primary);
   color: var(--accent-primary);
   font-family: var(--font-sans);
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   transition: color var(--transition-fast);
+  border-radius: var(--radius-full);
+  padding: 0.85rem;
+  width: 100%;
+  transition: 0.3 ease all;
 }
 
 .toggle-auth-btn:hover {
-  color: var(--accent-primary-hover);
-  text-decoration: underline;
+  color: #fff;
+  background: var(--accent-primary);
 }
 
 /* ==========================================================================
@@ -15345,6 +15360,7 @@ body.swipe-page-active .app-footer {
 
 .register-wizard-container {
   display: flex;
+  justify-content: center;
   width: 100%;
   min-height: calc(100vh - 120px);
   padding:0;
