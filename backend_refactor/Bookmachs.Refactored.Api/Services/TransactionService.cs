@@ -17,7 +17,7 @@ public interface ITransactionService
     Task<bool> DeleteMatchAsync(Guid matchTransactionId, Guid userId, CancellationToken cancellationToken = default);
     Task<FeeEstimationDto> EstimateFeeAsync(Guid bookId, Guid requesterUserId, CancellationToken cancellationToken = default);
     Task<CheckoutResultDto> CheckoutCardAsync(Guid matchTransactionId, string cardToken, Guid requesterUserId, bool acceptCrossBorder, CancellationToken cancellationToken = default);
-    Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, CancellationToken cancellationToken = default);
+    Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, CancellationToken cancellationToken = default);
     Task<WebpayConfirmResultDto> WebpayConfirmAsync(string token, CancellationToken cancellationToken = default);
     Task<WebpayConfirmResultDto> WebpayCancelAsync(string? tbkToken, string? buyOrder, CancellationToken cancellationToken = default);
     Task<ExchangeQuotaDto> GetExchangeQuotaAsync(Guid userId, CancellationToken cancellationToken = default);
@@ -161,6 +161,7 @@ public class TransactionService : ITransactionService
                 LogisticsMethod = t.LogisticsMethod,
                 IsCrossBorder = t.IsCrossBorder,
                 IsAvailable = isAvailable,
+                IsInternalStock = t.Book?.IsInternalStock ?? (t.OwnerUserId == null),
                 CreatedAt = t.CreatedAt
             });
         }
@@ -280,7 +281,7 @@ public class TransactionService : ITransactionService
         });
     }
 
-    public async Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, CancellationToken cancellationToken = default)
+    public async Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, CancellationToken cancellationToken = default)
     {
         var transaction = await _dbContext.MatchTransactions
             .Include(t => t.Book)
@@ -307,6 +308,38 @@ public class TransactionService : ITransactionService
                 Success = false,
                 Message = $"Has alcanzado tu límite mensual de intercambios ({quota.ExchangesConsumed}/{quota.MonthlyLimit}) para tu {quota.PlanName}.{upgradeSuggestion}"
             };
+        }
+
+        // Validaciones específicas para el método de Donación Comunitaria
+        if (!string.IsNullOrEmpty(logisticsMethod) && logisticsMethod.Trim().ToLowerInvariant() == "donacion")
+        {
+            if (!quota.IsPremium)
+            {
+                return new WebpayStartResultDto
+                {
+                    Success = false,
+                    Message = "👑 La opción de Donación Comunitaria está disponible únicamente para suscriptores con Plan Premium."
+                };
+            }
+
+            bool isInternalStock = transaction.Book != null && transaction.Book.IsInternalStock && transaction.OwnerUserId == null;
+            if (!isInternalStock)
+            {
+                return new WebpayStartResultDto
+                {
+                    Success = false,
+                    Message = "La Donación Comunitaria solo está permitida cuando el intercambio es con libros de la base de datos de Intercambialibros (no aplica para intercambios directos entre usuarios)."
+                };
+            }
+
+            if (quota.DonationLimitReached)
+            {
+                return new WebpayStartResultDto
+                {
+                    Success = false,
+                    Message = $"Has alcanzado el límite mensual de {quota.MonthlyDonationLimit} donaciones permitidas en tu Plan Premium."
+                };
+            }
         }
 
         // Validar si el libro objetivo ya no está disponible o está reservado por otro usuario
@@ -449,15 +482,21 @@ public class TransactionService : ITransactionService
             };
         }
 
+        if (!string.IsNullOrEmpty(logisticsMethod))
+        {
+            transaction.LogisticsMethod = logisticsMethod;
+        }
+
         // Transbank Webpay Plus exige que buyOrder tenga un largo máximo de 26 caracteres alfanuméricos
         var buyOrder = transaction.BuyOrder;
         if (string.IsNullOrEmpty(buyOrder))
         {
             buyOrder = transaction.Id.ToString("N")[..26];
             transaction.BuyOrder = buyOrder;
-            _dbContext.MatchTransactions.Update(transaction);
-            await _dbContext.SaveChangesAsync(cancellationToken);
         }
+
+        _dbContext.MatchTransactions.Update(transaction);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         var sessionId = $"sess_{requesterUserId.ToString("N")[..8]}";
 
@@ -722,11 +761,33 @@ public class TransactionService : ITransactionService
                         t.CreatedAt >= cycleStart)
             .CountAsync(cancellationToken);
 
+        // Contar donaciones comunitarias realizadas por el usuario en el ciclo actual (Límite: 2 por mes solo en Premium)
+        int donationsCount = 0;
+        if (user.IsPremium)
+        {
+            donationsCount = await _dbContext.MatchTransactions
+                .AsNoTracking()
+                .Where(t => t.RequesterUserId == userId &&
+                            t.LogisticsMethod != null && t.LogisticsMethod.ToLower() == "donacion" &&
+                            (t.PaymentStatus == "Captured" || t.PaymentStatus == "Hold" ||
+                             t.LogisticsStatus == "Delivered" || t.LogisticsStatus == "Completed" ||
+                             t.LogisticsStatus == "InTransit" || t.LogisticsStatus == "Pendiente Comprobante" ||
+                             t.LogisticsStatus == "En Espera") &&
+                            t.LogisticsStatus != "Cancelled" && t.LogisticsStatus != "Expired" &&
+                            t.CreatedAt >= cycleStart)
+                .CountAsync(cancellationToken);
+        }
+
+        const int monthlyDonationLimit = 2;
+
         return new ExchangeQuotaDto
         {
             ExchangesConsumed = consumedCount,
             MonthlyLimit = limit,
             LimitReached = consumedCount >= limit,
+            DonationsConsumed = donationsCount,
+            MonthlyDonationLimit = monthlyDonationLimit,
+            DonationLimitReached = user.IsPremium ? (donationsCount >= monthlyDonationLimit) : true,
             IsPremium = user.IsPremium,
             PlanName = user.IsPremium ? "Plan Premium" : "Plan Gratuito",
             CycleStartDate = cycleStart,
@@ -736,7 +797,9 @@ public class TransactionService : ITransactionService
 
     public async Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, CancellationToken cancellationToken = default)
     {
-        var transaction = await _dbContext.MatchTransactions.FirstOrDefaultAsync(t => t.Id == matchTransactionId, cancellationToken);
+        var transaction = await _dbContext.MatchTransactions
+            .Include(t => t.Book)
+            .FirstOrDefaultAsync(t => t.Id == matchTransactionId, cancellationToken);
         if (transaction == null)
         {
             throw new KeyNotFoundException($"La transacción de Match con ID {matchTransactionId} no existe.");
@@ -766,13 +829,47 @@ public class TransactionService : ITransactionService
             };
         }
 
-        if (method == "donacion" && string.IsNullOrEmpty(evidencePhotoBase64))
+        if (method == "donacion")
         {
-            return new LogisticsResultDto
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == requesterUserId, cancellationToken);
+            if (user == null || !user.IsPremium)
             {
-                Success = false,
-                Message = "Para el método Donación, debe subir una foto de evidencia."
-            };
+                return new LogisticsResultDto
+                {
+                    Success = false,
+                    Message = "👑 La opción de Donación Comunitaria está disponible únicamente para suscriptores con Plan Premium."
+                };
+            }
+
+            bool isInternalStock = transaction.Book != null && transaction.Book.IsInternalStock && transaction.OwnerUserId == null;
+            if (!isInternalStock)
+            {
+                return new LogisticsResultDto
+                {
+                    Success = false,
+                    Message = "La Donación Comunitaria solo está permitida cuando el intercambio es con libros de la base de datos de Intercambialibros (no aplica para intercambios directos entre usuarios)."
+                };
+            }
+
+            var quota = await GetExchangeQuotaAsync(requesterUserId, cancellationToken);
+            bool wasAlreadyDonation = string.Equals(transaction.LogisticsMethod, "donacion", StringComparison.OrdinalIgnoreCase);
+            if (!wasAlreadyDonation && quota.DonationLimitReached)
+            {
+                return new LogisticsResultDto
+                {
+                    Success = false,
+                    Message = $"Has alcanzado el límite mensual de {quota.MonthlyDonationLimit} donaciones de tu Plan Premium para este ciclo."
+                };
+            }
+
+            if (string.IsNullOrEmpty(evidencePhotoBase64))
+            {
+                return new LogisticsResultDto
+                {
+                    Success = false,
+                    Message = "Para el método Donación, debe subir una foto de evidencia."
+                };
+            }
         }
 
         if ((method == "bodega" || method == "p2p") && string.IsNullOrEmpty(trackingNumber))

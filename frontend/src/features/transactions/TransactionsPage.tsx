@@ -4,6 +4,7 @@ import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
 import { MatchDetailModal } from './components/MatchDetailModal';
 import { formatDateInUserTimezone } from '../../lib/dateUtils';
+import { useAuthStore } from '../authentication/store/authStore';
 
 interface MatchTransaction {
   id: string;
@@ -22,6 +23,7 @@ interface MatchTransaction {
   logisticsMethod: string | null;
   isCrossBorder: boolean;
   isAvailable?: boolean;
+  isInternalStock?: boolean;
   createdAt: string;
 }
 
@@ -38,6 +40,9 @@ interface ExchangeQuota {
   exchangesConsumed: number;
   monthlyLimit: number;
   limitReached: boolean;
+  donationsConsumed?: number;
+  monthlyDonationLimit?: number;
+  donationLimitReached?: boolean;
   isPremium: boolean;
   planName: string;
   cycleStartDate: string;
@@ -46,6 +51,7 @@ interface ExchangeQuota {
 
 export const TransactionsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const checkoutId = searchParams.get('checkout');
   const webpayTokenWs = searchParams.get('token_ws');
@@ -492,57 +498,88 @@ export const TransactionsPage: React.FC = () => {
                 </div>
 
                 <div className="logistics-radio-grid">
-                  {/* Opción 1: Donación Comunitaria (Desactivada temporalmente por requerimiento)
-                  <div 
-                    className={`logistics-radio-card ${selectedMethod === 'Donacion' ? 'selected' : ''}`}
-                    onClick={() => setSelectedMethod('Donacion')}
-                  >
-                    <div className="radio-indicator"></div>
-                    <div className="radio-card-content">
-                      <div className="radio-card-header">
-                        <span className="radio-card-title">
-                          <i className="fa-solid fa-heart"></i> 1. Donación Comunitaria
-                        </span>
-                        <span className="radio-card-badge badge-validation">Validación Previa por Equipo</span>
-                      </div>
-                      <p className="radio-card-desc">
-                        Dona tu libro físico en un colegio o espacio comunitario. Carga la foto de evidencia que pasará por un proceso de verificación previa antes de enviar el libro escogido.
-                      </p>
+                  {/* Opción 1: Donación Comunitaria */}
+                  {(() => {
+                    const isPremium = user?.isPremium ?? quota?.isPremium ?? false;
+                    const isInternalBook = selectedTx.isInternalStock === true || (selectedTx.ownerUserId === null && selectedTx.isInternalStock !== false);
+                    const isLimitReached = quota?.donationLimitReached === true;
+                    const donationsLeft = Math.max(0, 2 - (quota?.donationsConsumed ?? 0));
+                    const isDonationDisabled = !isPremium || !isInternalBook || isLimitReached;
 
-                      {selectedMethod === 'Donacion' && (
-                        <div className="radio-card-expand">
-                          <label className="evidence-label">
-                            Subir Fotografía de Evidencia de Donación:
-                          </label>
-                          <div className="dropzone-upload-box">
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={handlePhotoChange}
-                              className="file-input-hidden"
-                              id="evidence-file-input"
-                            />
-                            <label htmlFor="evidence-file-input" className="evidence-upload-trigger">
-                              {evidencePhoto ? (
-                                <div className="evidence-uploaded-row">
-                                  <img src={evidencePhoto} alt="Evidencia" className="evidence-thumb-img" />
-                                  <span className="evidence-thumb-text">
-                                    ✓ Fotografía cargada para revisión previa
-                                  </span>
-                                </div>
-                              ) : (
-                                <div>
-                                  <i className="fa-solid fa-camera camera-icon-large"></i>
-                                  <div className="camera-upload-text">Toca para subir foto del colegio o espacio comunitario</div>
-                                </div>
-                              )}
-                            </label>
+                    return (
+                      <div 
+                        className={`logistics-radio-card ${selectedMethod === 'Donacion' ? 'selected' : ''} ${isDonationDisabled ? 'disabled' : ''}`}
+                        onClick={() => {
+                          if (isDonationDisabled) return;
+                          setSelectedMethod('Donacion');
+                        }}
+                        style={isDonationDisabled ? { opacity: 0.65, cursor: 'not-allowed' } : {}}
+                      >
+                        <div className="radio-indicator"></div>
+                        <div className="radio-card-content">
+                          <div className="radio-card-header">
+                            <span className="radio-card-title">
+                              <i className="fa-solid fa-gift"></i> 1. Donación Comunitaria
+                            </span>
+                            {!isPremium ? (
+                              <span className="radio-card-badge" style={{ background: 'rgba(255, 215, 0, 0.15)', color: '#ffd700', border: '1px solid rgba(255, 215, 0, 0.4)', fontWeight: 700 }}>
+                                <i className="fa-solid fa-crown" style={{ color: '#ffd700', marginRight: '4px' }}></i> Exclusivo Premium
+                              </span>
+                            ) : !isInternalBook ? (
+                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
+                                <i className="fa-solid fa-database" style={{ marginRight: '4px' }}></i> Solo Stock Intercambialibros
+                              </span>
+                            ) : isLimitReached ? (
+                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
+                                <i className="fa-solid fa-ban" style={{ marginRight: '4px' }}></i> Límite Mensual Alcanzado (2/2)
+                              </span>
+                            ) : (
+                              <span className="radio-card-badge badge-validation" style={{ background: 'rgba(182, 255, 0, 0.15)', color: '#B6FF00', border: '1px solid rgba(182, 255, 0, 0.4)', fontWeight: 700 }}>
+                                <i className="fa-solid fa-circle-check" style={{ marginRight: '4px' }}></i> {donationsLeft} de 2 disponibles este mes
+                              </span>
+                            )}
                           </div>
+
+                          <p className="radio-card-desc">
+                            Dona tu libro físico en un colegio o espacio comunitario. Tras confirmar el pago del fee, podrás subir la fotografía de evidencia en el detalle del intercambio para su validación previa.
+                          </p>
+
+                          {!isPremium && (
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(255, 215, 0, 0.08)', border: '1px solid rgba(255, 215, 0, 0.25)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '12px' }}>
+                              <span style={{ color: '#ffd700' }}>
+                                <i className="fa-solid fa-lock" style={{ marginRight: '6px' }}></i>
+                                Disponible solo para miembros con <strong>Plan Premium</strong> (hasta 2 donaciones/mes).
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate('/planes');
+                                }}
+                                style={{ background: '#ffd700', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                              >
+                                <i className="fa-solid fa-crown"></i> Ver Planes
+                              </button>
+                            </div>
+                          )}
+
+                          {isPremium && !isInternalBook && (
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                              <i className="fa-solid fa-circle-info" style={{ color: '#38bdf8', marginRight: '6px' }}></i>
+                              La opción de donación solo aplica cuando el libro solicitado proviene del catálogo oficial de <strong>Intercambialibros</strong> (no aplica para intercambios directos entre usuarios).
+                            </div>
+                          )}
+
+                          {isPremium && isInternalBook && isLimitReached && (
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#fca5a5' }}>
+                              <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '6px' }}></i>
+                              Has alcanzado tu cuota de <strong>2 donaciones este mes</strong>. Podrás volver a donar al inicio de tu próximo ciclo de facturación.
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  */}
+                      </div>
+                    );
+                  })()}
 
                   {/* Opción 2: Entrega Presencial Santiago Chile */}
                   <div 
@@ -553,7 +590,7 @@ export const TransactionsPage: React.FC = () => {
                     <div className="radio-card-content">
                       <div className="radio-card-header">
                         <span className="radio-card-title">
-                          <i className="fa-solid fa-store"></i> 1. Entrega Presencial en Local Físico
+                          <i className="fa-solid fa-store"></i> 2. Entrega Presencial en Local Físico
                         </span>
                         <span className="radio-card-badge badge-free">Sin costo extra</span>
                       </div>
@@ -572,7 +609,7 @@ export const TransactionsPage: React.FC = () => {
                     <div className="radio-card-content">
                       <div className="radio-card-header">
                         <span className="radio-card-title">
-                          <i className="fa-solid fa-truck-fast"></i> 2. Envío por Encomienda a Local Físico
+                          <i className="fa-solid fa-truck-fast"></i> 3. Envío por Encomienda a Local Físico
                         </span>
                         <span className="radio-card-badge badge-courier">Pagas envío + comprobante</span>
                       </div>
@@ -595,7 +632,15 @@ export const TransactionsPage: React.FC = () => {
                   <button
                     type="button"
                     className="font-heading btn-next-step"
-                    onClick={() => setActiveStep(3)}
+                    onClick={() => {
+                      const isPremium = user?.isPremium ?? quota?.isPremium ?? false;
+                      const isInternalBook = selectedTx.isInternalStock === true || (selectedTx.ownerUserId === null && selectedTx.isInternalStock !== false);
+                      const isLimitReached = quota?.donationLimitReached === true;
+                      if (selectedMethod === 'Donacion' && (!isPremium || !isInternalBook || isLimitReached)) {
+                        setSelectedMethod('Presencial');
+                      }
+                      setActiveStep(3);
+                    }}
                   >
                     Continuar al Paso 3: Pago de Fee →
                   </button>
@@ -608,9 +653,6 @@ export const TransactionsPage: React.FC = () => {
               <div>
                 <div className="checkout-step-header">
                   <h3 className="checkout-step-title">Paso 3: Pago Seguro del Fee de Intercambio</h3>
-                  {/* <p className="checkout-step-subtitle">
-                    La tarifa del servicio calculada por la se retiene temporalmente en modo Hold y solo se liquida al concretar la entrega.
-                  </p> */}
                 </div>
 
                 <div className="fee-step-grid">
@@ -629,7 +671,7 @@ export const TransactionsPage: React.FC = () => {
                       <div className="summary-row">
                         <span>Opción de Entrega:</span>
                         <strong className="icon-neon">
-                          {selectedMethod === 'Donacion' ? 'Donación Comunitaria' : selectedMethod === 'Presencial' ? 'Entrega Presencial Santiago' : 'Envío Encomienda'}
+                          {selectedMethod === 'Donacion' ? '🎁 Donación Comunitaria' : selectedMethod === 'Presencial' ? '🏪 Entrega Presencial Santiago' : '📦 Envío Encomienda'}
                         </strong>
                       </div>
                       
@@ -638,6 +680,24 @@ export const TransactionsPage: React.FC = () => {
                         <strong className="fee-total-amount">${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP</strong>
                       </div>
                     </div>
+
+                    {selectedMethod === 'Donacion' && (
+                      <div style={{
+                        marginTop: '1rem',
+                        padding: '10px 14px',
+                        background: 'rgba(182, 255, 0, 0.08)',
+                        border: '1px solid rgba(182, 255, 0, 0.3)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: 'var(--text-primary)',
+                        lineHeight: '1.4'
+                      }}>
+                        <div style={{ fontWeight: 700, color: 'var(--neon)', marginBottom: '4px' }}>
+                          <i className="fa-solid fa-gift"></i> Compromiso de Donación Comunitaria:
+                        </div>
+                        Tras abonar el Fee en Transbank, deberás subir una fotografía del colegio o centro comunitario donde realizaste la donación para su validación previa.
+                      </div>
+                    )}
 
                     {selectedTx.isCrossBorder && (
                       <div className="cross-border-alert-box">
@@ -650,8 +710,6 @@ export const TransactionsPage: React.FC = () => {
                   </div>
 
                   <div className="webpay-card-container">
-                    {/* <h4 className="webpay-card-title">Pasarela Transbank Webpay Plus</h4> */}
-                    
                     <img 
                       src="/WebpayPlus_FB.png" 
                       alt="Webpay Plus Transbank" 
@@ -672,7 +730,7 @@ export const TransactionsPage: React.FC = () => {
                         marginBottom: '12px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
+                        justifyContent: 'center',
                         gap: '8px'
                       }}>
                         <span style={{ color: quota.limitReached ? '#991b1b' : '#166534', fontWeight: 600 }}>
@@ -696,6 +754,28 @@ export const TransactionsPage: React.FC = () => {
                             <i className="fa-solid fa-crown"></i> Subir a 5
                           </button>
                         )}
+                      </div>
+                    )}
+
+                    {selectedMethod === 'Donacion' && quota?.isPremium && (
+                      <div style={{
+                        padding: '10px 14px',
+                        background: quota.donationLimitReached ? '#fff1f2' : 'rgba(182, 255, 0, 0.08)',
+                        border: `1px solid ${quota.donationLimitReached ? '#fca5a5' : 'rgba(182, 255, 0, 0.3)'}`,
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: quota.donationLimitReached ? '#991b1b' : 'var(--neon)',
+                        fontWeight: 600
+                      }}>
+                        <i className="fa-solid fa-gift"></i>
+                        <span>
+                          Donaciones este mes: <strong>{quota.donationsConsumed || 0} / {quota.monthlyDonationLimit || 2}</strong>
+                          {quota.donationLimitReached ? ' (Límite mensual alcanzado)' : ' disponibles'}
+                        </span>
                       </div>
                     )}
 
@@ -751,44 +831,64 @@ export const TransactionsPage: React.FC = () => {
   return (
     <div className="transactions-page-container">
       <div className="transactions-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1>Tus Matches y Transacciones</h1>
             <p>Aquí puedes monitorear tus propuestas activas, realizar el pago de fee y revisar la logística.</p>
           </div>
           {quota && (
-            <div style={{
-              background: quota.limitReached ? '#fff1f2' : '#f0fdf4',
-              border: `1px solid ${quota.limitReached ? '#fca5a5' : '#bbf7d0'}`,
-              borderRadius: '24px',
-              padding: '8px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              fontSize: '13px',
-              color: quota.limitReached ? '#dc2626' : '#166534',
-              fontWeight: 600
-            }}>
-              <span>
-                <i className={`fa-solid ${quota.limitReached ? 'fa-triangle-exclamation' : 'fa-handshake'}`}></i> Cuota mensual: <strong>{quota.exchangesConsumed} / {quota.monthlyLimit}</strong> ({quota.planName})
-              </span>
-              {!quota.isPremium && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/planes')}
-                  style={{
-                    background: '#10b981',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '16px',
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    fontWeight: 700
-                  }}
-                >
-                  <i className="fa-solid fa-crown"></i> Subir a 5
-                </button>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{
+                background: quota.limitReached ? '#fff1f2' : '#f0fdf4',
+                border: `1px solid ${quota.limitReached ? '#fca5a5' : '#bbf7d0'}`,
+                borderRadius: '24px',
+                padding: '8px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '13px',
+                color: quota.limitReached ? '#dc2626' : '#166534',
+                fontWeight: 600
+              }}>
+                <span>
+                  <i className={`fa-solid ${quota.limitReached ? 'fa-triangle-exclamation' : 'fa-handshake'}`}></i> Cuota mensual: <strong>{quota.exchangesConsumed} / {quota.monthlyLimit}</strong> ({quota.planName})
+                </span>
+                {!quota.isPremium && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/planes')}
+                    style={{
+                      background: '#10b981',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '16px',
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      fontWeight: 700
+                    }}
+                  >
+                    <i className="fa-solid fa-crown"></i> Subir a 5
+                  </button>
+                )}
+              </div>
+
+              {quota.isPremium && (
+                <div style={{
+                  background: quota.donationLimitReached ? '#fff1f2' : 'rgba(182, 255, 0, 0.1)',
+                  border: `1px solid ${quota.donationLimitReached ? '#fca5a5' : 'rgba(182, 255, 0, 0.4)'}`,
+                  borderRadius: '24px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '13px',
+                  color: quota.donationLimitReached ? '#dc2626' : '#166534',
+                  fontWeight: 600
+                }}>
+                  <i className="fa-solid fa-gift" style={{ color: quota.donationLimitReached ? '#dc2626' : 'var(--neon)' }}></i>
+                  <span>Donaciones: <strong>{quota.donationsConsumed || 0} / {quota.monthlyDonationLimit || 2}</strong> este mes</span>
+                </div>
               )}
             </div>
           )}

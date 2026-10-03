@@ -194,7 +194,8 @@ public class TransactionsController : ControllerBase
                 request.MatchTransactionId,
                 userId,
                 request.ReturnUrl,
-                request.AcceptCrossBorder);
+                request.AcceptCrossBorder,
+                request.LogisticsMethod);
 
             if (!result.Success)
             {
@@ -380,6 +381,7 @@ public class WebpayStartRequest
     public Guid MatchTransactionId { get; set; }
     public string ReturnUrl { get; set; } = string.Empty;
     public bool AcceptCrossBorder { get; set; }
+    public string? LogisticsMethod { get; set; }
 }
 
 public class WebpayConfirmRequest

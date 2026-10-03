@@ -7942,6 +7942,19 @@ body.swipe-page-active .app-footer {
   transform: translateY(-2px);
 }
 
+.logistics-radio-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  border-color: rgba(255, 255, 255, 0.08);
+  transform: none !important;
+}
+
+.logistics-radio-card.disabled:hover {
+  transform: none !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: var(--bg-surface) !important;
+}
+
 .logistics-radio-card.selected {
   border-color: var(--neon);
   background: rgba(182, 255, 0, 0.04);

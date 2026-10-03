@@ -285,6 +285,7 @@ public class MatchTransactionDto
     public string? LogisticsMethod { get; set; }
     public bool IsCrossBorder { get; set; }
     public bool IsAvailable { get; set; } = true;
+    public bool IsInternalStock { get; set; } = false;
     public DateTime CreatedAt { get; set; }
 }
 
@@ -301,6 +302,9 @@ public class ExchangeQuotaDto
     public int ExchangesConsumed { get; set; }
     public int MonthlyLimit { get; set; }
     public bool LimitReached { get; set; }
+    public int DonationsConsumed { get; set; }
+    public int MonthlyDonationLimit { get; set; } = 2;
+    public bool DonationLimitReached { get; set; }
     public bool IsPremium { get; set; }
     public string PlanName { get; set; } = "Plan Gratuito";
     public DateTime CycleStartDate { get; set; }
