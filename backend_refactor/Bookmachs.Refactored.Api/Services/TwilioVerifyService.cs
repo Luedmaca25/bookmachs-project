@@ -92,7 +92,30 @@ public class TwilioVerifyService : ITwilioVerifyService
             }
 
             _logger.LogWarning("[Twilio Verify Error] Fallo al enviar código a {Phone}: {Status} - {Response}", normalizedPhone, response.StatusCode, responseBody);
-            return (false, "No fue posible enviar el código a través de Twilio. Por favor verifica el número o intenta por otro canal.");
+
+            var friendlyMessage = "No fue posible enviar el código de verificación. Por favor verifica el número o intenta por otro canal.";
+            try
+            {
+                using var jsonDoc = JsonDocument.Parse(responseBody);
+                if (jsonDoc.RootElement.TryGetProperty("message", out var msgProp))
+                {
+                    var twilioMsg = msgProp.GetString();
+                    if (!string.IsNullOrWhiteSpace(twilioMsg))
+                    {
+                        if (twilioMsg.Contains("Permission to send an SMS has not been enabled", StringComparison.OrdinalIgnoreCase))
+                        {
+                            friendlyMessage = "Los permisos de SMS para este país no están habilitados en Twilio (Messaging Geo-Permissions).";
+                        }
+                        else
+                        {
+                            friendlyMessage = $"Twilio: {twilioMsg}";
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            return (false, friendlyMessage);
         }
         catch (Exception ex)
         {
