@@ -2810,7 +2810,7 @@ body.swipe-page-active .app-footer {
   display: flex;
   flex-direction: column;
   gap: 0.12rem;
-  max-height: calc(100vh - 280px);
+  max-height: 200px;
   overflow-y: auto;
   box-sizing: border-box;
   pointer-events: auto;
