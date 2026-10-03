@@ -27,6 +27,9 @@ public class GlobalSettings
     public decimal MinFeeAmount { get; set; } = 1000.0m; // CLP mínimo
     public decimal MaxFeeAmount { get; set; } = 9000.0m; // CLP máximo
 
+    // Campaña promocional de Intercambio Doble (Exclusivo Premium)
+    public bool EnableDoubleExchange { get; set; } = true;
+
     public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
 }
 

@@ -14,6 +14,7 @@ interface GlobalSettings {
   feePercentage: number;
   minFeeAmount: number;
   maxFeeAmount: number;
+  enableDoubleExchange?: boolean;
   lastUpdatedAt: string;
 }
 
@@ -275,6 +276,7 @@ export const AdminSettingsPage: React.FC = () => {
       feePercentage: parseFloat(formData.get('feePercentage') as string) / 100,
       minFeeAmount: parseFloat(formData.get('minFeeAmount') as string),
       maxFeeAmount: parseFloat(formData.get('maxFeeAmount') as string),
+      enableDoubleExchange: formData.get('enableDoubleExchange') === 'on',
     };
 
     updateSettingsMutation.mutate(updated);
@@ -539,6 +541,26 @@ export const AdminSettingsPage: React.FC = () => {
                       min="0"
                       required 
                     />
+                  </div>
+
+                  <div className="form-group" style={{ gridColumn: 'span 2', background: 'rgba(182, 255, 0, 0.04)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(182, 255, 0, 0.2)', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                      <div>
+                        <label htmlFor="enableDoubleExchange" style={{ fontWeight: 700, fontSize: '15px', color: 'var(--neon)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                          <i className="fa-solid fa-arrows-split-up-and-left"></i> Campaña "Intercambio Doble" (Exclusivo Premium)
+                        </label>
+                        <small className="form-help-text" style={{ display: 'block', marginTop: '4px', color: 'var(--text-secondary)' }}>
+                          Activa o apaga en cualquier momento la modalidad de Intercambio Doble para usuarios Premium. Al estar encendido, los usuarios podrán recibir el libro de Intercambialibros sin entregar el suyo de inmediato, comprometiendo su ejemplar por 6 meses para trueques exclusivos entre usuarios (hasta 2 libros al mes).
+                        </small>
+                      </div>
+                      <input 
+                        type="checkbox" 
+                        id="enableDoubleExchange" 
+                        name="enableDoubleExchange" 
+                        defaultChecked={globalSettings?.enableDoubleExchange ?? true} 
+                        style={{ width: '22px', height: '22px', cursor: 'pointer', accentColor: 'var(--neon)' }}
+                      />
+                    </div>
                   </div>
                 </div>
 

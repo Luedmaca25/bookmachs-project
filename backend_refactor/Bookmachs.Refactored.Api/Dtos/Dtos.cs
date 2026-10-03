@@ -95,6 +95,8 @@ public class BookDto
     public bool IsFallbackCategory { get; set; }
     public Guid? OwnerId { get; set; }
     public string ExchangeStatus { get; set; } = "Available";
+    public bool IsDoubleExchangeCommitment { get; set; }
+    public DateTime? DoubleExchangeCommitmentUntil { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -111,6 +113,7 @@ public class GlobalSettingsDto
     public decimal FeePercentage { get; set; }
     public decimal MinFeeAmount { get; set; }
     public decimal MaxFeeAmount { get; set; }
+    public bool EnableDoubleExchange { get; set; } = true;
     public DateTime LastUpdatedAt { get; set; }
 }
 
@@ -305,6 +308,10 @@ public class ExchangeQuotaDto
     public int DonationsConsumed { get; set; }
     public int MonthlyDonationLimit { get; set; } = 2;
     public bool DonationLimitReached { get; set; }
+    public int DoubleExchangesConsumed { get; set; }
+    public int MonthlyDoubleExchangeLimit { get; set; } = 2;
+    public bool DoubleExchangeLimitReached { get; set; }
+    public bool EnableDoubleExchange { get; set; } = true;
     public bool IsPremium { get; set; }
     public string PlanName { get; set; } = "Plan Gratuito";
     public DateTime CycleStartDate { get; set; }

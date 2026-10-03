@@ -17,7 +17,7 @@ public interface ITransactionService
     Task<bool> DeleteMatchAsync(Guid matchTransactionId, Guid userId, CancellationToken cancellationToken = default);
     Task<FeeEstimationDto> EstimateFeeAsync(Guid bookId, Guid requesterUserId, CancellationToken cancellationToken = default);
     Task<CheckoutResultDto> CheckoutCardAsync(Guid matchTransactionId, string cardToken, Guid requesterUserId, bool acceptCrossBorder, CancellationToken cancellationToken = default);
-    Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, CancellationToken cancellationToken = default);
+    Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, Guid? offeredBookId = null, CancellationToken cancellationToken = default);
     Task<WebpayConfirmResultDto> WebpayConfirmAsync(string token, CancellationToken cancellationToken = default);
     Task<WebpayConfirmResultDto> WebpayCancelAsync(string? tbkToken, string? buyOrder, CancellationToken cancellationToken = default);
     Task<ExchangeQuotaDto> GetExchangeQuotaAsync(Guid userId, CancellationToken cancellationToken = default);
@@ -281,7 +281,7 @@ public class TransactionService : ITransactionService
         });
     }
 
-    public async Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, CancellationToken cancellationToken = default)
+    public async Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, Guid? offeredBookId = null, CancellationToken cancellationToken = default)
     {
         var transaction = await _dbContext.MatchTransactions
             .Include(t => t.Book)
@@ -308,6 +308,25 @@ public class TransactionService : ITransactionService
                 Success = false,
                 Message = $"Has alcanzado tu límite mensual de intercambios ({quota.ExchangesConsumed}/{quota.MonthlyLimit}) para tu {quota.PlanName}.{upgradeSuggestion}"
             };
+        }
+
+        // Validar libro propio ofrecido y compromisos previos de intercambio doble
+        if (offeredBookId.HasValue)
+        {
+            var offeredBook = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == offeredBookId.Value && b.OwnerId == requesterUserId, cancellationToken);
+            if (offeredBook != null)
+            {
+                bool isIntercambialibrosTarget = transaction.Book?.IsInternalStock == true || transaction.OwnerUserId == null;
+                if (isIntercambialibrosTarget && offeredBook.IsDoubleExchangeCommitment && offeredBook.DoubleExchangeCommitmentUntil.HasValue && offeredBook.DoubleExchangeCommitmentUntil.Value > DateTime.UtcNow)
+                {
+                    return new WebpayStartResultDto
+                    {
+                        Success = false,
+                        Message = $"El libro seleccionado ('{offeredBook.Title}') se encuentra bajo compromiso de Intercambio Doble y únicamente puede ser intercambiado con otro usuario particular."
+                    };
+                }
+            }
+            transaction.OfferedBookId = offeredBookId.Value;
         }
 
         // Validaciones específicas para el método de Donación Comunitaria
@@ -340,6 +359,50 @@ public class TransactionService : ITransactionService
                     Message = $"Has alcanzado el límite mensual de {quota.MonthlyDonationLimit} donaciones permitidas en tu Plan Premium."
                 };
             }
+        }
+
+        // Validaciones específicas para la modalidad de Intercambio Doble (Exclusivo Premium)
+        if (!string.IsNullOrEmpty(logisticsMethod) && 
+            (logisticsMethod.Trim().ToLowerInvariant() == "intercambiodoble" || logisticsMethod.Trim().ToLowerInvariant() == "intercambio_doble"))
+        {
+            if (!quota.EnableDoubleExchange)
+            {
+                return new WebpayStartResultDto
+                {
+                    Success = false,
+                    Message = "La modalidad de Intercambio Doble se encuentra temporalmente desactivada por el administrador."
+                };
+            }
+
+            if (!quota.IsPremium)
+            {
+                return new WebpayStartResultDto
+                {
+                    Success = false,
+                    Message = "👑 La opción de Intercambio Doble está disponible únicamente para suscriptores con Plan Premium."
+                };
+            }
+
+            bool isInternalStock = transaction.Book != null && transaction.Book.IsInternalStock && transaction.OwnerUserId == null;
+            if (!isInternalStock)
+            {
+                return new WebpayStartResultDto
+                {
+                    Success = false,
+                    Message = "El Intercambio Doble solo está disponible cuando el intercambio se realiza con libros de la base de datos de Intercambialibros (no aplica para intercambios directos entre usuarios)."
+                };
+            }
+
+            if (quota.DoubleExchangeLimitReached)
+            {
+                return new WebpayStartResultDto
+                {
+                    Success = false,
+                    Message = $"Has alcanzado el límite mensual de {quota.MonthlyDoubleExchangeLimit} Intercambios Dobles permitidos en tu Plan Premium para este ciclo."
+                };
+            }
+
+            transaction.LogisticsMethod = "IntercambioDoble";
         }
 
         // Validar si el libro objetivo ya no está disponible o está reservado por otro usuario
@@ -573,6 +636,23 @@ public class TransactionService : ITransactionService
                 {
                     transaction.LogisticsStatus = "Pendiente Comprobante";
                 }
+                else if (method == "intercambiodoble" || method == "intercambio_doble")
+                {
+                    transaction.LogisticsStatus = "Completed";
+
+                    // Marcar el libro propio ofrecido con el compromiso de Intercambio Doble por 6 meses
+                    if (transaction.OfferedBookId.HasValue)
+                    {
+                        var offeredBook = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == transaction.OfferedBookId.Value, cancellationToken);
+                        if (offeredBook != null)
+                        {
+                            offeredBook.IsDoubleExchangeCommitment = true;
+                            offeredBook.DoubleExchangeCommitmentUntil = DateTime.UtcNow.AddMonths(6);
+                            offeredBook.IsAvailable = true;
+                            _dbContext.Books.Update(offeredBook);
+                        }
+                    }
+                }
                 else
                 {
                     transaction.LogisticsStatus = "En Espera";
@@ -763,6 +843,7 @@ public class TransactionService : ITransactionService
 
         // Contar donaciones comunitarias realizadas por el usuario en el ciclo actual (Límite: 2 por mes solo en Premium)
         int donationsCount = 0;
+        int doubleExchangesCount = 0;
         if (user.IsPremium)
         {
             donationsCount = await _dbContext.MatchTransactions
@@ -776,9 +857,23 @@ public class TransactionService : ITransactionService
                             t.LogisticsStatus != "Cancelled" && t.LogisticsStatus != "Expired" &&
                             t.CreatedAt >= cycleStart)
                 .CountAsync(cancellationToken);
+
+            doubleExchangesCount = await _dbContext.MatchTransactions
+                .AsNoTracking()
+                .Where(t => t.RequesterUserId == userId &&
+                            t.LogisticsMethod != null && 
+                            (t.LogisticsMethod.ToLower() == "intercambiodoble" || t.LogisticsMethod.ToLower() == "intercambio_doble") &&
+                            (t.PaymentStatus == "Captured" || t.PaymentStatus == "Hold" ||
+                             t.LogisticsStatus == "Delivered" || t.LogisticsStatus == "Completed" ||
+                             t.LogisticsStatus == "InTransit" || t.LogisticsStatus == "Pendiente Comprobante" ||
+                             t.LogisticsStatus == "En Espera") &&
+                            t.LogisticsStatus != "Cancelled" && t.LogisticsStatus != "Expired" &&
+                            t.CreatedAt >= cycleStart)
+                .CountAsync(cancellationToken);
         }
 
         const int monthlyDonationLimit = 2;
+        const int monthlyDoubleExchangeLimit = 2;
 
         return new ExchangeQuotaDto
         {
@@ -788,6 +883,10 @@ public class TransactionService : ITransactionService
             DonationsConsumed = donationsCount,
             MonthlyDonationLimit = monthlyDonationLimit,
             DonationLimitReached = user.IsPremium ? (donationsCount >= monthlyDonationLimit) : true,
+            DoubleExchangesConsumed = doubleExchangesCount,
+            MonthlyDoubleExchangeLimit = monthlyDoubleExchangeLimit,
+            DoubleExchangeLimitReached = user.IsPremium ? (doubleExchangesCount >= monthlyDoubleExchangeLimit) : true,
+            EnableDoubleExchange = settings?.EnableDoubleExchange ?? true,
             IsPremium = user.IsPremium,
             PlanName = user.IsPremium ? "Plan Premium" : "Plan Gratuito",
             CycleStartDate = cycleStart,

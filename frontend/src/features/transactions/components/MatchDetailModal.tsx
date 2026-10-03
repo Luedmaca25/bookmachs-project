@@ -288,10 +288,12 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         {/* SECCIÓN LOGÍSTICA & SUBIDA DE COMPROBANTES */}
         <div className="fee-estimate-container mt-04" style={{ marginTop: '1rem' }}>
           <div style={{ color: 'var(--neon)', fontWeight: '700', fontSize: '0.95rem', marginBottom: '0.4rem' }}>
-            {currentMethod === 'Donacion' ? '🎁 Donación Comunitaria' : currentMethod === 'Envio' ? '📦 Envío por Encomienda' : '📍 Dirección de Entrega'}
+            {currentMethod === 'IntercambioDoble' ? '🔄 Intercambio Doble (Sin Entrega Inmediata)' : currentMethod === 'Donacion' ? '🎁 Donación Comunitaria' : currentMethod === 'Envio' ? '📦 Envío por Encomienda' : '📍 Dirección de Entrega'}
           </div>
           <p className="match-modal-subtitle" style={{ textAlign: 'center', margin: '0 0 1rem 0' }}>
-            {currentMethod === 'Donacion' 
+            {currentMethod === 'IntercambioDoble'
+              ? 'Has conservado tu libro para un segundo intercambio exclusivo con otro usuario particular.'
+              : currentMethod === 'Donacion' 
               ? 'Sube la foto del colegio o espacio comunitario para proceso de validación previa.'
               : currentMethod === 'Envio' 
               ? 'Registra el N° de seguimiento y comprobante de envío.'
@@ -432,6 +434,21 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                   </p>
                 </div>
               )}
+            </div>
+          )}
+
+          {currentMethod === 'IntercambioDoble' && (
+            <div style={{ background: 'rgba(182, 255, 0, 0.08)', padding: '1.1rem', borderRadius: '10px', border: '1px solid rgba(182, 255, 0, 0.35)', textAlign: 'center' }}>
+              <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--neon)', marginBottom: '0.4rem' }}>
+                <i className="fa-solid fa-repeat"></i> Beneficio Exclusivo: Intercambio Doble
+              </div>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', margin: '0 0 0.6rem 0', lineHeight: '1.4' }}>
+                Recibes el libro <strong>{transaction.bookTitle}</strong> sin necesidad de entregar <strong>{offerTitle}</strong> hoy.
+              </p>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(0, 0, 0, 0.2)', padding: '8px 12px', borderRadius: '8px', lineHeight: '1.4' }}>
+                <i className="fa-solid fa-circle-check" style={{ color: 'var(--neon)', marginRight: '6px' }}></i>
+                Tu ejemplar quedó publicado en tu libreta por un período mínimo de <strong>6 meses</strong>, disponible exclusivamente para ser intercambiado con otro usuario de la comunidad (P2P).
+              </div>
             </div>
           )}
 

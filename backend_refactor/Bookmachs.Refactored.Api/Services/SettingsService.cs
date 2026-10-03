@@ -52,6 +52,7 @@ public class SettingsService : ISettingsService
                 FeePercentage = 0.30m,
                 MinFeeAmount = 1000m,
                 MaxFeeAmount = 9000m,
+                EnableDoubleExchange = true,
                 LastUpdatedAt = DateTime.UtcNow
             };
             await _dbContext.GlobalSettings.AddAsync(settings, cancellationToken);
@@ -80,6 +81,7 @@ public class SettingsService : ISettingsService
         settings.FeePercentage = updateDto.FeePercentage;
         settings.MinFeeAmount = updateDto.MinFeeAmount;
         settings.MaxFeeAmount = updateDto.MaxFeeAmount;
+        settings.EnableDoubleExchange = updateDto.EnableDoubleExchange;
         settings.LastUpdatedAt = DateTime.UtcNow;
 
         _dbContext.GlobalSettings.Update(settings);
@@ -259,6 +261,7 @@ public class SettingsService : ISettingsService
             FeePercentage = g.FeePercentage,
             MinFeeAmount = g.MinFeeAmount,
             MaxFeeAmount = g.MaxFeeAmount,
+            EnableDoubleExchange = g.EnableDoubleExchange,
             LastUpdatedAt = g.LastUpdatedAt
         };
     }

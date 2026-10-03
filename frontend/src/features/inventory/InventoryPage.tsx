@@ -14,6 +14,8 @@ interface MyBookItem {
   imageUrl: string;
   isAvailable?: boolean;
   exchangeStatus?: string;
+  isDoubleExchangeCommitment?: boolean;
+  doubleExchangeCommitmentUntil?: string;
 }
 
 interface MatchTransaction {
@@ -126,6 +128,19 @@ export const InventoryPage: React.FC = () => {
       setFormSuccess('El libro fue eliminado de tus intereses exitosamente.');
     } catch (err: any) {
       setFormError(err.message || 'No se pudo eliminar el libro de tus intereses.');
+    }
+  };
+
+  const handleDeleteOfferedBook = async (bookId: string, bookTitle: string) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar "${bookTitle}" de tu libreta?`)) return;
+    setFormError(null);
+    setFormSuccess(null);
+    try {
+      const res = await apiClient.delete<any>(`/books/${bookId}`);
+      setOfferedBooks((prev) => prev.filter((item) => item.id !== bookId));
+      setFormSuccess(res?.message || 'El libro fue eliminado de tu libreta exitosamente.');
+    } catch (err: any) {
+      setFormError(err.message || 'No se pudo eliminar el libro de tu libreta.');
     }
   };
 
@@ -462,6 +477,9 @@ export const InventoryPage: React.FC = () => {
           ) : (
             <div className="inventory-grid">
               {offeredBooks.map((book) => {
+                const isDoubleCommitmentActive = !!book.isDoubleExchangeCommitment && !!book.doubleExchangeCommitmentUntil && new Date(book.doubleExchangeCommitmentUntil) > new Date();
+                const formattedUnlockDate = book.doubleExchangeCommitmentUntil ? new Date(book.doubleExchangeCommitmentUntil).toLocaleDateString('es-CL') : '';
+
                 let badgeLabel = 'En tu libreta';
                 let badgeIcon = 'fa-solid fa-book-bookmark';
                 let badgeClass = 'internal';
@@ -478,27 +496,80 @@ export const InventoryPage: React.FC = () => {
                   badgeLabel = 'Reservado por 48h';
                   badgeIcon = 'fa-solid fa-clock';
                   badgeClass = 'badge-status-reserved';
+                } else if (isDoubleCommitmentActive || book.exchangeStatus === 'DoubleExchangeCommitment') {
+                  badgeLabel = 'Compromiso Doble (Solo P2P)';
+                  badgeIcon = 'fa-solid fa-repeat';
+                  badgeClass = 'badge-status-inexchange';
                 }
 
                 return (
-                  <BookCard
-                    key={book.id}
-                    book={{
-                      id: book.id,
-                      title: book.title,
-                      author: book.author,
-                      condition: book.condition,
-                      description: book.description,
-                      imageUrl: getFileUrl(book.imageUrl),
-                      stockBadgeLabel: badgeLabel,
-                      stockBadgeIcon: badgeIcon,
-                      stockBadgeClass: badgeClass,
-                      exchangeStatus: book.exchangeStatus,
-                    }}
-                    className="libreta-swipe-card"
-                    showInterestButton={false}
-                    showUndoButton={false}
-                  />
+                  <div key={book.id} className="inventory-book-item-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <BookCard
+                      book={{
+                        id: book.id,
+                        title: book.title,
+                        author: book.author,
+                        condition: book.condition,
+                        description: book.description,
+                        imageUrl: getFileUrl(book.imageUrl),
+                        stockBadgeLabel: badgeLabel,
+                        stockBadgeIcon: badgeIcon,
+                        stockBadgeClass: badgeClass,
+                        exchangeStatus: book.exchangeStatus,
+                      }}
+                      className="libreta-swipe-card"
+                      showInterestButton={false}
+                      showUndoButton={false}
+                    />
+
+                    {isDoubleCommitmentActive ? (
+                      <div 
+                        style={{
+                          padding: '8px 12px',
+                          background: 'rgba(255, 215, 0, 0.08)',
+                          border: '1px solid rgba(255, 215, 0, 0.3)',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          fontSize: '11px',
+                          color: '#ffd700',
+                          cursor: 'not-allowed',
+                          textAlign: 'center'
+                        }}
+                        title={`Sujeto al compromiso de Intercambio Doble hasta el ${formattedUnlockDate}. No puede eliminarse de la libreta antes de transcurrir los 6 meses.`}
+                      >
+                        <i className="fa-solid fa-lock"></i>
+                        <span>Bloqueado por 6 meses (Hasta {formattedUnlockDate})</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteOfferedBook(book.id, book.title)}
+                        style={{
+                          width: '100%',
+                          padding: '7px 12px',
+                          background: 'rgba(239, 68, 68, 0.08)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '8px',
+                          color: '#ef4444',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          fontWeight: 600,
+                          transition: 'all 0.2s'
+                        }}
+                        title="Eliminar este libro de tu libreta"
+                      >
+                        <i className="fa-solid fa-trash-can"></i>
+                        <span>Eliminar de mi libreta</span>
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </div>

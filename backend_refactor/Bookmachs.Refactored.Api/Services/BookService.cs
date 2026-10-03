@@ -26,6 +26,7 @@ public interface IBookService
     Task<ReservationResultDto> ReserveBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> CancelReservationAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetMyReservationsAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<bool> DeleteBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
 }
 
 public class BookService : IBookService
@@ -171,6 +172,11 @@ public class BookService : IBookService
             {
                 dto.ExchangeStatus = "Reserved";
                 dto.IsAvailable = false;
+            }
+            else if (book.IsDoubleExchangeCommitment && book.DoubleExchangeCommitmentUntil.HasValue && book.DoubleExchangeCommitmentUntil.Value > DateTime.UtcNow)
+            {
+                dto.ExchangeStatus = "DoubleExchangeCommitment";
+                dto.IsAvailable = true;
             }
             else
             {
@@ -1172,8 +1178,39 @@ public class BookService : IBookService
             IsAvailable = b.IsAvailable,
             OwnerId = b.OwnerId,
             ExchangeStatus = b.IsAvailable ? "Available" : "Unavailable",
+            IsDoubleExchangeCommitment = b.IsDoubleExchangeCommitment,
+            DoubleExchangeCommitmentUntil = b.DoubleExchangeCommitmentUntil,
             CreatedAt = b.CreatedAt
         };
+    }
+
+    public async Task<bool> DeleteBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == bookId && b.OwnerId == userId, cancellationToken);
+        if (book == null)
+        {
+            throw new KeyNotFoundException("El libro no existe o no pertenece a tu libreta.");
+        }
+
+        if (book.IsDoubleExchangeCommitment && book.DoubleExchangeCommitmentUntil.HasValue && book.DoubleExchangeCommitmentUntil.Value > DateTime.UtcNow)
+        {
+            var unlockDate = book.DoubleExchangeCommitmentUntil.Value.ToString("dd/MM/yyyy");
+            throw new InvalidOperationException($"Este libro está sujeto al compromiso de Intercambio Doble y no puede ser eliminado de tu libreta hasta el {unlockDate} (plazo mínimo de 6 meses).");
+        }
+
+        bool hasActiveTx = await _dbContext.MatchTransactions.AnyAsync(t => 
+            (t.BookId == bookId || t.OfferedBookId == bookId) &&
+            (t.PaymentStatus == "Hold" || t.PaymentStatus == "Captured" || t.LogisticsStatus == "En Espera" || t.LogisticsStatus == "InTransit" || t.LogisticsStatus == "Pendiente Comprobante"), 
+            cancellationToken);
+
+        if (hasActiveTx)
+        {
+            throw new InvalidOperationException("No puedes eliminar un libro que tiene un intercambio en proceso.");
+        }
+
+        _dbContext.Books.Remove(book);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     private async Task<Book> EnsureBookExistsLocallyAsync(Guid bookId, CancellationToken cancellationToken)

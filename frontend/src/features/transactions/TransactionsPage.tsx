@@ -34,6 +34,9 @@ interface MyOfferedBook {
   condition: string;
   description: string;
   imageUrl: string;
+  isDoubleExchangeCommitment?: boolean;
+  doubleExchangeCommitmentUntil?: string;
+  exchangeStatus?: string;
 }
 
 interface ExchangeQuota {
@@ -43,6 +46,10 @@ interface ExchangeQuota {
   donationsConsumed?: number;
   monthlyDonationLimit?: number;
   donationLimitReached?: boolean;
+  doubleExchangesConsumed?: number;
+  monthlyDoubleExchangeLimit?: number;
+  doubleExchangeLimitReached?: boolean;
+  enableDoubleExchange?: boolean;
   isPremium: boolean;
   planName: string;
   cycleStartDate: string;
@@ -80,7 +87,7 @@ export const TransactionsPage: React.FC = () => {
   const [acceptCrossBorder, setAcceptCrossBorder] = useState(false);
 
   // Selección Logística de la Pantalla 11 (Radio Cards)
-  const [selectedMethod, setSelectedMethod] = useState<'Donacion' | 'Presencial' | 'Envio'>('Presencial');
+  const [selectedMethod, setSelectedMethod] = useState<'Donacion' | 'Presencial' | 'Envio' | 'IntercambioDoble'>('Presencial');
   // const [trackingNumber, setTrackingNumber] = useState<string>('');
   // const [evidencePhoto, setEvidencePhoto] = useState<string>('');
 
@@ -362,7 +369,7 @@ export const TransactionsPage: React.FC = () => {
               <div className="summary-row">
                 <span>Método de Entrega:</span>
                 <span className="badge-hold badge-hold-neon">
-                  {selectedMethod === 'Donacion' ? 'Donación Comunitaria' : selectedMethod === 'Presencial' ? 'Entrega Presencial Santiago' : 'Envío por Encomienda'}
+                  {selectedMethod === 'IntercambioDoble' ? '🔄 Intercambio Doble (Sin entrega inmediata)' : selectedMethod === 'Donacion' ? 'Donación Comunitaria' : selectedMethod === 'Presencial' ? 'Entrega Presencial Santiago' : 'Envío por Encomienda'}
                 </span>
               </div>
               <div className="summary-row">
@@ -426,36 +433,57 @@ export const TransactionsPage: React.FC = () => {
                     
                     {hasOfferedBooks ? (
                       <div>
-                        <div className="offered-select-wrapper">
-                          <select 
-                            value={selectedOfferedBookId} 
-                            onChange={(e) => setSelectedOfferedBookId(e.target.value)}
-                            className="offered-book-select"
-                          >
-                            {myOfferedBooks.map((b) => (
-                              <option key={b.id} value={b.id}>{b.title} - {b.author}</option>
-                            ))}
-                          </select>
-                        </div>
+                        {(() => {
+                          const isInternalBook = selectedTx.isInternalStock === true || (selectedTx.ownerUserId === null && selectedTx.isInternalStock !== false);
+                          const isCurrentOfferedBlocked = isInternalBook && !!currentOfferedBook?.isDoubleExchangeCommitment && !!currentOfferedBook?.doubleExchangeCommitmentUntil && new Date(currentOfferedBook.doubleExchangeCommitmentUntil) > new Date();
 
-                        {currentOfferedBook && (
-                          <div>
-                            <div className="swap-cover-frame">
-                              <img 
-                                src={getFileUrl(currentOfferedBook.imageUrl)} 
-                                alt={currentOfferedBook.title}
-                                onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=150'; }} 
-                              />
-                            </div>
-                            <div className="swap-book-title">{currentOfferedBook.title}</div>
-                            <div className="swap-book-author">Autor: {currentOfferedBook.author || 'Desconocido'}</div>
-                            <div className="offered-select-wrapper">
-                              <span className={`condition-badge ${(currentOfferedBook.condition || 'Excelente').toLowerCase()}`}>
-                                Estado libro: {currentOfferedBook.condition || 'Excelente'}
-                              </span>
-                            </div>
-                          </div>
-                        )}
+                          return (
+                            <>
+                              <div className="offered-select-wrapper">
+                                <select 
+                                  value={selectedOfferedBookId} 
+                                  onChange={(e) => setSelectedOfferedBookId(e.target.value)}
+                                  className="offered-book-select"
+                                >
+                                  {myOfferedBooks.map((b) => {
+                                    const isBlocked = isInternalBook && !!b.isDoubleExchangeCommitment && !!b.doubleExchangeCommitmentUntil && new Date(b.doubleExchangeCommitmentUntil) > new Date();
+                                    return (
+                                      <option key={b.id} value={b.id} disabled={isBlocked}>
+                                        {b.title} - {b.author} {isBlocked ? '🔒 (Bloqueado: Solo P2P)' : ''}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+
+                              {isCurrentOfferedBlocked && (
+                                <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#fca5a5', lineHeight: '1.4' }}>
+                                  <i className="fa-solid fa-lock" style={{ marginRight: '6px', color: '#ef4444' }}></i>
+                                  <strong>Libro bajo compromiso de Intercambio Doble:</strong> Este libro está activo por 6 meses (hasta el {new Date(currentOfferedBook.doubleExchangeCommitmentUntil!).toLocaleDateString('es-CL')}) y solo puede intercambiarse entre usuarios particulares, no con el stock de Intercambialibros. Por favor selecciona otro libro de tu libreta.
+                                </div>
+                              )}
+
+                              {currentOfferedBook && (
+                                <div>
+                                  <div className="swap-cover-frame">
+                                    <img 
+                                      src={getFileUrl(currentOfferedBook.imageUrl)} 
+                                      alt={currentOfferedBook.title}
+                                      onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=150'; }} 
+                                    />
+                                  </div>
+                                  <div className="swap-book-title">{currentOfferedBook.title}</div>
+                                  <div className="swap-book-author">Autor: {currentOfferedBook.author || 'Desconocido'}</div>
+                                  <div className="offered-select-wrapper">
+                                    <span className={`condition-badge ${(currentOfferedBook.condition || 'Excelente').toLowerCase()}`}>
+                                      Estado libro: {currentOfferedBook.condition || 'Excelente'}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <div className="no-offered-warning-box">
@@ -474,16 +502,24 @@ export const TransactionsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="btn-right-align">
-                  <button
-                    type="button"
-                    className={`font-heading btn-step-continue ${hasOfferedBooks ? 'enabled' : 'disabled'}`}
-                    onClick={() => setActiveStep(2)}
-                    disabled={!hasOfferedBooks}
-                  >
-                    Continuar al Paso 2: Logística de Entrega →
-                  </button>
-                </div>
+                {(() => {
+                  const isInternalBook = selectedTx.isInternalStock === true || (selectedTx.ownerUserId === null && selectedTx.isInternalStock !== false);
+                  const isCurrentOfferedBlocked = isInternalBook && !!currentOfferedBook?.isDoubleExchangeCommitment && !!currentOfferedBook?.doubleExchangeCommitmentUntil && new Date(currentOfferedBook.doubleExchangeCommitmentUntil) > new Date();
+                  const canContinue = hasOfferedBooks && !isCurrentOfferedBlocked;
+
+                  return (
+                    <div className="btn-right-align">
+                      <button
+                        type="button"
+                        className={`font-heading btn-step-continue ${canContinue ? 'enabled' : 'disabled'}`}
+                        onClick={() => setActiveStep(2)}
+                        disabled={!canContinue}
+                      >
+                        Continuar al Paso 2: Logística de Entrega →
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -618,6 +654,92 @@ export const TransactionsPage: React.FC = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Opción 4: Intercambio Doble (Exclusivo Premium) */}
+                  {(() => {
+                    const isPremium = user?.isPremium ?? quota?.isPremium ?? false;
+                    const isInternalBook = selectedTx.isInternalStock === true || (selectedTx.ownerUserId === null && selectedTx.isInternalStock !== false);
+                    const isDoubleEnabled = quota?.enableDoubleExchange !== false;
+                    const isDoubleLimitReached = (quota?.doubleExchangeLimitReached === true) || ((quota?.doubleExchangesConsumed ?? 0) >= (quota?.monthlyDoubleExchangeLimit ?? 2));
+                    const doubleExchangesLeft = Math.max(0, (quota?.monthlyDoubleExchangeLimit ?? 2) - (quota?.doubleExchangesConsumed ?? 0));
+                    const isDoubleDisabled = !isDoubleEnabled || !isPremium || !isInternalBook || isDoubleLimitReached;
+
+                    if (!isDoubleEnabled) return null;
+
+                    return (
+                      <div 
+                        className={`logistics-radio-card ${selectedMethod === 'IntercambioDoble' ? 'selected' : ''} ${isDoubleDisabled ? 'disabled' : ''}`}
+                        onClick={() => {
+                          if (isDoubleDisabled) return;
+                          setSelectedMethod('IntercambioDoble');
+                        }}
+                        style={isDoubleDisabled ? { opacity: 0.65, cursor: 'not-allowed' } : {}}
+                      >
+                        <div className="radio-indicator"></div>
+                        <div className="radio-card-content">
+                          <div className="radio-card-header">
+                            <span className="radio-card-title">
+                              <i className="fa-solid fa-repeat"></i> 4. Intercambio Doble
+                            </span>
+                            {!isPremium ? (
+                              <span className="radio-card-badge" style={{ background: 'rgba(255, 215, 0, 0.15)', color: '#ffd700', border: '1px solid rgba(255, 215, 0, 0.4)', fontWeight: 700 }}>
+                                <i className="fa-solid fa-crown" style={{ color: '#ffd700', marginRight: '4px' }}></i> Exclusivo Premium
+                              </span>
+                            ) : !isInternalBook ? (
+                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
+                                <i className="fa-solid fa-database" style={{ marginRight: '4px' }}></i> Solo Stock Intercambialibros
+                              </span>
+                            ) : isDoubleLimitReached ? (
+                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
+                                <i className="fa-solid fa-ban" style={{ marginRight: '4px' }}></i> Límite Mensual Alcanzado (2/2)
+                              </span>
+                            ) : (
+                              <span className="radio-card-badge badge-validation" style={{ background: 'rgba(182, 255, 0, 0.15)', color: '#B6FF00', border: '1px solid rgba(182, 255, 0, 0.4)', fontWeight: 700 }}>
+                                <i className="fa-solid fa-sparkles" style={{ marginRight: '4px' }}></i> {doubleExchangesLeft} de 2 disponibles este mes
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="radio-card-desc">
+                            Recibe el libro solicitado de Intercambialibros y <strong>no entregues el tuyo en este momento</strong>. Tu ejemplar quedará publicado por un mínimo de <strong>6 meses</strong> en la plataforma para ser intercambiado exclusivamente con otro usuario de la comunidad (en ese segundo intercambio sí entregarás el ejemplar físico).
+                          </p>
+
+                          {!isPremium && (
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(255, 215, 0, 0.08)', border: '1px solid rgba(255, 215, 0, 0.25)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '12px' }}>
+                              <span style={{ color: '#ffd700' }}>
+                                <i className="fa-solid fa-lock" style={{ marginRight: '6px' }}></i>
+                                Beneficio por tiempo limitado exclusivo para miembros con <strong>Plan Premium</strong> (hasta 2 al mes).
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate('/planes');
+                                }}
+                                style={{ background: '#ffd700', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                              >
+                                <i className="fa-solid fa-crown"></i> Ver Planes
+                              </button>
+                            </div>
+                          )}
+
+                          {isPremium && !isInternalBook && (
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                              <i className="fa-solid fa-circle-info" style={{ color: '#38bdf8', marginRight: '6px' }}></i>
+                              El Intercambio Doble solo aplica cuando solicitas un libro del catálogo oficial de <strong>Intercambialibros</strong> (no aplica entre usuarios particulares).
+                            </div>
+                          )}
+
+                          {isPremium && isInternalBook && isDoubleLimitReached && (
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#fca5a5' }}>
+                              <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '6px' }}></i>
+                              Has alcanzado tu cuota de <strong>2 intercambios dobles este mes</strong>. Podrás volver a utilizar esta opción en tu próximo ciclo mensual.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="step-actions-row">
@@ -636,7 +758,14 @@ export const TransactionsPage: React.FC = () => {
                       const isPremium = user?.isPremium ?? quota?.isPremium ?? false;
                       const isInternalBook = selectedTx.isInternalStock === true || (selectedTx.ownerUserId === null && selectedTx.isInternalStock !== false);
                       const isLimitReached = quota?.donationLimitReached === true;
+                      const isDoubleEnabled = quota?.enableDoubleExchange !== false;
+                      const isDoubleLimitReached = (quota?.doubleExchangeLimitReached === true) || ((quota?.doubleExchangesConsumed ?? 0) >= (quota?.monthlyDoubleExchangeLimit ?? 2));
+                      const isDoubleDisabled = !isDoubleEnabled || !isPremium || !isInternalBook || isDoubleLimitReached;
+
                       if (selectedMethod === 'Donacion' && (!isPremium || !isInternalBook || isLimitReached)) {
+                        setSelectedMethod('Presencial');
+                      }
+                      if (selectedMethod === 'IntercambioDoble' && isDoubleDisabled) {
                         setSelectedMethod('Presencial');
                       }
                       setActiveStep(3);
@@ -671,7 +800,7 @@ export const TransactionsPage: React.FC = () => {
                       <div className="summary-row">
                         <span>Opción de Entrega:</span>
                         <strong className="icon-neon">
-                          {selectedMethod === 'Donacion' ? '🎁 Donación Comunitaria' : selectedMethod === 'Presencial' ? '🏪 Entrega Presencial Santiago' : '📦 Envío Encomienda'}
+                          {selectedMethod === 'IntercambioDoble' ? '🔄 Intercambio Doble' : selectedMethod === 'Donacion' ? '🎁 Donación Comunitaria' : selectedMethod === 'Presencial' ? '🏪 Entrega Presencial Santiago' : '📦 Envío Encomienda'}
                         </strong>
                       </div>
                       
@@ -696,6 +825,24 @@ export const TransactionsPage: React.FC = () => {
                           <i className="fa-solid fa-gift"></i> Compromiso de Donación Comunitaria:
                         </div>
                         Tras abonar el Fee en Transbank, deberás subir una fotografía del colegio o centro comunitario donde realizaste la donación para su validación previa.
+                      </div>
+                    )}
+
+                    {selectedMethod === 'IntercambioDoble' && (
+                      <div style={{
+                        marginTop: '1rem',
+                        padding: '10px 14px',
+                        background: 'rgba(182, 255, 0, 0.08)',
+                        border: '1px solid rgba(182, 255, 0, 0.3)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: 'var(--text-primary)',
+                        lineHeight: '1.4'
+                      }}>
+                        <div style={{ fontWeight: 700, color: 'var(--neon)', marginBottom: '4px' }}>
+                          <i className="fa-solid fa-repeat"></i> Beneficio de Intercambio Doble:
+                        </div>
+                        Recibirás el libro <strong>{selectedTx.bookTitle}</strong> y no tienes que entregar <strong>{currentOfferedBook?.title || 'tu libro'}</strong> hoy. Tu ejemplar quedará comprometido y publicado en la plataforma por un plazo mínimo de 6 meses para intercambiarse exclusivamente con otro usuario particular (P2P).
                       </div>
                     )}
 
@@ -775,6 +922,28 @@ export const TransactionsPage: React.FC = () => {
                         <span>
                           Donaciones este mes: <strong>{quota.donationsConsumed || 0} / {quota.monthlyDonationLimit || 2}</strong>
                           {quota.donationLimitReached ? ' (Límite mensual alcanzado)' : ' disponibles'}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedMethod === 'IntercambioDoble' && quota?.isPremium && (
+                      <div style={{
+                        padding: '10px 14px',
+                        background: quota.doubleExchangeLimitReached ? '#fff1f2' : 'rgba(182, 255, 0, 0.08)',
+                        border: `1px solid ${quota.doubleExchangeLimitReached ? '#fca5a5' : 'rgba(182, 255, 0, 0.3)'}`,
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: quota.doubleExchangeLimitReached ? '#991b1b' : 'var(--neon)',
+                        fontWeight: 600
+                      }}>
+                        <i className="fa-solid fa-repeat"></i>
+                        <span>
+                          Intercambios Dobles este mes: <strong>{quota.doubleExchangesConsumed || 0} / {quota.monthlyDoubleExchangeLimit || 2}</strong>
+                          {quota.doubleExchangeLimitReached ? ' (Límite mensual alcanzado)' : ' disponibles'}
                         </span>
                       </div>
                     )}
@@ -888,6 +1057,24 @@ export const TransactionsPage: React.FC = () => {
                 }}>
                   <i className="fa-solid fa-gift" style={{ color: quota.donationLimitReached ? '#dc2626' : 'var(--neon)' }}></i>
                   <span>Donaciones: <strong>{quota.donationsConsumed || 0} / {quota.monthlyDonationLimit || 2}</strong> este mes</span>
+                </div>
+              )}
+
+              {quota.isPremium && quota.enableDoubleExchange !== false && (
+                <div style={{
+                  background: quota.doubleExchangeLimitReached ? '#fff1f2' : 'rgba(182, 255, 0, 0.1)',
+                  border: `1px solid ${quota.doubleExchangeLimitReached ? '#fca5a5' : 'rgba(182, 255, 0, 0.4)'}`,
+                  borderRadius: '24px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '13px',
+                  color: quota.doubleExchangeLimitReached ? '#dc2626' : '#166534',
+                  fontWeight: 600
+                }}>
+                  <i className="fa-solid fa-repeat" style={{ color: quota.doubleExchangeLimitReached ? '#dc2626' : 'var(--neon)' }}></i>
+                  <span>Dobles: <strong>{quota.doubleExchangesConsumed || 0} / {quota.monthlyDoubleExchangeLimit || 2}</strong> este mes</span>
                 </div>
               )}
             </div>

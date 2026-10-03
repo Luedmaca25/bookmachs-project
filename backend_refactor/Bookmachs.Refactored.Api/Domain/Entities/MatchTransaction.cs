@@ -18,6 +18,10 @@ public class MatchTransaction
     public Guid? OwnerUserId { get; set; }
     public User? OwnerUser { get; set; }
 
+    // El libro propio ofrecido por el solicitante en el intercambio
+    public Guid? OfferedBookId { get; set; }
+    public Book? OfferedBook { get; set; }
+
     // Tarifa (Fee) calculada y bloqueada para la transacción
     public decimal FeeAmount { get; set; }
 

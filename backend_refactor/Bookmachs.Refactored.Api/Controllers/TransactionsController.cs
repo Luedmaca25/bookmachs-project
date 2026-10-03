@@ -195,7 +195,8 @@ public class TransactionsController : ControllerBase
                 userId,
                 request.ReturnUrl,
                 request.AcceptCrossBorder,
-                request.LogisticsMethod);
+                request.LogisticsMethod,
+                request.OfferedBookId);
 
             if (!result.Success)
             {
@@ -382,6 +383,7 @@ public class WebpayStartRequest
     public string ReturnUrl { get; set; } = string.Empty;
     public bool AcceptCrossBorder { get; set; }
     public string? LogisticsMethod { get; set; }
+    public Guid? OfferedBookId { get; set; }
 }
 
 public class WebpayConfirmRequest

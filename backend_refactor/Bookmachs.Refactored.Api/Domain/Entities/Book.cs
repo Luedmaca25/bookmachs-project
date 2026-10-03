@@ -31,6 +31,10 @@ public class Book
     public Guid? ReservedByUserId { get; set; }
     public User? ReservedByUser { get; set; }
 
+    // Compromiso de Intercambio Doble: libro queda disponible exclusivamente para otros usuarios (P2P) por mínimo 6 meses
+    public bool IsDoubleExchangeCommitment { get; set; } = false;
+    public DateTime? DoubleExchangeCommitmentUntil { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
