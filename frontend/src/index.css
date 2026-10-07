@@ -104,8 +104,7 @@ body {
 }
 
 #root,
-.app-container,
-.app-main {
+.app-container {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden !important;
@@ -227,9 +226,21 @@ body {
   padding: 3rem 2rem;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow: visible;
   overflow-y: visible;
+  overflow-x: clip;
   background-color: #fff;
+}
+
+/* Prevenir doble scroll vertical en desktop fuera de la vista de Swipe */
+.app-main:not(.swipe-main-active):not(:has(.swipe-page-container)),
+.app-main:has(.checkout-view-container),
+.app-main:has(.transactions-page-container) {
+  overflow: visible !important;
+  overflow-y: visible !important;
+  overflow-x: clip !important;
+  height: auto !important;
+  max-height: none !important;
 }
 
 .app-footer {
@@ -7932,7 +7943,7 @@ body.swipe-page-active .app-footer {
   margin-bottom: 2rem;
   box-shadow: var(--shadow-sm);
   position: relative;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .duet-swap-deck::before {

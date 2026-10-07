@@ -457,7 +457,7 @@ export const TransactionsPage: React.FC = () => {
                               </div>
 
                               {isCurrentOfferedBlocked && (
-                                <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#fca5a5', lineHeight: '1.4' }}>
+                                <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#b91c1c', lineHeight: '1.4' }}>
                                   <i className="fa-solid fa-lock" style={{ marginRight: '6px', color: '#ef4444' }}></i>
                                   <strong>Libro bajo compromiso de Intercambio Doble:</strong> Este libro está activo por 6 meses (hasta el {new Date(currentOfferedBook.doubleExchangeCommitmentUntil!).toLocaleDateString('es-CL')}) y solo puede intercambiarse entre usuarios particulares, no con el stock de Intercambialibros. Por favor selecciona otro libro de tu libreta.
                                 </div>
@@ -558,20 +558,20 @@ export const TransactionsPage: React.FC = () => {
                               <i className="fa-solid fa-gift"></i> 1. Donación Comunitaria
                             </span>
                             {!isPremium ? (
-                              <span className="radio-card-badge" style={{ background: 'rgba(255, 215, 0, 0.15)', color: '#ffd700', border: '1px solid rgba(255, 215, 0, 0.4)', fontWeight: 700 }}>
-                                <i className="fa-solid fa-crown" style={{ color: '#ffd700', marginRight: '4px' }}></i> Exclusivo Premium
+                              <span className="radio-card-badge" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#B45309', border: '1px solid rgba(245, 158, 11, 0.35)', fontWeight: 700 }}>
+                                <i className="fa-solid fa-crown" style={{ color: '#D97706', marginRight: '4px' }}></i> Exclusivo Premium
                               </span>
                             ) : !isInternalBook ? (
-                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
+                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#b91c1c', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
                                 <i className="fa-solid fa-database" style={{ marginRight: '4px' }}></i> Solo Stock Intercambialibros
                               </span>
                             ) : isLimitReached ? (
-                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
+                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#b91c1c', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
                                 <i className="fa-solid fa-ban" style={{ marginRight: '4px' }}></i> Límite Mensual Alcanzado (2/2)
                               </span>
                             ) : (
-                              <span className="radio-card-badge badge-validation" style={{ background: 'rgba(182, 255, 0, 0.15)', color: '#B6FF00', border: '1px solid rgba(182, 255, 0, 0.4)', fontWeight: 700 }}>
-                                <i className="fa-solid fa-circle-check" style={{ marginRight: '4px' }}></i> {donationsLeft} de 2 disponibles este mes
+                              <span className="radio-card-badge badge-validation" style={{ background: 'rgba(15, 157, 88, 0.12)', color: '#0F9D58', border: '1px solid rgba(15, 157, 88, 0.35)', fontWeight: 700 }}>
+                                <i className="fa-solid fa-circle-check" style={{ marginRight: '4px', color: '#0F9D58' }}></i> {donationsLeft} de 2 disponibles este mes
                               </span>
                             )}
                           </div>
@@ -581,9 +581,9 @@ export const TransactionsPage: React.FC = () => {
                           </p>
 
                           {!isPremium && (
-                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(255, 215, 0, 0.08)', border: '1px solid rgba(255, 215, 0, 0.25)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '12px' }}>
-                              <span style={{ color: '#ffd700' }}>
-                                <i className="fa-solid fa-lock" style={{ marginRight: '6px' }}></i>
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '12px' }}>
+                              <span style={{ color: '#92400E', fontWeight: 500 }}>
+                                <i className="fa-solid fa-lock" style={{ marginRight: '6px', color: '#D97706' }}></i>
                                 Disponible solo para miembros con <strong>Plan Premium</strong> (hasta 2 donaciones/mes).
                               </span>
                               <button
@@ -592,22 +592,22 @@ export const TransactionsPage: React.FC = () => {
                                   e.stopPropagation();
                                   navigate('/planes');
                                 }}
-                                style={{ background: '#ffd700', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                style={{ background: '#D97706', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                               >
-                                <i className="fa-solid fa-crown"></i> Ver Planes
+                                <i className="fa-solid fa-crown" style={{ marginRight: '4px' }}></i> Ver Planes
                               </button>
                             </div>
                           )}
 
                           {isPremium && !isInternalBook && (
-                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                              <i className="fa-solid fa-circle-info" style={{ color: '#38bdf8', marginRight: '6px' }}></i>
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(2, 132, 199, 0.08)', border: '1px solid rgba(2, 132, 199, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#0369a1' }}>
+                              <i className="fa-solid fa-circle-info" style={{ color: '#0284c7', marginRight: '6px' }}></i>
                               La opción de donación solo aplica cuando el libro solicitado proviene del catálogo oficial de <strong>Intercambialibros</strong> (no aplica para intercambios directos entre usuarios).
                             </div>
                           )}
 
                           {isPremium && isInternalBook && isLimitReached && (
-                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#fca5a5' }}>
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#b91c1c' }}>
                               <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '6px' }}></i>
                               Has alcanzado tu cuota de <strong>2 donaciones este mes</strong>. Podrás volver a donar al inicio de tu próximo ciclo de facturación.
                             </div>
@@ -626,7 +626,7 @@ export const TransactionsPage: React.FC = () => {
                     <div className="radio-card-content">
                       <div className="radio-card-header">
                         <span className="radio-card-title">
-                          <i className="fa-solid fa-store"></i> 2. Entrega Presencial en Local Físico
+                          <i className="fa-solid fa-store"></i> 2. Entrega y Recibe en Local Físico
                         </span>
                         <span className="radio-card-badge badge-free">Sin costo extra</span>
                       </div>
@@ -647,10 +647,12 @@ export const TransactionsPage: React.FC = () => {
                         <span className="radio-card-title">
                           <i className="fa-solid fa-truck-fast"></i> 3. Envío por Encomienda a Local Físico
                         </span>
-                        <span className="radio-card-badge badge-courier">Pagas envío + comprobante</span>
+                        <span className="radio-card-badge badge-courier">Pagas envío del libro que envías y del libro que recibes</span>
                       </div>
                       <p className="radio-card-desc">
-                        Envía tu libro a la dirección física de Intercambialibros en <strong>Patronato 447, Recoleta, Santiago, Chile</strong> vía Starken o Chilexpress. Podrás subir tu comprobante de envío o voucher una vez realizado el pago.
+                        Envía tu libro a la dirección física de Intercambialibros en <strong>Patronato 447, Recoleta, Santiago, Chile</strong> vía Starken o Chilexpress. Podrás subir tu comprobante de envío o voucher una vez realizado el pago*.
+                        <br/><br/>
+                        <i>*El libro que despachas como el que recibes, lo paga el usuario.</i>
                       </p>
                     </div>
                   </div>
@@ -682,20 +684,20 @@ export const TransactionsPage: React.FC = () => {
                               <i className="fa-solid fa-repeat"></i> 4. Intercambio Doble
                             </span>
                             {!isPremium ? (
-                              <span className="radio-card-badge" style={{ background: 'rgba(255, 215, 0, 0.15)', color: '#ffd700', border: '1px solid rgba(255, 215, 0, 0.4)', fontWeight: 700 }}>
-                                <i className="fa-solid fa-crown" style={{ color: '#ffd700', marginRight: '4px' }}></i> Exclusivo Premium
+                              <span className="radio-card-badge" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#B45309', border: '1px solid rgba(245, 158, 11, 0.35)', fontWeight: 700 }}>
+                                <i className="fa-solid fa-crown" style={{ color: '#D97706', marginRight: '4px' }}></i> Exclusivo Premium
                               </span>
                             ) : !isInternalBook ? (
-                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
+                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#b91c1c', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
                                 <i className="fa-solid fa-database" style={{ marginRight: '4px' }}></i> Solo Stock Intercambialibros
                               </span>
                             ) : isDoubleLimitReached ? (
-                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
+                              <span className="radio-card-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#b91c1c', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 600 }}>
                                 <i className="fa-solid fa-ban" style={{ marginRight: '4px' }}></i> Límite Mensual Alcanzado (2/2)
                               </span>
                             ) : (
-                              <span className="radio-card-badge badge-validation" style={{ background: 'rgba(182, 255, 0, 0.15)', color: '#B6FF00', border: '1px solid rgba(182, 255, 0, 0.4)', fontWeight: 700 }}>
-                                <i className="fa-solid fa-sparkles" style={{ marginRight: '4px' }}></i> {doubleExchangesLeft} de 2 disponibles este mes
+                              <span className="radio-card-badge badge-validation" style={{ background: 'rgba(15, 157, 88, 0.12)', color: '#0F9D58', border: '1px solid rgba(15, 157, 88, 0.35)', fontWeight: 700 }}>
+                                <i className="fa-solid fa-sparkles" style={{ marginRight: '4px', color: '#0F9D58' }}></i> {doubleExchangesLeft} de 2 disponibles este mes
                               </span>
                             )}
                           </div>
@@ -705,9 +707,9 @@ export const TransactionsPage: React.FC = () => {
                           </p>
 
                           {!isPremium && (
-                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(255, 215, 0, 0.08)', border: '1px solid rgba(255, 215, 0, 0.25)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '12px' }}>
-                              <span style={{ color: '#ffd700' }}>
-                                <i className="fa-solid fa-lock" style={{ marginRight: '6px' }}></i>
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '12px' }}>
+                              <span style={{ color: '#92400E', fontWeight: 500 }}>
+                                <i className="fa-solid fa-lock" style={{ marginRight: '6px', color: '#D97706' }}></i>
                                 Beneficio por tiempo limitado exclusivo para miembros con <strong>Plan Premium</strong> (hasta 2 al mes).
                               </span>
                               <button
@@ -716,22 +718,22 @@ export const TransactionsPage: React.FC = () => {
                                   e.stopPropagation();
                                   navigate('/planes');
                                 }}
-                                style={{ background: '#ffd700', color: '#000', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                style={{ background: '#D97706', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                               >
-                                <i className="fa-solid fa-crown"></i> Ver Planes
+                                <i className="fa-solid fa-crown" style={{ marginRight: '4px' }}></i> Ver Planes
                               </button>
                             </div>
                           )}
 
                           {isPremium && !isInternalBook && (
-                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                              <i className="fa-solid fa-circle-info" style={{ color: '#38bdf8', marginRight: '6px' }}></i>
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(2, 132, 199, 0.08)', border: '1px solid rgba(2, 132, 199, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#0369a1' }}>
+                              <i className="fa-solid fa-circle-info" style={{ color: '#0284c7', marginRight: '6px' }}></i>
                               El Intercambio Doble solo aplica cuando solicitas un libro del catálogo oficial de <strong>Intercambialibros</strong> (no aplica entre usuarios particulares).
                             </div>
                           )}
 
                           {isPremium && isInternalBook && isDoubleLimitReached && (
-                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#fca5a5' }}>
+                            <div style={{ marginTop: '0.6rem', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', fontSize: '12px', color: '#b91c1c' }}>
                               <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '6px' }}></i>
                               Has alcanzado tu cuota de <strong>2 intercambios dobles este mes</strong>. Podrás volver a utilizar esta opción en tu próximo ciclo mensual.
                             </div>

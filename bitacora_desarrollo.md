@@ -1089,6 +1089,121 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   - [SwipePage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/SwipePage.tsx)
   - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
 
+---
+
+### Implementación de Recuperación de Contraseña con SendGrid Dynamic Templates
+* **Objetivo:** Permitir a los usuarios que hayan olvidado su contraseña solicitar un enlace de restablecimiento seguro por correo electrónico utilizando plantillas dinámicas de SendGrid, y definir una nueva contraseña con validación y cifrado robusto.
+* **Detalles Técnicos en Backend ([Bookmachs.Refactored.Api](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api)):**
+  1. **Servicio SendGrid ([SendGridEmailService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/SendGridEmailService.cs)):**
+     - Se definió el DTO `PasswordResetEmailData` que expone los parámetros para la plantilla dinámica de SendGrid: `UserName`, `UserEmail`, `ResetLink`, `ExpirationMinutes` y `SupportEmail`.
+     - Implementado `SendPasswordResetEmailAsync` con fallback en modo desarrollo si la API Key o el Template ID no están configurados (registrando el enlace en logs para pruebas locales sin bloquear el flujo).
+  2. **Configuración ([appsettings.json](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/appsettings.json)):**
+     - Añadido `SendGrid:TemplateIdPasswordReset` (`d-xxxxxx_your_dynamic_template_id_pwd_reset`).
+     - Añadido `Frontend:BaseUrl` (`http://localhost:5173`) para generación dinámica de URLs de restablecimiento.
+  3. **Generación y Verificación de Tokens ([AuthService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/AuthService.cs)):**
+     - `RequestPasswordResetAsync`: Genera tokens criptográficamente seguros (`RandomNumberGenerator.GetBytes(32)`) y los almacena en `ICacheService` durante 60 minutos asociados al correo del usuario. Por seguridad contra enumeración de usuarios, retorna siempre respuesta exitosa genérica.
+     - `ResetPasswordAsync`: Valida el token contra la caché, comprueba el email, actualiza `PasswordHash` mediante `IPasswordHasher` (PBKDF2/SHA256 con salt de 128 bits y 100,000 iteraciones), persiste los cambios en la base de datos y consume/invalida el token.
+  4. **Controlador REST ([AuthController.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Controllers/AuthController.cs)):**
+     - Endpoint `POST /auth/password/forgot` (`ForgotPasswordRequest`).
+     - Endpoint `POST /auth/password/reset` (`ResetPasswordRequest`).
+* **Detalles Técnicos en Frontend ([frontend](file:///C:/Users/luis_/Proyectos/bookmachs/frontend)):**
+  1. **Inicio de Sesión ([AuthenticationPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/authentication/AuthenticationPage.tsx)):**
+     - Añadido botón interactivo *"¿Olvidaste tu contraseña?"* en el campo de contraseña.
+     - Implementada tarjeta interactiva de solicitud de recuperación por correo, con mensaje de confirmación amigable y retorno al login.
+  2. **Página de Restablecimiento ([ResetPasswordPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/authentication/ResetPasswordPage.tsx)):**
+     - Creado componente que lee `token` y `email` desde los query params (`/recuperar-password?token=...&email=...`).
+     - Formulario con campos de nueva contraseña, confirmación, botones toggle de visibilidad (ojo) y validación de seguridad.
+     - Redirección automática tras actualización exitosa hacia el login.
+  3. **Rutas y Estilos ([AppRouter.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/router/AppRouter.tsx) & [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)):**
+     - Ruta pública `/recuperar-password` registrada en el enrutador.
+     - Estilos coherentes con la temática oscura y acentos neón `#B6FF00`.
+
+---
+
+### Indicador de Alerta de Matches Pendientes en el Menú Inferior (icon-time.png)
+* **Objetivo:** Notificar visualmente al usuario cuando tenga propuestas de intercambio ("matches") pendientes de confirmar o abonar fee, mostrando el icono de alerta `@/icons/icon-time.png` junto al icono de "Matchs" en la barra de navegación flotante inferior (y complementariamente en el menú superior desktop y offcanvas).
+* **Detalles Técnicos:**
+  1. **Monitoreo Reactivo de Matches ([MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)):**
+     - Se integró `useQuery` de `@tanstack/react-query` para consultar `/transactions/my-matches` con clave `['my-matches', user?.id]`.
+     - Se calculó la bandera `hasPendingMatches`:
+       Comprueba si existen transacciones donde `paymentStatus === 'Pending'`, `isAvailable !== false` y la logística no esté cancelada ni expirada.
+  2. **Inclusión Visual del Icono de Alerta ([MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)):**
+     - En el ítem de navegación `Matchs` de la barra inferior móvil, se añadió el contenedor condicional `.pill-nav-time-badge` que renderiza `/icons/icon-time.png` superpuesto sobre la esquina superior derecha del icono de apretón de manos.
+     - Se añadió también de manera armónica en la navegación desktop y menú lateral móvil offcanvas.
+  3. **Invalidación Inmediata al Ocurrir Match ([SwipePage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/SwipePage.tsx)):**
+     - Al producirse un match instantáneo durante el swipe (`response.isMatch === true`), se dispara `queryClient.invalidateQueries({ queryKey: ['my-matches'] })`, actualizando el badge en tiempo real sin requerir recarga de página.
+  4. **Estilos y Animación ([index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)):**
+     - Reglas `.pill-nav-time-badge` y `.pill-nav-time-img` con borde naranja brillante `#FF8000` y animación suave de pulsación (`@keyframes pulseTimeAlert`) para capturar la atención del usuario de manera elegante.
+* **Archivos Clave Modificados:**
+  - [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)
+  - [SwipePage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/SwipePage.tsx)
+  - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
+
+---
+
+### Redirección a Login al Intentar Contratar Plan Premium Sin Sesión (/planes)
+* **Observación del Cliente:** En la pantalla `/planes`, cuando un usuario no autenticado presionaba el botón *"Contratar Plan Premium"*, el sistema no realizaba ninguna acción visible ni redirigía al inicio de sesión.
+* **Diagnóstico Técnico:**
+  - En [PlansPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/subscriptions/PlansPage.tsx), la función `handleSelectPlan` evaluaba `if (!isAuthenticated || !user)` y únicamente ejecutaba `setErrorMessage('Debes iniciar sesión...')` sin invocar navegación.
+  - Al no redirigir ni realizar scroll automático hacia el mensaje de alerta superior, el usuario percibía que el botón no respondía.
+* **Solución Implementada:**
+  - Se importó e instanció el hook `useNavigate` de `react-router-dom`.
+  - Se actualizó `handleSelectPlan` para que, en caso de no contar con sesión activa, redirija inmediatamente al usuario a `/auth` forzando el modo de inicio de sesión (`navigate('/auth', { state: { forceLogin: Date.now() } })`).
+* **Archivos Clave Modificados:**
+  - [PlansPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/subscriptions/PlansPage.tsx)
+
+---
+
+### Restablecimiento Automático del Scroll al Cambiar de Pantalla (Scroll to Top)
+* **Observación del Cliente:** Al navegar entre pantallas de la aplicación, la posición del scroll vertical se mantenía retenida en el punto exacto donde se encontraba en la vista previa, en lugar de restablecerse automáticamente a la parte superior.
+* **Diagnóstico Técnico:**
+  - En aplicaciones SPA gestionadas con React Router, el navegador retiene de forma predeterminada el desplazamiento (`window.history.scrollRestoration = 'auto'`) entre transiciones de ruta en el historial del cliente.
+  - Al no existir un listener global de desplazamiento en el layout raíz ni anulación del comportamiento nativo del navegador, vistas con contenido extenso (ej. `/catalogo`, `/planes`, `/transacciones`, `/ayuda`, `/recuperar-password`) heredaban el offset de scroll vertical de la pantalla anterior.
+* **Solución Implementada:**
+  - En [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx), se configuró `window.history.scrollRestoration = 'manual'` al montar el layout principal.
+  - Se implementó un efecto reactivo que vigila tanto cambios de ruta (`location.pathname`) como parámetros de búsqueda (`location.search`).
+  - Al detectar un ancla (`location.hash`), se respeta el desplazamiento hacia el elemento destino si existe; de lo contrario, se fuerza de inmediato el scroll a `(0, 0)` en `window`, `document.documentElement`, `document.body`, `.app-main` y `.app-container`.
+  - Se programó una segunda pasada sincronizada con `requestAnimationFrame` para asegurar que el scroll se limpie incluso tras el ciclo de pintado y renderizado del nuevo componente.
+* **Archivos Clave Modificados:**
+  - [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)
+
+---
+
+### Corrección de Doble Scroll Vertical en Desktop al Ingresar a Checkout
+* **Observación del Cliente:** Al ingresar al checkout en desktop (`/transacciones?checkout=...`), aparecía una barra de scroll vertical en el selector `.app-main` además del scroll nativo de la página (window/body), ocasionando un incómodo doble scroll vertical.
+* **Diagnóstico Técnico:**
+  - El selector agrupado `#root, .app-container, .app-main` contenía `overflow-x: hidden !important;`.
+  - Según la especificación estándar del W3C (CSS Overflow Module), cuando un elemento declara `overflow-x: hidden` y `overflow-y: visible`, el navegador fuerza automáticamente el cómputo de `overflow-y` a `auto` (es imposible tener `hidden` en un eje y `visible` en el otro).
+  - Asimismo, bajo la especificación W3C Flexbox (Sección 4.5), un elemento flex (`.app-main` con `flex: 1` dentro de `.app-container`) cuyo valor computado de `overflow` no es `visible`, pierde su tamaño mínimo automático (`min-height: auto`) y pasa a tener `min-height: 0`.
+  - Como resultado, `.app-main` quedaba acotado a la altura del flex container e interpretaba el contenido del checkout y sus tarjetas (incluyendo el pseudo-elemento `::before` de `.duet-swap-deck` que excedía las dimensiones) como un desbordamiento interno, generando su propia barra de desplazamiento vertical simultáneamente con la de la página.
+* **Solución Implementada:**
+  - Se eliminó `.app-main` de la regla global `#root, .app-container, .app-main { overflow-x: hidden !important; }`.
+  - Se actualizó `.app-main` con `overflow: visible !important; overflow-y: visible !important; overflow-x: clip !important;`, permitiendo que el contenedor crezca con su contenido natural y delegue el scroll vertical exclusivamente al viewport de la página.
+  - Se reforzó con reglas explícitas para `.app-main:has(.checkout-view-container)` y `.app-main:has(.transactions-page-container)`.
+  - En `.duet-swap-deck`, se cambió `overflow: visible;` a `overflow: hidden;` para contener de manera precisa el degradado radial de fondo generado por el pseudo-elemento `::before`.
+* **Archivos Clave Modificados:**
+  - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
+
+---
+
+### Mejora de Contraste y Legibilidad en Paso 2 de Checkout (Opciones de Logística)
+* **Observación del Cliente:** En el Paso 2 del checkout (selección de entrega física/logística), existían textos y badges con colores amarillos (`#ffd700` y `#B6FF00`) que presentaban muy bajo contraste sobre fondo blanco/claro, dificultando su lectura.
+* **Diagnóstico Técnico:**
+  - En [TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx), tanto en la opción *Donación Comunitaria* como en *Intercambio Doble*, se utilizaban estilos en línea heredados del tema oscuro anterior (`color: '#ffd700'`, `color: '#B6FF00'`).
+  - Al migrar al tema visual botánico claro (`--bg-primary: #F7F9F8`, `--bg-surface: #F0F4F2`, fondos de tarjeta blancos), los textos amarillos brillantes carecían de contraste adecuado (incumpliendo WCAG AA/AAA).
+  - Adicionalmente, mensajes de advertencia de libros bloqueados o límites mensuales usaban `#fca5a5` (rosa muy pálido), resultando poco nítidos sobre fondos claros.
+* **Solución Implementada:**
+  - **Badges "Exclusivo Premium":** Se actualizaron a un tono ámbar profundo de alto contraste (`color: #B45309`, borde y fondo `rgba(245, 158, 11, 0.12)` con icono de corona `#D97706`).
+  - **Badges de disponibilidad:** Se sustituyó el verde lima fosforescente (`#B6FF00`) por el verde esmeralda corporativo (`#0F9D58` con fondo `rgba(15, 157, 88, 0.12)`).
+  - **Banners informativos para usuarios no-premium:** Se cambió el texto a ámbar oscuro de alta legibilidad (`color: #92400E`), el botón *"Ver Planes"* a ámbar sólido (`#D97706`) con texto blanco nítido (`#ffffff`), y el candado a `#D97706`.
+  - **Mensajes de stock y advertencias:** Se actualizaron a azules oscuros (`#0369a1` sobre fondo azul claro) y rojos intensos (`#b91c1c` sobre fondo rojo claro), logrando una legibilidad óptima en todas las tarjetas del flujo de entrega.
+* **Archivos Clave Modificados:**
+  - [TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx)
+
+
+
+
+
 
 
 

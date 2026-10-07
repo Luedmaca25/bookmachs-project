@@ -110,6 +110,44 @@ export const MainLayout: React.FC = () => {
     };
   }, [mobileMenuOpen]);
 
+  // Desactivar la restauración automática del scroll del navegador para controlar el scroll en SPA
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
+
+  // Restablecer el scroll al inicio (0, 0) cada vez que cambia de pantalla o parámetros de búsqueda
+  useEffect(() => {
+    if (location.hash) {
+      const target = document.querySelector(location.hash);
+      if (target) {
+        target.scrollIntoView();
+        return;
+      }
+    }
+
+    const resetScroll = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      const appMain = document.querySelector('.app-main');
+      if (appMain) {
+        appMain.scrollTop = 0;
+      }
+
+      const appContainer = document.querySelector('.app-container');
+      if (appContainer) {
+        appContainer.scrollTop = 0;
+      }
+    };
+
+    resetScroll();
+    const animId = requestAnimationFrame(resetScroll);
+    return () => cancelAnimationFrame(animId);
+  }, [location.pathname, location.search]);
+
   // Cerrar menú offcanvas al cambiar de ruta
   useEffect(() => {
     setMobileMenuOpen(false);

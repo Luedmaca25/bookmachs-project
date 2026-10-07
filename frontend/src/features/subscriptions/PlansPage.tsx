@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
@@ -16,6 +17,7 @@ interface Plan {
 }
 
 export const PlansPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user, login, isAuthenticated } = useAuthStore();
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -100,7 +102,7 @@ export const PlansPage: React.FC = () => {
 
   const handleSelectPlan = async (plan: Plan) => {
     if (!isAuthenticated || !user) {
-      setErrorMessage('Debes iniciar sesión o registrarte para realizar un Upgrade.');
+      navigate('/auth', { state: { forceLogin: Date.now() } });
       return;
     }
 
