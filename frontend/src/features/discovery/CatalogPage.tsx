@@ -64,11 +64,13 @@ export const CatalogPage: React.FC = () => {
   // Estados de filtros
   const [searchInput, setSearchInput] = useState(initialSearchParam);
   const [searchTerm, setSearchTerm] = useState(initialSearchParam);
-  const [category, setCategory] = useState('');
-  const [condition, setCondition] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [conditions, setConditions] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('createdAt');
 
   const defaultFilterOptions: FilterOptions = {
+    categories: [],
+    conditions: [],
     category: '',
     condition: '',
     author: '',
@@ -89,7 +91,7 @@ export const CatalogPage: React.FC = () => {
     }
   }, [searchParams]);
 
-  const hasSearchCriteria = searchTerm.trim().length > 0 || !!category || !!condition;
+  const hasSearchCriteria = searchTerm.trim().length > 0 || categories.length > 0 || conditions.length > 0;
 
   // Estado para panel de filtros colapsable (oculto por defecto)
   const [showFilters, setShowFilters] = useState(false);
@@ -154,8 +156,8 @@ export const CatalogPage: React.FC = () => {
       try {
         const queryParams = new URLSearchParams();
         if (searchTerm.trim()) queryParams.append('searchTerm', searchTerm.trim());
-        if (category) queryParams.append('category', category);
-        if (condition) queryParams.append('condition', condition);
+        if (categories.length > 0) queryParams.append('category', categories.join('|'));
+        if (conditions.length > 0) queryParams.append('condition', conditions.join(','));
         queryParams.append('pageNumber', pageNumber.toString());
         queryParams.append('pageSize', pageSize.toString());
         queryParams.append('sortBy', sortBy);
@@ -181,12 +183,12 @@ export const CatalogPage: React.FC = () => {
     return () => {
       abortController.abort();
     };
-  }, [isAuthenticated, user, searchTerm, category, condition, pageNumber, pageSize, sortBy, hasSearchCriteria]);
+  }, [isAuthenticated, user, searchTerm, categories, conditions, pageNumber, pageSize, sortBy, hasSearchCriteria]);
 
   // Reset de página al cambiar filtros
   useEffect(() => {
     setPageNumber(1);
-  }, [searchTerm, category, condition, sortBy]);
+  }, [searchTerm, categories, conditions, sortBy]);
 
   // Determinar si un libro es Recién Llegado (creado en los últimos 7 días)
   const isNewlyArrived = (createdAtString: string) => {
@@ -214,8 +216,8 @@ export const CatalogPage: React.FC = () => {
       // Recargar catálogo para actualizar la disponibilidad virtual de stock
       const queryParams = new URLSearchParams();
       if (searchTerm.trim()) queryParams.append('searchTerm', searchTerm.trim());
-      if (category) queryParams.append('category', category);
-      if (condition) queryParams.append('condition', condition);
+      if (categories.length > 0) queryParams.append('category', categories.join('|'));
+      if (conditions.length > 0) queryParams.append('condition', conditions.join(','));
       queryParams.append('pageNumber', pageNumber.toString());
       queryParams.append('pageSize', pageSize.toString());
       queryParams.append('sortBy', sortBy);
@@ -238,8 +240,8 @@ export const CatalogPage: React.FC = () => {
       refetchReservations();
       const queryParams = new URLSearchParams();
       if (searchTerm.trim()) queryParams.append('searchTerm', searchTerm.trim());
-      if (category) queryParams.append('category', category);
-      if (condition) queryParams.append('condition', condition);
+      if (categories.length > 0) queryParams.append('category', categories.join('|'));
+      if (conditions.length > 0) queryParams.append('condition', conditions.join(','));
       queryParams.append('pageNumber', pageNumber.toString());
       queryParams.append('pageSize', pageSize.toString());
       queryParams.append('sortBy', sortBy);
@@ -362,9 +364,26 @@ export const CatalogPage: React.FC = () => {
   };
 
   const handleApplyFilters = (newFilters: FilterOptions) => {
-    setFilterOptions(newFilters);
-    setCategory(newFilters.category || '');
-    setCondition(newFilters.condition || '');
+    const cats = newFilters.categories
+      ? newFilters.categories
+      : newFilters.category
+      ? (newFilters.category.includes('|') ? newFilters.category.split('|') : [newFilters.category]).map((s) => s.trim()).filter(Boolean)
+      : [];
+    const conds = newFilters.conditions
+      ? newFilters.conditions
+      : newFilters.condition
+      ? newFilters.condition.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+
+    setFilterOptions({
+      ...newFilters,
+      categories: cats,
+      conditions: conds,
+      category: cats.join('|'),
+      condition: conds.join(','),
+    });
+    setCategories(cats);
+    setConditions(conds);
     if (newFilters.author) {
       setSearchTerm(newFilters.author);
       setSearchInput(newFilters.author);
@@ -380,8 +399,8 @@ export const CatalogPage: React.FC = () => {
 
   const handleResetFilters = () => {
     setFilterOptions(defaultFilterOptions);
-    setCategory('');
-    setCondition('');
+    setCategories([]);
+    setConditions([]);
     setSortBy('createdAt');
     setPageNumber(1);
   };
@@ -389,16 +408,16 @@ export const CatalogPage: React.FC = () => {
   const clearAllFilters = () => {
     setSearchInput('');
     setSearchTerm('');
-    setCategory('');
-    setCondition('');
+    setCategories([]);
+    setConditions([]);
     setSortBy('createdAt');
     setFilterOptions(defaultFilterOptions);
     setPageNumber(1);
   };
 
   const activeFiltersCount =
-    (filterOptions.category ? 1 : 0) +
-    (filterOptions.condition ? 1 : 0) +
+    categories.length +
+    conditions.length +
     (filterOptions.author ? 1 : 0) +
     (filterOptions.sortBy && filterOptions.sortBy !== 'createdAt' ? 1 : 0) +
     (filterOptions.isNewlyArrived ? 1 : 0) +
@@ -505,7 +524,7 @@ export const CatalogPage: React.FC = () => {
       </div>
 
       {/* Chips de Filtros Activos para fácil limpieza */}
-      {(searchTerm || category || condition || filterOptions.author || (filterOptions.sortBy && filterOptions.sortBy !== 'createdAt') || filterOptions.isNewlyArrived || filterOptions.availableNow) && (
+      {(searchTerm || categories.length > 0 || conditions.length > 0 || filterOptions.author || (filterOptions.sortBy && filterOptions.sortBy !== 'createdAt') || filterOptions.isNewlyArrived || filterOptions.availableNow) && (
         <div className="active-filters-bar">
           <span className="active-filters-label">Filtros aplicados:</span>
           {searchTerm && (
@@ -520,18 +539,46 @@ export const CatalogPage: React.FC = () => {
               </button>
             </span>
           )}
-          {category && (
-            <span className="active-filter-chip">
-              Categoría: {category}
-              <button type="button" onClick={() => { setCategory(''); setFilterOptions(prev => ({ ...prev, category: '' })); }} title="Quitar categoría"><i className="fa-solid fa-xmark"></i></button>
+          {categories.map((cat) => (
+            <span key={cat} className="active-filter-chip">
+              Categoría: {cat}
+              <button
+                type="button"
+                onClick={() => {
+                  const updated = categories.filter((c) => c !== cat);
+                  setCategories(updated);
+                  setFilterOptions((prev) => ({
+                    ...prev,
+                    categories: updated,
+                    category: updated.join('|'),
+                  }));
+                }}
+                title={`Quitar categoría ${cat}`}
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
             </span>
-          )}
-          {condition && (
-            <span className="active-filter-chip">
-              Estado: {condition}
-              <button type="button" onClick={() => { setCondition(''); setFilterOptions(prev => ({ ...prev, condition: '' })); }} title="Quitar estado"><i className="fa-solid fa-xmark"></i></button>
+          ))}
+          {conditions.map((cond) => (
+            <span key={cond} className="active-filter-chip">
+              Estado: {cond}
+              <button
+                type="button"
+                onClick={() => {
+                  const updated = conditions.filter((c) => c !== cond);
+                  setConditions(updated);
+                  setFilterOptions((prev) => ({
+                    ...prev,
+                    conditions: updated,
+                    condition: updated.join(','),
+                  }));
+                }}
+                title={`Quitar estado ${cond}`}
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
             </span>
-          )}
+          ))}
           {filterOptions.author && !searchTerm.includes(filterOptions.author) && (
             <span className="active-filter-chip">
               Autor: {filterOptions.author}

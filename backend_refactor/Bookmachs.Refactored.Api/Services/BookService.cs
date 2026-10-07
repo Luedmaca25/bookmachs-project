@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Bookmachs.Refactored.Api.Domain.Entities;
@@ -900,10 +901,30 @@ public class BookService : IBookService
 
         if (!string.IsNullOrWhiteSpace(category))
         {
-            var cat = category.Trim();
-            var mappedItems = _homologationService.GetMappedItemsForConcepts(new[] { cat });
-            if (mappedItems.Any())
+            // Las categorías pueden venir separadas por '|' para evitar romper nombres que contienen comas (ej. "Ciencia, Tecnología y Medicina")
+            string[] rawCategories;
+            if (category.Contains('|'))
             {
+                rawCategories = category.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            }
+            else
+            {
+                // Si no contiene '|', verificar si la cadena completa coincide exactamente con un concepto conocido
+                var allConcepts = _homologationService.GetAllConcepts();
+                bool matchesExactConcept = allConcepts.Any(c => string.Equals(c.ConceptName, category.Trim(), StringComparison.OrdinalIgnoreCase));
+                if (matchesExactConcept)
+                {
+                    rawCategories = new[] { category.Trim() };
+                }
+                else
+                {
+                    rawCategories = category.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                }
+            }
+
+            if (rawCategories.Length > 0)
+            {
+                var mappedItems = _homologationService.GetMappedItemsForConcepts(rawCategories);
                 var categoryOnlyIds = mappedItems
                     .Where(m => !m.SubcategoryId.HasValue)
                     .Select(m => m.CategoryId)
@@ -916,41 +937,69 @@ public class BookService : IBookService
                     .Distinct()
                     .ToList();
 
-                query = query.Where(p =>
-                    (p.IdCategoriaProducto.HasValue && categoryOnlyIds.Contains(p.IdCategoriaProducto.Value)) ||
-                    (p.IdSubcategoria.HasValue && subcategoryIds.Contains(p.IdSubcategoria.Value)) ||
-                    (p.Categoria != null && p.Categoria.NombreCategoria.Contains(cat)));
-            }
-            else
-            {
-                query = query.Where(p =>
-                    p.Categoria != null && p.Categoria.NombreCategoria.Contains(cat)
-                );
+                var parameter = Expression.Parameter(typeof(EcolecturaProducto), "p");
+                Expression? combinedCategoryFilter = null;
+
+                if (categoryOnlyIds.Count > 0)
+                {
+                    var idCatProp = Expression.Property(parameter, nameof(EcolecturaProducto.IdCategoriaProducto));
+                    var hasValue = Expression.Property(idCatProp, "HasValue");
+                    var val = Expression.Property(idCatProp, "Value");
+                    var containsMethod = typeof(List<int>).GetMethod("Contains", new[] { typeof(int) })!;
+                    var idsConst = Expression.Constant(categoryOnlyIds);
+                    var containsExpr = Expression.Call(idsConst, containsMethod, val);
+                    var catIdMatch = Expression.AndAlso(hasValue, containsExpr);
+
+                    combinedCategoryFilter = catIdMatch;
+                }
+
+                if (subcategoryIds.Count > 0)
+                {
+                    var idSubProp = Expression.Property(parameter, nameof(EcolecturaProducto.IdSubcategoria));
+                    var hasValue = Expression.Property(idSubProp, "HasValue");
+                    var val = Expression.Property(idSubProp, "Value");
+                    var containsMethod = typeof(List<int>).GetMethod("Contains", new[] { typeof(int) })!;
+                    var idsConst = Expression.Constant(subcategoryIds);
+                    var containsExpr = Expression.Call(idsConst, containsMethod, val);
+                    var subIdMatch = Expression.AndAlso(hasValue, containsExpr);
+
+                    combinedCategoryFilter = combinedCategoryFilter == null
+                        ? subIdMatch
+                        : Expression.OrElse(combinedCategoryFilter, subIdMatch);
+                }
+
+                if (combinedCategoryFilter != null)
+                {
+                    var lambda = Expression.Lambda<Func<EcolecturaProducto, bool>>(combinedCategoryFilter, parameter);
+                    query = query.Where(lambda);
+                }
+                else
+                {
+                    // Si ninguna categoría seleccionada tiene mapeos válidos en la homologación dinámica, no devolver resultados
+                    query = query.Where(p => false);
+                }
             }
         }
 
         if (!string.IsNullOrWhiteSpace(condition))
         {
-            var cond = condition.Trim().ToLower();
-            if (cond == "excelente" || cond == "nuevo")
+            var conditionList = condition.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(c => c.ToLower())
+                .ToList();
+
+            var targetStateIds = new List<int>();
+            foreach (var cond in conditionList)
             {
-                query = query.Where(p => p.IdEstadoProducto == 4);
+                if (cond == "excelente" || cond == "nuevo") targetStateIds.Add(4);
+                else if (cond == "muy bueno") targetStateIds.Add(5);
+                else if (cond == "bueno") targetStateIds.Add(1);
+                else if (cond == "aceptable" || cond == "normal") targetStateIds.Add(2);
+                else if (cond == "desgastado" || cond == "reliquia" || cond == "reliquias") targetStateIds.Add(7);
             }
-            else if (cond == "muy bueno")
+
+            if (targetStateIds.Count > 0)
             {
-                query = query.Where(p => p.IdEstadoProducto == 5);
-            }
-            else if (cond == "bueno")
-            {
-                query = query.Where(p => p.IdEstadoProducto == 1);
-            }
-            else if (cond == "aceptable" || cond == "normal")
-            {
-                query = query.Where(p => p.IdEstadoProducto == 2);
-            }
-            else if (cond == "desgastado" || cond == "reliquia" || cond == "reliquias")
-            {
-                query = query.Where(p => p.IdEstadoProducto == 7);
+                query = query.Where(p => p.IdEstadoProducto.HasValue && targetStateIds.Contains(p.IdEstadoProducto.Value));
             }
         }
 

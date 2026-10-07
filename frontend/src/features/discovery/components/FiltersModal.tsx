@@ -11,6 +11,8 @@ export interface FilterOptions {
   isNewlyArrived: boolean;
   availableNow: boolean;
   showFallbackOptions: boolean;
+  categories?: string[];
+  conditions?: string[];
 }
 
 interface FiltersModalProps {
@@ -37,8 +39,28 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
   // Tab activo: 'basicos' | 'avanzados'
   const [activeTab, setActiveTab] = useState<'basicos' | 'avanzados'>('avanzados');
 
+  const normalizeFilters = (raw: FilterOptions): FilterOptions => {
+    const cats = raw.categories
+      ? raw.categories
+      : raw.category
+      ? (raw.category.includes('|') ? raw.category.split('|') : [raw.category]).map((s) => s.trim()).filter(Boolean)
+      : [];
+    const conds = raw.conditions
+      ? raw.conditions
+      : raw.condition
+      ? raw.condition.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    return {
+      ...raw,
+      categories: cats,
+      conditions: conds,
+      category: cats.join('|'),
+      condition: conds.join(','),
+    };
+  };
+
   // Estado local de filtros dentro del modal
-  const [filters, setFilters] = useState<FilterOptions>(initialFilters);
+  const [filters, setFilters] = useState<FilterOptions>(() => normalizeFilters(initialFilters));
 
   // Selector abierto actualmente para edición inline de filtro
   const [openSelector, setOpenSelector] = useState<string | null>(null);
@@ -46,7 +68,7 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
   // Sincronizar estado local cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
-      setFilters(initialFilters);
+      setFilters(normalizeFilters(initialFilters));
       setOpenSelector(null);
     }
   }, [isOpen, initialFilters]);
@@ -80,6 +102,30 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
     }));
   };
 
+  const handleToggleFilterItem = (key: 'categories' | 'conditions', item: string) => {
+    setFilters((prev) => {
+      const currentList = prev[key] || [];
+      const exists = currentList.includes(item);
+      const updatedList = exists
+        ? currentList.filter((x) => x !== item)
+        : [...currentList, item];
+      return {
+        ...prev,
+        [key]: updatedList,
+        [key === 'categories' ? 'category' : 'condition']: key === 'categories' ? updatedList.join('|') : updatedList.join(','),
+      };
+    });
+  };
+
+  const handleClearFilterList = (key: 'categories' | 'conditions', e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFilters((prev) => ({
+      ...prev,
+      [key]: [],
+      [key === 'categories' ? 'category' : 'condition']: '',
+    }));
+  };
+
   const handleUpdateFilter = (key: keyof FilterOptions, value: any) => {
     setFilters((prev) => ({
       ...prev,
@@ -99,6 +145,8 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
   const handleResetAll = () => {
     onResetFilters();
     setFilters({
+      categories: [],
+      conditions: [],
       category: '',
       condition: '',
       author: '',
@@ -115,7 +163,14 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
       onClose();
       return;
     }
-    onApplyFilters(filters);
+    const finalFilters: FilterOptions = {
+      ...filters,
+      categories: filters.categories || [],
+      conditions: filters.conditions || [],
+      category: (filters.categories || []).join('|'),
+      condition: (filters.conditions || []).join(','),
+    };
+    onApplyFilters(finalFilters);
     onClose();
   };
 
@@ -176,14 +231,16 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
                 <div className="filter-row-left">
                   <i className="fa-solid fa-book-open filter-row-icon"></i>
                   <span className="filter-row-label">Categoría</span>
-                  {filters.category && (
+                  {filters.categories && filters.categories.length > 0 && (
                     <span className="filter-selected-pill">
-                      {filters.category}
+                      {filters.categories.length === 1 
+                        ? filters.categories[0] 
+                        : `${filters.categories.length} seleccionadas`}
                       <button
                         type="button"
-                        onClick={(e) => handleClearSingleFilter('category', e)}
+                        onClick={(e) => handleClearFilterList('categories', e)}
                         className="pill-clear-btn"
-                        title="Quitar filtro"
+                        title="Quitar categorías"
                       >
                         <i className="fa-solid fa-xmark"></i>
                       </button>
@@ -194,7 +251,7 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
                   type="button"
                   className="filter-row-action-btn"
                 >
-                  {filters.category ? 'Cambiar' : 'Añadir filtro +'}
+                  {filters.categories && filters.categories.length > 0 ? 'Editar' : 'Añadir filtro +'}
                 </button>
               </div>
 
@@ -202,16 +259,20 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
                 <div className="filter-inline-selector animated-fade-in">
                   <div className="selector-options-chips">
                     {tags.length > 0 ? (
-                      tags.map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          className={`selector-chip ${filters.category === t ? 'selected' : ''}`}
-                          onClick={() => handleUpdateFilter('category', t)}
-                        >
-                          {t}
-                        </button>
-                      ))
+                      tags.map((t) => {
+                        const isSelected = (filters.categories || []).includes(t);
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            className={`selector-chip ${isSelected ? 'selected' : ''}`}
+                            onClick={() => handleToggleFilterItem('categories', t)}
+                          >
+                            {isSelected && <i className="fa-solid fa-check" style={{ marginRight: '6px' }}></i>}
+                            {t}
+                          </button>
+                        );
+                      })
                     ) : (
                       <p className="no-tags-notice">No hay categorías disponibles.</p>
                     )}
@@ -226,14 +287,16 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
                 <div className="filter-row-left">
                   <i className="fa-regular fa-bookmark filter-row-icon"></i>
                   <span className="filter-row-label">Estado físico</span>
-                  {filters.condition && (
+                  {filters.conditions && filters.conditions.length > 0 && (
                     <span className="filter-selected-pill">
-                      {filters.condition}
+                      {filters.conditions.length === 1 
+                        ? filters.conditions[0] 
+                        : `${filters.conditions.length} seleccionados`}
                       <button
                         type="button"
-                        onClick={(e) => handleClearSingleFilter('condition', e)}
+                        onClick={(e) => handleClearFilterList('conditions', e)}
                         className="pill-clear-btn"
-                        title="Quitar filtro"
+                        title="Quitar estados físicos"
                       >
                         <i className="fa-solid fa-xmark"></i>
                       </button>
@@ -244,23 +307,27 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
                   type="button"
                   className="filter-row-action-btn"
                 >
-                  {filters.condition ? 'Cambiar' : 'Añadir filtro +'}
+                  {filters.conditions && filters.conditions.length > 0 ? 'Editar' : 'Añadir filtro +'}
                 </button>
               </div>
 
               {openSelector === 'condition' && (
                 <div className="filter-inline-selector animated-fade-in">
                   <div className="selector-options-chips">
-                    {['Excelente', 'Muy bueno', 'Bueno', 'Aceptable', 'Desgastado'].map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        className={`selector-chip ${filters.condition === c ? 'selected' : ''}`}
-                        onClick={() => handleUpdateFilter('condition', c)}
-                      >
-                        {c}
-                      </button>
-                    ))}
+                    {['Excelente', 'Muy bueno', 'Bueno', 'Aceptable', 'Desgastado'].map((c) => {
+                      const isSelected = (filters.conditions || []).includes(c);
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          className={`selector-chip ${isSelected ? 'selected' : ''}`}
+                          onClick={() => handleToggleFilterItem('conditions', c)}
+                        >
+                          {isSelected && <i className="fa-solid fa-check" style={{ marginRight: '6px' }}></i>}
+                          {c}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}

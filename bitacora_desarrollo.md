@@ -1200,6 +1200,52 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
 * **Archivos Clave Modificados:**
   - [TransactionsPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/transactions/TransactionsPage.tsx)
 
+---
+
+### Selección Múltiple en Filtros de Catálogo Avanzado (/catalogo)
+* **Observación del Cliente:** En la pantalla `/catalogo`, los filtros de búsqueda únicamente permitían seleccionar una sola categoría y un solo estado físico a la vez, cerrando el selector de inmediato. El cliente solicitó permitir selección múltiple en ambos criterios.
+* **Diagnóstico Técnico:**
+  - En [FiltersModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/components/FiltersModal.tsx), el estado de `category` y `condition` almacenaba un único `string`. Al hacer clic en cualquier chip de opción, se ejecutaba `handleUpdateFilter(key, value)` el cual sobreescribía el valor y forzaba `setOpenSelector(null)`, impidiendo la selección combinada.
+  - En [CatalogPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/CatalogPage.tsx), tanto el llamado a la API como la barra de chips activos (`active-filters-bar`) estaban diseñados para manejar valores únicos individuales.
+  - En el backend ([BookService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/BookService.cs)), `GetCatalogAsync` evaluaba `category` y `condition` como valores únicos directos, sin parsear listas separadas por comas.
+* **Solución Implementada:**
+  - **Backend ([BookService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/BookService.cs)):**
+    - Se adaptó `category` para admitir valores separados por comas (`category.Split(',')`), integrando `_homologationService.GetMappedItemsForConcepts(categories)` con resolución dinámica de expresiones LINQ (`Expression.OrElse`) sobre `IdCategoriaProducto`, `IdSubcategoria` y coincidencias de nombre.
+    - Se adaptó `condition` para parsear múltiples estados (`condition.Split(',')`), acumulando sus identificadores correspondientes (`IdEstadoProducto IN (...)`).
+  - **Frontend ([FiltersModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/components/FiltersModal.tsx)):**
+    - Se agregaron arreglos `categories: string[]` y `conditions: string[]` en `FilterOptions`.
+    - Se creó la función `handleToggleFilterItem` para alternar la selección de cada chip de forma independiente sin cerrar el desplegable.
+    - Los chips seleccionados muestran el icono de verificación `✓` y resaltado activo. La cabecera del filtro muestra la cantidad seleccionada (*"X seleccionadas"* / *"X seleccionados"*).
+  - **Frontend ([CatalogPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/CatalogPage.tsx)):**
+    - Se actualizaron los estados a `categories` y `conditions`.
+    - Se renderiza un chip independiente para cada categoría y estado físico aplicado en `active-filters-bar`, permitiendo removerlos individualmente o limpiarlos todos a la vez.
+    - Los llamados a `/books/catalog` concatenan los valores seleccionados con comas en los parámetros `category` y `condition`.
+* **Archivos Clave Modificados:**
+  - [BookService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/BookService.cs)
+---
+
+### Corrección de Filtrado de Categorías por IDs Homologados Dinámicos en Catálogo y Swipe
+* **Observación del Cliente:** Al buscar en `/catalogo` seleccionando una categoría como *"Ciencia, Tecnología y Medicina"*, la consulta no debe buscar por coincidencia de texto en la base de datos de Ecolectura porque las categorías no se llaman así. La búsqueda debe obtener primero los IDs de las categorías y subcategorías configuradas en el mapeo dinámico (`MasterPreferenceTags` y `PreferenceCategoryMappings`) para filtrar estrictamente por esos identificadores (`IdCategoriaProducto` y `IdSubcategoria`). Se solicitó también revisar si en Swipe (`/swipe`) ocurría lo mismo.
+* **Diagnóstico Técnico:**
+  - **En Catálogo ([BookService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/BookService.cs) `GetCatalogAsync`):**
+    - `_homologationService.GetMappedItemsForConcepts(categories)` ya obtenía los `categoryOnlyIds` e `subcategoryIds` de la base de datos de homologación.
+    - Sin embargo, la consulta además incluía una condición con `Expression.Call(nombreCatProp, strContainsMethod, ...)` que buscaba si `p.Categoria.NombreCategoria` contenía el nombre del concepto (`"Ciencia, Tecnología y Medicina"`). Dado que en Ecolectura las categorías se llaman *"Adulto"*, *"Medicina y Salud"*, etc., esa cláusula de texto generaba inconsistencias.
+  - **En Swipe ([BookService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/BookService.cs) `GetRecommendationsAsync`):**
+    - Se verificó minuciosamente el flujo de Swipe: ya operaba de forma 100% correcta utilizando exclusivamente los identificadores numéricos:
+      `p => (p.IdCategoriaProducto.HasValue && categoryOnlyIds.Contains(p.IdCategoriaProducto.Value)) || (p.IdSubcategoria.HasValue && subcategoryIds.Contains(p.IdSubcategoria.Value))`.
+    - Swipe no utilizaba búsqueda de texto por nombres de categoría, garantizando coincidencia precisa contra la base de datos de Ecolectura.
+* **Solución Implementada:**
+  - En `GetCatalogAsync` de [BookService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/BookService.cs), se removió completamente la búsqueda por texto (`NombreCategoria.Contains`) para categorías.
+  - Ahora el filtrado en el catálogo se basa **estrictamente en los IDs de categorías y subcategorías** (`IdCategoriaProducto IN (...)` o `IdSubcategoria IN (...)`) obtenidos del servicio dinámico de homologación `_homologationService.GetMappedItemsForConcepts(categories)`.
+  - **Soporte para Categorías con Comas Internas:** Se identificó que nombres como *"Ciencia, Tecnología y Medicina"* o *"Arte, Cultura y Estilo de Vida"* se rompían al usar la coma `,` como separador de filtros múltiples. Se actualizó el contrato para unir/separar mediante pipe `|` (`category="Ciencia, Tecnología y Medicina|Novela"`), y en el backend se verifica primero si la cadena completa coincide con un concepto existente o contiene `|` antes de cualquier división.
+  - En el frontend ([CatalogPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/CatalogPage.tsx) y [FiltersModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/components/FiltersModal.tsx)), se actualizó la serialización del filtro de categorías para usar `|`.
+  - Frontend y backend compilados y verificados con 0 errores.
+* **Archivos Clave Modificados:**
+  - [BookService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/BookService.cs)
+  - [CatalogPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/CatalogPage.tsx)
+  - [FiltersModal.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/components/FiltersModal.tsx)
+
+
 
 
 
