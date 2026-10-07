@@ -7,6 +7,7 @@ import { InventoryPage } from '../../features/inventory/InventoryPage';
 import { TransactionsPage } from '../../features/transactions/TransactionsPage';
 import { SocialPage } from '../../features/social/SocialPage';
 import { AuthenticationPage } from '../../features/authentication/AuthenticationPage';
+import { ResetPasswordPage } from '../../features/authentication/ResetPasswordPage';
 import { AdminSettingsPage } from '../../features/admin/AdminSettingsPage';
 import { PlansPage } from '../../features/subscriptions/PlansPage';
 import { HelpCenterPage } from '../../features/support/HelpCenterPage';
@@ -78,6 +79,7 @@ export const AppRouter: React.FC = () => {
           } />
           
           <Route path="auth" element={<AuthenticationPage />} />
+          <Route path="recuperar-password" element={<ResetPasswordPage />} />
           
           <Route path="admin" element={
             <ProtectedRoute requireAdmin>

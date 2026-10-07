@@ -42,6 +42,13 @@ export const AuthenticationPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // Forgot password states
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+
   // Profile preferences states
   const [tags, setTags] = useState<any[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -262,6 +269,35 @@ export const AuthenticationPage: React.FC = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError(null);
+    if (!forgotEmail.trim()) {
+      setForgotError('Por favor ingresa tu correo electrónico.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const response = await apiClient.post<{ success: boolean; message: string }>('/auth/password/forgot', {
+        email: forgotEmail.trim()
+      });
+      if (response.success) {
+        setForgotSuccess(true);
+      } else {
+        setForgotError(response.message || 'No fue posible procesar la solicitud.');
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setForgotError(err.message || 'Error al enviar el correo de recuperación.');
+      } else {
+        setForgotError('Error inesperado al solicitar la recuperación.');
+      }
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -568,6 +604,81 @@ export const AuthenticationPage: React.FC = () => {
     );
   }
 
+  // Render Forgot Password Form
+  if (isForgotPassword) {
+    return (
+      <div className="auth-page-container">
+        <div className="modal-card modal-card-no-anim reset-password-card">
+          <div className="modal-header">
+            <div className="reset-password-icon-badge">
+              <i className="fa-solid fa-lock"></i>
+            </div>
+            <h2 className="neon-text">Recuperar Contraseña</h2>
+            <p className='mb-3'>
+              Ingresa el correo electrónico asociado a tu cuenta de Intercambialibros y te enviaremos un enlace para restablecer tu contraseña.
+            </p>
+          </div>
+
+          {forgotSuccess ? (
+            <div className="reset-password-success-box">
+              <div className="reset-password-check-circle">
+                <i className="fa-solid fa-envelope-circle-check"></i>
+              </div>
+              <h3 className="reset-password-success-title">¡Revisa tu Correo!</h3>
+              <p className="reset-password-help-text">
+                Si el correo <strong>{forgotEmail}</strong> está registrado, te hemos enviado un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada o carpeta de spam.
+              </p>
+              <button
+                type="button"
+                className="modal-submit-btn"
+                onClick={() => {
+                  setIsForgotPassword(false);
+                  setForgotSuccess(false);
+                  setForgotError(null);
+                }}
+              >
+                Volver a Iniciar Sesión
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotSubmit} className="modal-form">
+              {forgotError && <div className="modal-error">{forgotError}</div>}
+
+              <div className="modal-field">
+                <label>Correo Electrónico</label>
+                <input
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <button type="submit" className="modal-submit-btn" disabled={forgotLoading || !forgotEmail.trim()}>
+                {forgotLoading ? 'Enviando enlace...' : 'Enviar Enlace de Recuperación'}
+              </button>
+
+              <div className="reset-password-back-wrap">
+                <button
+                  type="button"
+                  className="reset-password-back-link"
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setForgotError(null);
+                  }}
+                >
+                  <i className="fa-solid fa-arrow-left"></i> Volver a Iniciar Sesión
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Render Login Form when NOT authenticated
   return (
     <div className="auth-page-container">
@@ -606,7 +717,9 @@ export const AuthenticationPage: React.FC = () => {
           </div>
 
           <div className="modal-field">
-            <label>Contraseña</label>
+            <div className="auth-field-header-row">
+              <label>Contraseña</label>
+            </div>
             <input 
               type="password" 
               placeholder="••••••••" 
@@ -617,7 +730,20 @@ export const AuthenticationPage: React.FC = () => {
           </div>
 
           <button type="submit" className="modal-submit-btn" disabled={loading}>
-            {loading ? 'Procesando...' : 'Ingresar'}
+            {loading ? 'Procesando...' : 'Iniciar sesión'}
+          </button>
+
+          <button
+                type="button"
+                className="auth-forgot-link-btn"
+                onClick={() => {
+                  setIsForgotPassword(true);
+                  setForgotSuccess(false);
+                  setForgotError(null);
+                  setForgotEmail(email);
+                }}
+              >
+                ¿Olvidaste tu contraseña?
           </button>
         </form>
 

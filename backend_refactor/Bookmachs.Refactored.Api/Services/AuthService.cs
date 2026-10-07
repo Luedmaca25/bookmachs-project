@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Security.Cryptography;
+using Microsoft.Extensions.Configuration;
 using Bookmachs.Refactored.Api.Domain.Entities;
 using Bookmachs.Refactored.Api.Dtos;
 using Bookmachs.Refactored.Api.Infrastructure.Persistence;
@@ -46,6 +48,8 @@ public interface IAuthService
     Task<AuthResponseDto> UpdateProfileAsync(Guid userId, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default);
     Task<AuthResponseDto> UpdateAvatarAsync(Guid userId, string profileImageUrl, CancellationToken cancellationToken = default);
     Task<UserProfileDto> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<(bool Success, string Message)> RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default);
+    Task<(bool Success, string Message)> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken cancellationToken = default);
 }
 
 public class AuthService : IAuthService
@@ -54,17 +58,26 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly ITwilioVerifyService _twilioVerifyService;
+    private readonly ISendGridEmailService _sendGridEmailService;
+    private readonly ICacheService _cacheService;
+    private readonly IConfiguration _configuration;
 
     public AuthService(
         BookmachsDbContext dbContext,
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtTokenGenerator,
-        ITwilioVerifyService twilioVerifyService)
+        ITwilioVerifyService twilioVerifyService,
+        ISendGridEmailService sendGridEmailService,
+        ICacheService cacheService,
+        IConfiguration configuration)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
         _twilioVerifyService = twilioVerifyService;
+        _sendGridEmailService = sendGridEmailService;
+        _cacheService = cacheService;
+        _configuration = configuration;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(string email, string password, string name, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default)
@@ -521,6 +534,90 @@ public class AuthService : IAuthService
             DailySwipesConsumed = user.DailySwipesConsumed,
             DailySwipeLimit = effectiveLimit
         };
+    }
+
+    public async Task<(bool Success, string Message)> RequestPasswordResetAsync(string email, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return (false, "Debes ingresar tu correo electrónico.");
+        }
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
+
+        // Por seguridad (prevenir enumeración de cuentas), responder con mensaje neutro exitoso
+        if (user == null)
+        {
+            return (true, "Si el correo está registrado en Bookmachs, recibirás un enlace para restablecer tu contraseña.");
+        }
+
+        // Generar token criptográficamente seguro
+        var tokenBytes = RandomNumberGenerator.GetBytes(32);
+        var token = Convert.ToHexString(tokenBytes).ToLowerInvariant();
+
+        // Guardar token en caché con validez de 1 hora
+        var cacheKey = $"pwd_reset_{token}";
+        _cacheService.Set(cacheKey, user.Email, TimeSpan.FromHours(1));
+
+        // Construir link dinámico apuntando al frontend
+        var baseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
+        baseUrl = baseUrl.TrimEnd('/');
+        var resetLink = $"{baseUrl}/recuperar-password?token={token}&email={Uri.EscapeDataString(user.Email)}";
+
+        // Preparar modelo de datos para la plantilla dinámica de SendGrid
+        var emailData = new PasswordResetEmailData
+        {
+            UserName = !string.IsNullOrWhiteSpace(user.Name) ? user.Name : "Lector",
+            UserEmail = user.Email,
+            ResetLink = resetLink,
+            ExpirationMinutes = 60,
+            SupportEmail = _configuration["SendGrid:FromEmail"] ?? "notificaciones@bookmachs.com"
+        };
+
+        await _sendGridEmailService.SendPasswordResetEmailAsync(user.Email, emailData);
+
+        return (true, "Si el correo está registrado en Bookmachs, recibirás un enlace para restablecer tu contraseña.");
+    }
+
+    public async Task<(bool Success, string Message)> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return (false, "El token de recuperación es requerido.");
+        }
+
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+        {
+            return (false, "La nueva contraseña debe tener al menos 6 caracteres.");
+        }
+
+        var cacheKey = $"pwd_reset_{token.Trim().ToLowerInvariant()}";
+        var cachedEmail = _cacheService.Get<string>(cacheKey);
+
+        if (string.IsNullOrWhiteSpace(cachedEmail))
+        {
+            return (false, "El enlace de recuperación es inválido o ha expirado. Por favor solicita uno nuevo.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(email) && !string.Equals(cachedEmail.Trim(), email.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            return (false, "El correo electrónico no coincide con el token de recuperación.");
+        }
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == cachedEmail.ToLower(), cancellationToken);
+        if (user == null)
+        {
+            return (false, "No se encontró el usuario asociado a esta solicitud.");
+        }
+
+        user.PasswordHash = _passwordHasher.HashPassword(newPassword);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Invalidar el token consumido
+        _cacheService.Remove(cacheKey);
+
+        return (true, "Tu contraseña ha sido restablecida exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.");
     }
 
     private static AuthResponseDto MapToAuthResponse(User user, string token)

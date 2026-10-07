@@ -33,9 +33,19 @@ public class ExchangeReminderEmailData
     public string TransactionId { get; set; } = string.Empty;
 }
 
+public class PasswordResetEmailData
+{
+    public string UserName { get; set; } = string.Empty;
+    public string UserEmail { get; set; } = string.Empty;
+    public string ResetLink { get; set; } = string.Empty;
+    public int ExpirationMinutes { get; set; } = 60;
+    public string SupportEmail { get; set; } = "soporte@bookmachs.com";
+}
+
 public interface ISendGridEmailService
 {
     Task<bool> SendFulfillmentReminderEmailAsync(string recipientEmail, ExchangeReminderEmailData data);
+    Task<bool> SendPasswordResetEmailAsync(string recipientEmail, PasswordResetEmailData data);
 }
 
 public class SendGridEmailService : ISendGridEmailService
@@ -95,6 +105,50 @@ public class SendGridEmailService : ISendGridEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Excepción al conectar con SendGrid para enviar correo a {RecipientEmail}", recipientEmail);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendPasswordResetEmailAsync(string recipientEmail, PasswordResetEmailData data)
+    {
+        var apiKey = _configuration["SendGrid:ApiKey"];
+        var fromEmail = _configuration["SendGrid:FromEmail"] ?? "notificaciones@bookmachs.com";
+        var fromName = _configuration["SendGrid:FromName"] ?? "Bookmachs Intercambios";
+        var templateId = _configuration["SendGrid:TemplateIdPasswordReset"];
+
+        if (string.IsNullOrWhiteSpace(apiKey) || apiKey.StartsWith("YOUR_") || string.IsNullOrWhiteSpace(templateId) || templateId.StartsWith("d-xxxxxx"))
+        {
+            _logger.LogInformation("[SendGrid Mock / Dev] Solicitud de restablecimiento de contraseña para {RecipientEmail}. Enlace directo: {ResetLink}", recipientEmail, data.ResetLink);
+            return true;
+        }
+
+        try
+        {
+            var client = new SendGridClient(apiKey);
+            var from = new EmailAddress(fromEmail, fromName);
+            var to = new EmailAddress(recipientEmail, data.UserName);
+
+            var msg = MailHelper.CreateSingleTemplateEmail(
+                from,
+                to,
+                templateId,
+                data
+            );
+
+            var response = await client.SendEmailAsync(msg);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Correo de recuperación de contraseña enviado exitosamente a {RecipientEmail} vía SendGrid", recipientEmail);
+                return true;
+            }
+
+            var body = await response.Body.ReadAsStringAsync();
+            _logger.LogError("Error al enviar correo SendGrid de recuperación de contraseña. StatusCode: {StatusCode}, Body: {Body}", response.StatusCode, body);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Excepción al conectar con SendGrid para enviar recuperación de contraseña a {RecipientEmail}", recipientEmail);
             return false;
         }
     }

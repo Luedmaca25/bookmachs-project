@@ -429,6 +429,41 @@ public class AuthController : ControllerBase
 
         return PhysicalFile(filePath, contentType);
     }
+
+    /// <summary>
+    /// Solicita el restablecimiento de contraseña enviando un correo vía SendGrid con Dynamic Templates.
+    /// </summary>
+    [HttpPost("password/forgot")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequest(new { success = false, message = "Debes ingresar tu correo electrónico." });
+        }
+
+        var result = await _authService.RequestPasswordResetAsync(request.Email.Trim());
+        return Ok(new { success = result.Success, message = result.Message });
+    }
+
+    /// <summary>
+    /// Restablece la contraseña utilizando el token recibido por correo electrónico.
+    /// </summary>
+    [HttpPost("password/reset")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(new { success = false, message = "El token y la nueva contraseña son requeridos." });
+        }
+
+        var result = await _authService.ResetPasswordAsync(request.Email, request.Token, request.NewPassword);
+        if (!result.Success)
+        {
+            return BadRequest(new { success = false, message = result.Message });
+        }
+
+        return Ok(new { success = true, message = result.Message });
+    }
 }
 
 public class RegisterRequest
@@ -502,4 +537,16 @@ public class AvatarUploadRequest
 {
     public Microsoft.AspNetCore.Http.IFormFile? File { get; set; }
     public string? ProfileImageUrl { get; set; }
+}
+
+public class ForgotPasswordRequest
+{
+    public string Email { get; set; } = string.Empty;
+}
+
+public class ResetPasswordRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Token { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
 }

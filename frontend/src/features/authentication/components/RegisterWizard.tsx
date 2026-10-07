@@ -910,7 +910,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
             </div>
 
             <div className="register-options-list">
-              <label 
+              {/* <label 
                 className={`register-option-card ${channel === 'whatsapp' ? 'selected' : ''}`}
                 onClick={() => setChannel('whatsapp')}
               >
@@ -921,7 +921,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                 <span className="register-radio-circle">
                   {channel === 'whatsapp' && <span className="register-radio-dot"></span>}
                 </span>
-              </label>
+              </label> */}
 
               <label 
                 className={`register-option-card ${channel === 'sms' ? 'selected' : ''}`}
