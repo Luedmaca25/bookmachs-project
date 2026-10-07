@@ -620,6 +620,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                   max={new Date().toISOString().split('T')[0]}
                   autoFocus
                   required
+                  tabIndex={-1}
                 />
                 <i className="fa-regular fa-calendar register-input-trailing-icon"></i>
               </div>
@@ -788,13 +789,13 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                 {loading ? 'Verificando disponibilidad...' : 'Siguiente'}
               </button>
               
-              <button 
+              {/* <button 
                 type="button" 
                 className="register-secondary-btn" 
                 onClick={() => setStep(6)}
               >
                 Registrarme con mi correo
-              </button>
+              </button> */}
 
               <button type="button" className="register-link-btn" onClick={onGoToLogin}>
                 Ya tengo una cuenta
@@ -848,6 +849,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                   className="register-eye-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label="Ver contraseña"
+                  tabIndex={-1}
                 >
                   <i className={`fa-regular ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>
@@ -867,6 +869,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
                   className="register-eye-toggle-btn"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   aria-label="Ver confirmar contraseña"
+                  tabIndex={-1}
                 >
                   <i className={`fa-regular ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>

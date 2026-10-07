@@ -12,6 +12,14 @@ export const MainLayout: React.FC = () => {
   const [premiumModalInfo, setPremiumModalInfo] = useState<{ featureName?: string; icon?: string } | null>(null);
   const location = useLocation();
 
+  const needsOnboarding = isAuthenticated && (
+    !user?.pais || 
+    !user?.documentoIdentidad || 
+    (!user?.preferences || user.preferences.length === 0)
+  );
+
+  const isSwipeActive = location.pathname === '/' && !needsOnboarding;
+
   // Navega a /auth forzando el modo login incluso si ya estamos en esa ruta
   const handleGoToLogin = () => {
     setMobileMenuOpen(false);
@@ -267,11 +275,11 @@ export const MainLayout: React.FC = () => {
         </div>
       )}
 
-      <main className={`app-main ${location.pathname === '/' ? 'swipe-main-active' : ''}`}>
+      <main className={`app-main ${isSwipeActive ? 'swipe-main-active' : ''}`}>
         <Outlet />
       </main>
 
-      {location.pathname !== '/auth' && (
+      {location.pathname !== '/auth' && !needsOnboarding && (
         <footer className="app-footer">
           <div className="footer-links-row">
             {isAuthenticated && user && (
@@ -293,7 +301,7 @@ export const MainLayout: React.FC = () => {
       )}
 
       {/* BARRA DE NAVEGACIÓN INFERIOR ESTILO FLOATING PILL (5 OPCIONES) */}
-      {location.pathname !== '/auth' && <nav className="mobile-bottom-nav" aria-label="Navegación inferior">
+      {location.pathname !== '/auth' && !needsOnboarding && <nav className="mobile-bottom-nav" aria-label="Navegación inferior">
         <Link 
           to="/catalogo" 
           className={`bottom-nav-item ${location.pathname === '/catalogo' ? 'active' : ''}`}

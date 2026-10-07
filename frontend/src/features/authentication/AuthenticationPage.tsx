@@ -572,7 +572,7 @@ export const AuthenticationPage: React.FC = () => {
   return (
     <div className="auth-page-container">
       <div className="modal-footer">
-        <p className='toggle-auth-p'>¿No tienes cuenta?</p>
+        {/* <p className='toggle-auth-p'>¿No tienes cuenta?</p> */}
         <button 
           type="button" 
           className="toggle-auth-btn"
@@ -586,10 +586,10 @@ export const AuthenticationPage: React.FC = () => {
       </div>
         
       <div className="modal-card modal-card-no-anim">
-        <div className="modal-header">
-          {/* <h2>Iniciar sesión</h2> */}
+        {/* <div className="modal-header">
+          <h2>Iniciar sesión</h2>
           <p>Ingresa a tu cuenta para continuar intercambiando libros.</p>
-        </div>
+        </div> */}
 
         {error && <div className="modal-error">{error}</div>}
 

@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Bookmachs.Refactored.Api.Infrastructure.Services;
 
 namespace Bookmachs.Refactored.Api.Services;
 
@@ -17,12 +18,18 @@ public class TwilioVerifyService : ITwilioVerifyService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly ILogger<TwilioVerifyService> _logger;
+    private readonly ICacheService _cacheService;
 
-    public TwilioVerifyService(HttpClient httpClient, IConfiguration configuration, ILogger<TwilioVerifyService> logger)
+    public TwilioVerifyService(
+        HttpClient httpClient, 
+        IConfiguration configuration, 
+        ILogger<TwilioVerifyService> logger,
+        ICacheService cacheService)
     {
         _httpClient = httpClient;
         _configuration = configuration;
         _logger = logger;
+        _cacheService = cacheService;
     }
 
     public string NormalizePhoneNumber(string phone)
@@ -49,6 +56,9 @@ public class TwilioVerifyService : ITwilioVerifyService
         {
             return (false, "El número de teléfono proporcionado no tiene un formato internacional válido (ej: +56912345678).");
         }
+
+        // Invalidar cualquier verificación previa en caché para este número al solicitar un nuevo código
+        _cacheService.Remove($"verified_phone_{normalizedPhone}");
 
         var normalizedChannel = string.Equals(channel?.Trim(), "sms", StringComparison.OrdinalIgnoreCase) ? "sms" : "whatsapp";
 
@@ -127,8 +137,22 @@ public class TwilioVerifyService : ITwilioVerifyService
     public async Task<(bool Verified, string Message)> CheckVerificationCodeAsync(string toPhone, string code, CancellationToken cancellationToken = default)
     {
         var normalizedPhone = NormalizePhoneNumber(toPhone);
-        var cleanCode = code?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedPhone))
+        {
+            return (false, "Debes ingresar un número de teléfono válido.");
+        }
 
+        var cacheKey = $"verified_phone_{normalizedPhone}";
+
+        // 1. Si el número ya fue verificado exitosamente previamente (ej. en el paso de validación OTP antes de aceptar términos),
+        // evitamos volver a consultar a Twilio Verify porque los códigos son de un solo uso y Twilio los invalida una vez aprobados.
+        if (_cacheService.Get<bool>(cacheKey))
+        {
+            _logger.LogInformation("[Twilio Verify] Teléfono {Phone} previamente verificado con éxito en la sesión de registro (Caché activa).", normalizedPhone);
+            return (true, "Número de teléfono verificado con éxito.");
+        }
+
+        var cleanCode = code?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(cleanCode))
         {
             return (false, "Debes ingresar el código de verificación.");
@@ -146,6 +170,7 @@ public class TwilioVerifyService : ITwilioVerifyService
             if (cleanCode == devOtp || cleanCode == "1234" || cleanCode == "123456")
             {
                 _logger.LogInformation("[Twilio Verify Mock] Código validado con éxito para {Phone} en modo desarrollo.", normalizedPhone);
+                _cacheService.Set(cacheKey, true, TimeSpan.FromMinutes(20));
                 return (true, "Teléfono verificado correctamente (Modo Desarrollo).");
             }
             return (false, $"Código inválido. En modo desarrollo el código permitido es {devOtp}.");
@@ -180,6 +205,7 @@ public class TwilioVerifyService : ITwilioVerifyService
                     if (string.Equals(status, "approved", StringComparison.OrdinalIgnoreCase))
                     {
                         _logger.LogInformation("[Twilio Verify] Código aprobado con éxito para {Phone}", normalizedPhone);
+                        _cacheService.Set(cacheKey, true, TimeSpan.FromMinutes(20));
                         return (true, "Número de teléfono verificado con éxito.");
                     }
                 }
@@ -192,6 +218,15 @@ public class TwilioVerifyService : ITwilioVerifyService
         {
             _logger.LogError(ex, "[Twilio Verify Exception] Error al validar código para {Phone}", normalizedPhone);
             return (false, "Error interno al validar el código telefónico.");
+        }
+    }
+
+    public void ClearPhoneVerification(string phone)
+    {
+        var normalizedPhone = NormalizePhoneNumber(phone);
+        if (!string.IsNullOrWhiteSpace(normalizedPhone))
+        {
+            _cacheService.Remove($"verified_phone_{normalizedPhone}");
         }
     }
 }

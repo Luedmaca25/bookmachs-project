@@ -1042,6 +1042,55 @@ Este documento contiene un registro técnico detallado de cada una de las tareas
   2. Se configuró el enlace de "Ingresar" con la ruta explícita `/auth?mode=login` en la barra de escritorio, cabecera móvil y menú lateral offcanvas.
   3. En [AuthenticationPage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/authentication/AuthenticationPage.tsx), se agregó un efecto que escucha activamente `searchParams`, conmutando inmediatamente `isLogin` a `true` cada vez que el usuario presiona "Ingresar", asegurando que la vista de login se despliegue de inmediato.
 
+---
+
+## Entrada de Bitácora: Corrección de Expiración Prematura de Código OTP al Aceptar Términos de Registro
+
+* **Fecha:** 6 de Octubre, 2026
+* **Observación del Cliente:** Al registrarse como nuevo usuario, en la pantalla final de "Acepta las condiciones y políticas", el sistema arrojaba el error: *"El código ingresado es incorrecto o ha expirado. Por favor solicita uno nuevo."*, a pesar de que el código telefónico (WhatsApp/SMS) ya había sido ingresado y validado exitosamente en el paso anterior.
+* **Diagnóstico Técnico:**
+  1. **Consumo de Códigos OTP en Twilio Verify:** En el paso 7 del registro (`RegisterWizard.tsx`), el usuario valida su código llamando al endpoint `/auth/phone/verify-code`. Twilio Verify procesa la solicitud `/VerificationCheck` y, al aprobarlo (`status = "approved"`), consume e invalida el código internamente por razones de seguridad (código de un solo uso).
+  2. **Validación Redundante en el Registro Final:** Al avanzar a la pantalla 8 y presionar "Acepto" (`handleFinalSubmit`), el frontend enviaba nuevamente el código OTP al endpoint `/auth/register` (o `/auth/complete-onboarding`), el cual volvía a consultar a `_twilioVerifyService.CheckVerificationCodeAsync(normalizedPhone, verificationCode)`.
+  3. Al ser consultado por segunda vez, Twilio Verify rechazaba el código ya consumido/aprobado, disparando la excepción y mostrando el mensaje de código expirado.
+* **Solución Implementada:**
+  1. **Gestión de Sesión de Verificación en Memoria ([TwilioVerifyService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/TwilioVerifyService.cs) & [ITwilioVerifyService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/ITwilioVerifyService.cs)):**
+     - Se integró `ICacheService` en `TwilioVerifyService`.
+     - Cuando un número telefónico es aprobado exitosamente por Twilio Verify (o en modo desarrollo), se guarda en caché una bandera de validación (`verified_phone_{normalizedPhone} = true`) con un TTL de 20 minutos.
+     - `CheckVerificationCodeAsync` comprueba primeramente la presencia de esta bandera en caché. Si el teléfono ya fue validado durante el flujo de registro, confirma la validez sin volver a enviar una petición redundante a Twilio.
+     - Al solicitar un nuevo código (`SendVerificationCodeAsync`), cualquier validación previa para dicho número se invalida en caché.
+  2. **Consumo y Limpieza Posterior ([AuthService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/AuthService.cs)):**
+     - En `RegisterOnboardingAsync` y `CompleteOnboardingAsync`, una vez que el usuario ha sido creado y persistido con éxito en la base de datos con `IsPhoneVerified = true`, se invoca `ClearPhoneVerification(normalizedPhone)`, liberando la memoria y consumiendo el permiso temporal.
+* **Archivos Clave Modificados:**
+  - [ITwilioVerifyService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/ITwilioVerifyService.cs)
+  - [TwilioVerifyService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/TwilioVerifyService.cs)
+  - [AuthService.cs](file:///C:/Users/luis_/Proyectos/bookmachs/backend_refactor/Bookmachs.Refactored.Api/Services/AuthService.cs)
+
+---
+
+### Corrección de Doble Scroll Vertical en Onboarding (Vista Desktop)
+* **Observación del Cliente:** Al registrarse como nuevo usuario y llegar a la sección de Onboarding (asistente de gustos y perfil), aparecían dos barras de desplazamiento vertical superpuestas e independientes en vista de escritorio: una en el contenedor principal `app-main swipe-main-active` y otra en el contenedor del paso `onboarding-page-wrapper swipe-onboarding-wrapper`.
+* **Diagnóstico Técnico:**
+  1. **Conflicto de Layout Swipe vs Onboarding:** La ruta `/` aloja la vista de descubrimiento Swipe. Para garantizar que la baraja de libros no tenga desplazamiento vertical tipo Tinder, existían reglas CSS que aplicaban `swipe-main-active`, `position: fixed` o `overflow-y: auto !important` tanto a `.app-main` como a `html`/`body`/`app-container`.
+  2. **Bloqueo Incondicional en Hook de Montaje:** En [SwipePage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/SwipePage.tsx), un `useEffect` bloqueaba el `overflow` del documento (`document.body.style.overflow = 'hidden'`) y agregaba la clase `swipe-page-active` sin discriminar si el usuario estaba viendo el asistente de onboarding (`showWizard`).
+  3. **Scroll Anidado en el Wrapper:** La clase `.swipe-onboarding-wrapper` en [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css) tenía definida la propiedad `overflow-y: auto !important` junto a un `min-height: calc(100vh - 100px);`, lo que generaba un contenedor con scroll interno anidado dentro de `.app-main`, el cual a su vez tenía su propia barra de scroll.
+* **Solución Implementada:**
+  1. **Desactivación de `swipe-main-active` en Layout ([MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)):**
+     - Se condicionó `isSwipeActive = location.pathname === '/' && !needsOnboarding;`.
+     - Cuando el usuario nuevo requiere completar el onboarding, `<main className="app-main">` ya no recibe la clase `swipe-main-active`, previniendo que se apliquen las reglas de contenedor fijo de la baraja Swipe.
+  2. **Liberación del Scroll en el Ciclo de Vida ([SwipePage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/SwipePage.tsx)):**
+     - Se sincronizó el efecto de scroll lock con `[showWizard]`. Si `showWizard` está activo, se limpian las clases `swipe-page-active` de `document.body` y `document.documentElement` y se restablece el comportamiento de scroll natural del navegador.
+  3. **Limpieza de Estilos CSS ([index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)):**
+     - Se ajustaron las reglas de fijación de pantalla completa (`html:has(...)`, `app-container:has(...)`) para aplicarse exclusivamente a `.swipe-page-container` (la baraja interactiva real) y no a los contenedores de onboarding.
+     - Se actualizó `.app-main:has(.onboarding-page-wrapper)` con `overflow-y: visible !important`, eliminando la barra de desplazamiento del contenedor exterior.
+     - Se modificó `.swipe-onboarding-wrapper` para usar `overflow-y: visible !important; min-height: auto !important; padding: 0 !important;`, suprimiendo la barra de desplazamiento interior.
+     - Como resultado, el onboarding en desktop fluye de manera limpia y unificada con una sola barra de desplazamiento nativa del navegador cuando el contenido del paso lo requiere (o ninguna si cabe en pantalla).
+* **Archivos Clave Modificados:**
+  - [MainLayout.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/app/layout/MainLayout.tsx)
+  - [SwipePage.tsx](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/features/discovery/SwipePage.tsx)
+  - [index.css](file:///C:/Users/luis_/Proyectos/bookmachs/frontend/src/index.css)
+
+
+
 
 
 

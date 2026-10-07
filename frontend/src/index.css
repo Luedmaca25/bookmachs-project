@@ -196,6 +196,7 @@ body {
 }
 
 .login-button {
+  border: 0;
   background: var(--gradient-accent);
   color: #fff !important;
   padding: 0.6rem 1.6rem;
@@ -1871,8 +1872,8 @@ p {
 /* Bloqueo total de scroll y rebote elástico en vista de swipe */
 html.swipe-page-active,
 body.swipe-page-active,
-html:has(.swipe-main-active),
-body:has(.swipe-main-active) {
+html:has(.swipe-page-container),
+body:has(.swipe-page-container) {
   overflow: hidden !important;
   height: 100% !important;
   max-height: 100dvh !important;
@@ -1883,7 +1884,7 @@ body:has(.swipe-main-active) {
   overscroll-behavior-y: none !important;
 }
 
-.app-container:has(.swipe-main-active),
+.app-container:has(.swipe-page-container),
 body.swipe-page-active .app-container {
   min-height: 100dvh !important;
   height: 100dvh !important;
@@ -1921,7 +1922,7 @@ body.swipe-page-active .app-container {
   }
 }
 
-/* Permitir scroll y espacio adecuado bajo el header cuando el onboarding o registro se renderizan en app-main */
+/* Permitir scroll natural y espacio adecuado bajo el header cuando el onboarding o registro se renderizan en app-main */
 .app-main:has(.onboarding-wizard-container),
 .app-main:has(.onboarding-page-wrapper),
 .app-main:has(.register-wizard-container) {
@@ -1933,9 +1934,9 @@ body.swipe-page-active .app-container {
   height: auto !important;
   min-height: calc(100vh - 120px) !important;
   max-height: none !important;
-  overflow-y: auto !important;
+  overflow-y: visible !important;
   overflow-x: hidden !important;
-  padding: 3rem 1.5rem 6rem !important;
+  padding: 2.5rem 1.5rem 4rem !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -1947,7 +1948,7 @@ body.swipe-page-active .app-container {
   .app-main:has(.onboarding-wizard-container),
   .app-main:has(.onboarding-page-wrapper),
   .app-main:has(.register-wizard-container) {
-    padding: calc(68px + 1.75rem) 1rem 1rem !important;
+    padding: calc(68px + 1.25rem) 1rem calc(96px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
@@ -2992,17 +2993,17 @@ body.swipe-page-active .app-footer {
 }
 
 .modal-card {
-  background: var(--gradient-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 2.5rem;
+  /* background: var(--gradient-card); */
+  /* border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); */
+  padding: 2.5rem 0;
   width: 90%;
   max-width: 460px;
   max-height: calc(100vh - 4.5rem);
   max-height: calc(100dvh - 4.5rem);
   overflow-y: auto;
   box-sizing: border-box;
-  box-shadow: var(--shadow-lg);
+  /* box-shadow: var(--shadow-lg); */
   display: flex;
   flex-direction: column;
   /* gap: 1.5rem; */
@@ -3161,8 +3162,6 @@ body.swipe-page-active .app-footer {
   text-align: center;
   width: 90%;
   max-width: 460px;
-  padding-left: 2.5rem;
-  padding-right: 2.5rem;
 }
 
 .toggle-auth-p {
@@ -3202,7 +3201,7 @@ body.swipe-page-active .app-footer {
   color: var(--text-muted);
   font-size: 0.85rem;
   font-weight: 500;
-  margin: 0.5rem 0;
+  margin: 24px 0;
 }
 
 .modal-divider::before,
@@ -8421,7 +8420,8 @@ body.swipe-page-active .app-footer {
   align-items: center;
   flex-direction: column;
   min-height: 70vh;
-  gap: 24px;
+  margin-top: 24px;
+  /* gap: 24px; */
 }
 
 .onboarding-page-wrapper {
@@ -8438,10 +8438,11 @@ body.swipe-page-active .app-footer {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  min-height: calc(100vh - 100px);
-  overflow-y: auto !important;
+  min-height: auto !important;
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch;
-  padding: 1rem 0.5rem 6rem !important;
+  padding: 0 !important;
 }
 
 .profile-container {
@@ -10988,8 +10989,8 @@ body.swipe-page-active .app-footer {
   }
 
   /* Ajuste de viewport inferior en vista Swipe para barra flotante móvil */
-  .app-main.swipe-main-active,
-  .app-main:has(.swipe-page-container) {
+  .app-main.swipe-main-active:not(:has(.onboarding-wizard-container)):not(:has(.onboarding-page-wrapper)):not(:has(.register-wizard-container)),
+  .app-main:has(.swipe-page-container):not(:has(.onboarding-wizard-container)):not(:has(.onboarding-page-wrapper)):not(:has(.register-wizard-container)) {
     bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
     padding: 0.25rem 0.5rem !important;
   }

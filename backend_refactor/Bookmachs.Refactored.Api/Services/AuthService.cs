@@ -186,14 +186,11 @@ public class AuthService : IAuthService
         if (existingPhone)
             throw new InvalidOperationException("Este número de teléfono ya está registrado en otra cuenta.");
 
-        // Validar código si se especificó
-        if (!string.IsNullOrWhiteSpace(verificationCode))
+        // Validar código o verificar que el teléfono fue validado previamente en la sesión
+        var verifyResult = await _twilioVerifyService.CheckVerificationCodeAsync(normalizedPhone, verificationCode ?? string.Empty, cancellationToken);
+        if (!verifyResult.Verified)
         {
-            var verifyResult = await _twilioVerifyService.CheckVerificationCodeAsync(normalizedPhone, verificationCode, cancellationToken);
-            if (!verifyResult.Verified)
-            {
-                throw new InvalidOperationException(verifyResult.Message);
-            }
+            throw new InvalidOperationException(verifyResult.Message);
         }
 
         var fullName = string.IsNullOrWhiteSpace(lastName) 
@@ -229,6 +226,8 @@ public class AuthService : IAuthService
         await _dbContext.Users.AddAsync(user, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        _twilioVerifyService.ClearPhoneVerification(normalizedPhone);
+
         var token = _jwtTokenGenerator.GenerateToken(user);
         return MapToAuthResponse(user, token);
     }
@@ -255,12 +254,9 @@ public class AuthService : IAuthService
         if (phoneInUse)
             throw new InvalidOperationException("Este número de teléfono ya está registrado en otra cuenta.");
 
-        if (!string.IsNullOrWhiteSpace(code))
-        {
-            var verifyResult = await _twilioVerifyService.CheckVerificationCodeAsync(normalizedPhone, code, cancellationToken);
-            if (!verifyResult.Verified)
-                throw new InvalidOperationException(verifyResult.Message);
-        }
+        var verifyResult = await _twilioVerifyService.CheckVerificationCodeAsync(normalizedPhone, code ?? string.Empty, cancellationToken);
+        if (!verifyResult.Verified)
+            throw new InvalidOperationException(verifyResult.Message);
 
         user.Telefono = normalizedPhone;
         user.IsPhoneVerified = true;
@@ -272,6 +268,8 @@ public class AuthService : IAuthService
 
         _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        _twilioVerifyService.ClearPhoneVerification(normalizedPhone);
 
         var token = _jwtTokenGenerator.GenerateToken(user);
         return MapToAuthResponse(user, token);

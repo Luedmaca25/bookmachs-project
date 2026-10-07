@@ -19,4 +19,10 @@ public interface ITwilioVerifyService
     /// Valida el código OTP provisto por el usuario contra Twilio Verify.
     /// </summary>
     Task<(bool Verified, string Message)> CheckVerificationCodeAsync(string toPhone, string code, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Limpia el estado de verificación temporal en caché de un número de teléfono tras completar el registro/onboarding.
+    /// </summary>
+    void ClearPhoneVerification(string phone);
 }
+

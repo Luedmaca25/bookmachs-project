@@ -152,8 +152,17 @@ export const SwipePage: React.FC = () => {
   const [swipeLimit, setSwipeLimit] = useState(user?.dailySwipeLimit ?? (user?.isPremium ? 1000 : 40));
   const [showUndoPremiumModal, setShowUndoPremiumModal] = useState(false);
 
-  // Bloquear el scroll y el rebote de pantalla en dispositivos móviles durante la experiencia de Swipe
+  // Bloquear el scroll y el rebote de pantalla en dispositivos móviles durante la experiencia de Swipe (solo cuando no está en onboarding)
   useEffect(() => {
+    if (showWizard) {
+      document.body.classList.remove('swipe-page-active');
+      document.documentElement.classList.remove('swipe-page-active');
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.style.overscrollBehavior = '';
+      return;
+    }
+
     const originalBodyOverflow = document.body.style.overflow;
     const originalHtmlOverflow = document.documentElement.style.overflow;
     const originalOverscroll = document.body.style.overscrollBehavior;
@@ -171,7 +180,7 @@ export const SwipePage: React.FC = () => {
       document.body.classList.remove('swipe-page-active');
       document.documentElement.classList.remove('swipe-page-active');
     };
-  }, []);
+  }, [showWizard]);
 
   // Cargar estado real de swipes consumidos en el día directamente desde la Base de Datos al entrar
   useEffect(() => {
