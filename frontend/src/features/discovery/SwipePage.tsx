@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
 import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
@@ -33,6 +33,7 @@ interface BookItem {
 
 export const SwipePage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated, token } = useAuthStore();
   
   // Control de Onboarding
@@ -551,6 +552,7 @@ export const SwipePage: React.FC = () => {
         if (response.isMatch && response.matchTransactionId) {
           setMatchedBook(swipedBook);
           setMatchTransactionId(response.matchTransactionId);
+          queryClient.invalidateQueries({ queryKey: ['my-matches'] });
         }
       }
     } catch (err: any) {

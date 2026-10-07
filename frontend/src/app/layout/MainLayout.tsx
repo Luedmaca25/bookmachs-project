@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../features/authentication/store/authStore';
 import { GlobalPremiumModal } from '../../features/subscriptions/components/GlobalPremiumModal';
 import { apiClient } from '../../lib/apiClient';
@@ -11,6 +12,28 @@ export const MainLayout: React.FC = () => {
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [premiumModalInfo, setPremiumModalInfo] = useState<{ featureName?: string; icon?: string } | null>(null);
   const location = useLocation();
+
+  // Consulta de matches para verificar si el usuario tiene matches pendientes de confirmar/pagar
+  const { data: myMatches } = useQuery<any[]>({
+    queryKey: ['my-matches', user?.id],
+    queryFn: () => apiClient.get<any[]>('/transactions/my-matches'),
+    enabled: Boolean(isAuthenticated && user),
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+
+  const hasPendingMatches = Boolean(
+    isAuthenticated &&
+    user &&
+    myMatches &&
+    myMatches.some(
+      (m) =>
+        m.paymentStatus?.toLowerCase() === 'pending' &&
+        m.isAvailable !== false &&
+        m.logisticsStatus?.toLowerCase() !== 'cancelled' &&
+        m.logisticsStatus?.toLowerCase() !== 'expired'
+    )
+  );
 
   const needsOnboarding = isAuthenticated && (
     !user?.pais || 
@@ -125,7 +148,14 @@ export const MainLayout: React.FC = () => {
                 )}
               </Link>
               <Link to="/libreta" className="nav-link">Tu libreta</Link>
-              <Link to="/transacciones" className="nav-link">Matches</Link>
+              <Link to="/transacciones" className="nav-link">
+                Matches
+                {hasPendingMatches && (
+                  <span className="desktop-nav-time-badge" title="Tienes matches pendientes">
+                    <img src="/icons/icon-time.png" alt="Alerta pendiente" className="desktop-nav-time-img" />
+                  </span>
+                )}
+              </Link>
             </>
           )}
           
@@ -221,6 +251,11 @@ export const MainLayout: React.FC = () => {
                   </Link>
                   <Link to="/transacciones" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
                     <i className="fa-solid fa-handshake"></i> Matches
+                    {hasPendingMatches && (
+                      <span className="offcanvas-time-badge" title="Tienes matches pendientes">
+                        <img src="/icons/icon-time.png" alt="Alerta pendiente" className="offcanvas-time-img" />
+                      </span>
+                    )}
                   </Link>
                 </>
               )}
@@ -361,6 +396,15 @@ export const MainLayout: React.FC = () => {
               alt="Matchs"
               className="bottom-nav-icon-img"
             />
+            {hasPendingMatches && (
+              <span className="pill-nav-time-badge" title="Tienes matches pendientes">
+                <img
+                  src="/icons/icon-time.png"
+                  alt="Alerta de matches pendientes"
+                  className="pill-nav-time-img"
+                />
+              </span>
+            )}
           </div>
           <span className="nav-label">Matchs</span>
         </Link>
