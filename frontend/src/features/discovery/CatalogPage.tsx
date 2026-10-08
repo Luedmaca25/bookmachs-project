@@ -28,6 +28,16 @@ interface PaginatedBooks {
   pageSize: number;
   totalCount: number;
   totalPages: number;
+  searchesConsumed?: number;
+  searchLimit?: number;
+  searchesRemaining?: number;
+}
+
+interface CatalogSearchStatus {
+  searchesConsumed: number;
+  searchLimit: number;
+  searchesRemaining: number;
+  limitReached: boolean;
 }
 
 interface TagItem {
@@ -40,12 +50,25 @@ export const CatalogPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
 
-  const { data: globalSettings } = useQuery<{ searchKeywordsLimitPremium: number }>({
+  const { data: globalSettings } = useQuery<{ searchKeywordsLimitPremium: number; catalogSearchLimitPremium: number }>({
     queryKey: ['globalSettings'],
     queryFn: () => apiClient.get<any>('/globalsettings'),
   });
 
   const maxSearchKeywords = globalSettings?.searchKeywordsLimitPremium ?? 10;
+
+  // Estado de límite y conteo de búsquedas en el catálogo
+  const { data: searchStatus, refetch: refetchSearchStatus } = useQuery<CatalogSearchStatus>({
+    queryKey: ['catalogSearchStatus'],
+    queryFn: () => apiClient.get<CatalogSearchStatus>('/books/catalog-search-status'),
+    enabled: isAuthenticated && user?.isPremium === true,
+  });
+
+  const searchesConsumed = searchStatus?.searchesConsumed ?? 0;
+  const searchLimit = searchStatus?.searchLimit ?? (globalSettings?.catalogSearchLimitPremium ?? 10);
+  const searchesRemaining = searchStatus ? Math.max(0, searchLimit - searchesConsumed) : searchLimit;
+  const isSearchLimitReached = searchStatus?.limitReached ?? (searchesRemaining <= 0);
+  const [limitWarning, setLimitWarning] = useState<string | null>(null);
 
   // Estados de catálogo
   const [books, setBooks] = useState<BookItem[]>([]);
@@ -169,10 +192,13 @@ export const CatalogPage: React.FC = () => {
         setBooks(response.items);
         setTotalPages(response.totalPages);
         setTotalCount(response.totalCount);
+        refetchSearchStatus();
       } catch (err: any) {
         if (err.name === 'AbortError') return;
         console.error('Error al cargar catálogo:', err);
-        setError('Ocurrió un error al cargar el catálogo avanzado de libros.');
+        const errMsg = err?.message || 'Ocurrió un error al cargar el catálogo avanzado de libros.';
+        setError(errMsg);
+        refetchSearchStatus();
       } finally {
         setLoading(false);
       }
@@ -359,11 +385,21 @@ export const CatalogPage: React.FC = () => {
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSearchLimitReached) {
+      setLimitWarning(`Has alcanzado el límite de ${searchLimit} búsquedas de tu membresía Premium para este periodo.`);
+      return;
+    }
+    setLimitWarning(null);
     setSearchTerm(searchInput.trim());
     setPageNumber(1);
   };
 
   const handleApplyFilters = (newFilters: FilterOptions) => {
+    if (isSearchLimitReached) {
+      alert(`Has alcanzado el límite de ${searchLimit} búsquedas en el catálogo para tu plan Premium en este periodo.`);
+      return;
+    }
+    setLimitWarning(null);
     const cats = newFilters.categories
       ? newFilters.categories
       : newFilters.category
@@ -439,7 +475,7 @@ export const CatalogPage: React.FC = () => {
               <button
                 type="submit"
                 className="search-submit-btn"
-                title="Buscar (Presiona Enter)"
+                title="Buscar"
                 aria-label="Buscar"
               >
                 <i className="fa-solid fa-magnifying-glass search-icon"></i>
@@ -447,7 +483,7 @@ export const CatalogPage: React.FC = () => {
               <input
                 id="search-input"
                 type="text"
-                placeholder="¿Qué libro, autor o palabra clave quieres buscar? (Presiona Enter)"
+                placeholder="¿Qué libro, autor o palabra clave quieres buscar?"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -474,8 +510,9 @@ export const CatalogPage: React.FC = () => {
               )}
               <button
                 type="submit"
-                className="spotify-search-action-btn font-heading"
-                title="Buscar libro"
+                className={`spotify-search-action-btn font-heading ${isSearchLimitReached ? 'disabled' : ''}`}
+                title={isSearchLimitReached ? 'Límite de búsquedas alcanzado' : 'Buscar libro'}
+                disabled={isSearchLimitReached}
               >
                 Buscar
               </button>
@@ -483,6 +520,16 @@ export const CatalogPage: React.FC = () => {
           </form>
         </div>
       </div>
+
+      {/* Alerta de Límite de Búsquedas Agotadas */}
+      {(limitWarning || isSearchLimitReached) && (
+        <div className="search-limit-warning search-limit-depleted font-body">
+          <i className="fa-solid fa-circle-exclamation"></i>
+          <span>
+            {limitWarning || `Has utilizado todas tus ${searchLimit} búsquedas permitidas de este ciclo mensual. Tus búsquedas se renovarán con tu ciclo de suscripción.`}
+          </span>
+        </div>
+      )}
 
       {/* Alerta de Límite de Palabras Clave de GlobalSettings */}
       {isKeywordLimitExceeded && (
@@ -492,9 +539,20 @@ export const CatalogPage: React.FC = () => {
         </div>
       )}
 
-      {/* Barra Superior de Control: Botón Filtros + Mis Reservas */}
+      {/* Barra Superior de Control: Botón Filtros + Contador de Búsquedas + Mis Reservas */}
       <div className="catalog-controls-top-bar">
-        <div className="left-controls-group" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="left-controls-group" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Contador de Búsquedas del Catálogo (Plan Premium) */}
+          <div 
+            className={`catalog-search-counter-badge ${isSearchLimitReached ? 'depleted' : searchesRemaining <= 2 ? 'warning' : ''}`}
+            title={`Cuota mensual de búsquedas en catálogo: ${searchesConsumed} realizadas de ${searchLimit} permitidas`}
+          >
+            <i className={`fa-solid ${isSearchLimitReached ? 'fa-lock' : 'fa-magnifying-glass'}`}></i>
+            <span className="counter-text">
+              Búsquedas: <strong>{searchesConsumed}</strong> usadas <span className="counter-divider">/</span> <strong>{searchesRemaining}</strong> restantes
+            </span>
+          </div>
+          
           <button
             type="button"
             className={`toggle-filters-btn ${showFilters ? 'active' : ''}`}

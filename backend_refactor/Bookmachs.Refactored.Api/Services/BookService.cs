@@ -23,6 +23,7 @@ public interface IBookService
     Task<SwipeStatusDto> GetSwipeStatusAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<SwipeResultDto> SwipeBookAsync(Guid bookId, Guid userId, string action, CancellationToken cancellationToken = default);
     Task<SwipeStatusDto> UndoSwipeAsync(Guid userId, Guid? bookId = null, CancellationToken cancellationToken = default);
+    Task<CatalogSearchStatusDto> GetCatalogSearchStatusAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> ReserveBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> CancelReservationAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
@@ -863,6 +864,40 @@ public class BookService : IBookService
         };
     }
 
+    public async Task<CatalogSearchStatusDto> GetCatalogSearchStatusAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("Usuario no encontrado.");
+        }
+
+        var now = DateTime.UtcNow;
+        bool userModified = false;
+        if (UserCycleHelper.CheckAndApplySubscriptionExpiration(user, now))
+        {
+            userModified = true;
+        }
+        if (UserCycleHelper.CheckAndApplyMonthlySwipeReset(user, now))
+        {
+            userModified = true;
+        }
+        if (userModified)
+        {
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
+        int searchLimit = (settings != null && settings.CatalogSearchLimitPremium > 0) ? settings.CatalogSearchLimitPremium : 10;
+
+        return new CatalogSearchStatusDto
+        {
+            SearchesConsumed = user.CatalogSearchesConsumed,
+            SearchLimit = searchLimit
+        };
+    }
+
     public async Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, CancellationToken cancellationToken = default)
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -872,7 +907,16 @@ public class BookService : IBookService
         }
 
         var now = DateTime.UtcNow;
+        bool userModified = false;
         if (UserCycleHelper.CheckAndApplySubscriptionExpiration(user, now))
+        {
+            userModified = true;
+        }
+        if (UserCycleHelper.CheckAndApplyMonthlySwipeReset(user, now))
+        {
+            userModified = true;
+        }
+        if (userModified)
         {
             _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -881,6 +925,23 @@ public class BookService : IBookService
         if (!user.IsPremium)
         {
             throw new UnauthorizedAccessException("Se requiere una membresía Premium para acceder al catálogo avanzado.");
+        }
+
+        var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
+        int searchLimit = (settings != null && settings.CatalogSearchLimitPremium > 0) ? settings.CatalogSearchLimitPremium : 10;
+
+        // Validar si el usuario alcanzó el límite de búsquedas configurado
+        if (user.CatalogSearchesConsumed >= searchLimit)
+        {
+            throw new InvalidOperationException($"Has alcanzado el límite de {searchLimit} búsquedas en el catálogo para tu plan Premium en el periodo actual.");
+        }
+
+        // Si es una consulta de página 1 (nueva búsqueda/filtro), incrementar el contador
+        if (pageNumber <= 1)
+        {
+            user.CatalogSearchesConsumed++;
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         // Query Ecolectura Productos
@@ -1022,7 +1083,13 @@ public class BookService : IBookService
 
         var dtos = items.Select(MapEcolecturaProductToBookDto).ToList();
 
-        return new PaginatedListDto<BookDto>(dtos, page, size, totalCount);
+        var response = new PaginatedListDto<BookDto>(dtos, page, size, totalCount)
+        {
+            SearchesConsumed = user.CatalogSearchesConsumed,
+            SearchLimit = searchLimit
+        };
+
+        return response;
     }
 
     public async Task<ReservationResultDto> ReserveBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default)

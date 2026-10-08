@@ -22,6 +22,9 @@ public class GlobalSettings
     // Límite de palabras clave de búsqueda para usuarios Premium
     public int SearchKeywordsLimitPremium { get; set; } = 10;
 
+    // Límite de búsquedas permitidas en el catálogo para usuarios Premium
+    public int CatalogSearchLimitPremium { get; set; } = 10;
+
     // Configuración del Fee de Intercambio
     public decimal FeePercentage { get; set; } = 0.30m; // 30%
     public decimal MinFeeAmount { get; set; } = 1000.0m; // CLP mínimo

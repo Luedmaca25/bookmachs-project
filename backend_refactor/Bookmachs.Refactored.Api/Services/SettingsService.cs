@@ -49,6 +49,7 @@ public class SettingsService : ISettingsService
                 BasicPlanPriceUsd = 4.99m,
                 PremiumPlanPriceUsd = 9.99m,
                 SearchKeywordsLimitPremium = 10,
+                CatalogSearchLimitPremium = 10,
                 FeePercentage = 0.30m,
                 MinFeeAmount = 1000m,
                 MaxFeeAmount = 9000m,
@@ -78,6 +79,7 @@ public class SettingsService : ISettingsService
         settings.BasicPlanPriceUsd = updateDto.BasicPlanPriceUsd;
         settings.PremiumPlanPriceUsd = updateDto.PremiumPlanPriceUsd;
         settings.SearchKeywordsLimitPremium = updateDto.SearchKeywordsLimitPremium > 0 ? updateDto.SearchKeywordsLimitPremium : 10;
+        settings.CatalogSearchLimitPremium = updateDto.CatalogSearchLimitPremium > 0 ? updateDto.CatalogSearchLimitPremium : 10;
         settings.FeePercentage = updateDto.FeePercentage;
         settings.MinFeeAmount = updateDto.MinFeeAmount;
         settings.MaxFeeAmount = updateDto.MaxFeeAmount;
@@ -258,6 +260,7 @@ public class SettingsService : ISettingsService
             BasicPlanPriceUsd = g.BasicPlanPriceUsd,
             PremiumPlanPriceUsd = g.PremiumPlanPriceUsd,
             SearchKeywordsLimitPremium = g.SearchKeywordsLimitPremium > 0 ? g.SearchKeywordsLimitPremium : 10,
+            CatalogSearchLimitPremium = g.CatalogSearchLimitPremium > 0 ? g.CatalogSearchLimitPremium : 10,
             FeePercentage = g.FeePercentage,
             MinFeeAmount = g.MinFeeAmount,
             MaxFeeAmount = g.MaxFeeAmount,

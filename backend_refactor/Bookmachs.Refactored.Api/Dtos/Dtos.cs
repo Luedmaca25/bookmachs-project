@@ -110,11 +110,20 @@ public class GlobalSettingsDto
     public decimal BasicPlanPriceUsd { get; set; }
     public decimal PremiumPlanPriceUsd { get; set; }
     public int SearchKeywordsLimitPremium { get; set; } = 10;
+    public int CatalogSearchLimitPremium { get; set; } = 10;
     public decimal FeePercentage { get; set; }
     public decimal MinFeeAmount { get; set; }
     public decimal MaxFeeAmount { get; set; }
     public bool EnableDoubleExchange { get; set; } = true;
     public DateTime LastUpdatedAt { get; set; }
+}
+
+public class CatalogSearchStatusDto
+{
+    public int SearchesConsumed { get; set; }
+    public int SearchLimit { get; set; }
+    public int SearchesRemaining => Math.Max(0, SearchLimit - SearchesConsumed);
+    public bool LimitReached => SearchesConsumed >= SearchLimit;
 }
 
 public class PreferenceCategoryMappingDto

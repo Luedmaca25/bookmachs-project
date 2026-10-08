@@ -34,6 +34,9 @@ public class User
     public int BonusSwipesGranted { get; set; } = 0;
     public DateTime? LastBonusGrantedAt { get; set; }
 
+    // Control de cuota mensual de búsquedas en catálogo
+    public int CatalogSearchesConsumed { get; set; } = 0;
+
     // Estado de Suscripción
     public bool IsPremium { get; set; } = false;
     public string SubscriptionPlan { get; set; } = "Free"; // Free, Basic, Full

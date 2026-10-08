@@ -10511,10 +10511,19 @@ body.swipe-page-active .app-footer {
   justify-content: center;
 }
 
-.spotify-search-action-btn:hover {
+.spotify-search-action-btn:hover:not(:disabled) {
   background: #0d8a4c;
   transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(15, 157, 88, 0.35);
+}
+
+.spotify-search-action-btn:disabled,
+.spotify-search-action-btn.disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.65;
 }
 
 .spotify-search-limit-badge {
@@ -10615,6 +10624,70 @@ body.swipe-page-active .app-footer {
   font-size: 0.8rem;
   margin-left: 4px;
   transition: transform var(--transition-fast);
+}
+
+/* Badge del Contador de Búsquedas en Catálogo */
+.catalog-search-counter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 157, 88, 0.08);
+  border: 1.5px solid rgba(15, 157, 88, 0.3);
+  color: #0d8047;
+  padding: 7px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.90rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.catalog-search-counter-badge i {
+  font-size: 0.92rem;
+  color: var(--accent-primary);
+}
+
+.catalog-search-counter-badge strong {
+  font-weight: 700;
+  color: #0b6b3b;
+}
+
+.catalog-search-counter-badge .counter-divider {
+  opacity: 0.45;
+  margin: 0 3px;
+}
+
+.catalog-search-counter-badge.warning {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(234, 179, 8, 0.4);
+  color: #a16207;
+}
+
+.catalog-search-counter-badge.warning i,
+.catalog-search-counter-badge.warning strong {
+  color: #a16207;
+}
+
+.catalog-search-counter-badge.depleted {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #dc2626;
+}
+
+.catalog-search-counter-badge.depleted i,
+.catalog-search-counter-badge.depleted strong {
+  color: #dc2626;
+}
+
+.search-limit-warning.search-limit-depleted {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+
+.search-limit-warning.search-limit-depleted i {
+  color: #dc2626;
 }
 
 /* Panel Colapsable de Filtros - Tema Claro */

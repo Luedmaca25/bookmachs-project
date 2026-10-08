@@ -41,6 +41,7 @@ public static class UserCycleHelper
         {
             user.DailySwipesConsumed = 0;
             user.BonusSwipesGranted = 0;
+            user.CatalogSearchesConsumed = 0;
             user.LastBonusGrantedAt = null;
             user.LastSwipeResetDate = cycleStart;
             return true;

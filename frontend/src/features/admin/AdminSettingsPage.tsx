@@ -11,6 +11,7 @@ interface GlobalSettings {
   basicPlanPriceUsd: number;
   premiumPlanPriceUsd: number;
   searchKeywordsLimitPremium: number;
+  catalogSearchLimitPremium: number;
   feePercentage: number;
   minFeeAmount: number;
   maxFeeAmount: number;
@@ -273,6 +274,8 @@ export const AdminSettingsPage: React.FC = () => {
       monthlyMatchLimitPremium: parseInt(formData.get('monthlyMatchLimitPremium') as string, 10),
       basicPlanPriceUsd: parseFloat(formData.get('basicPlanPriceUsd') as string),
       premiumPlanPriceUsd: parseFloat(formData.get('premiumPlanPriceUsd') as string),
+      searchKeywordsLimitPremium: parseInt(formData.get('searchKeywordsLimitPremium') as string, 10) || 10,
+      catalogSearchLimitPremium: parseInt(formData.get('catalogSearchLimitPremium') as string, 10) || 10,
       feePercentage: parseFloat(formData.get('feePercentage') as string) / 100,
       minFeeAmount: parseFloat(formData.get('minFeeAmount') as string),
       maxFeeAmount: parseFloat(formData.get('maxFeeAmount') as string),
@@ -503,6 +506,19 @@ export const AdminSettingsPage: React.FC = () => {
                       required 
                     />
                     <small className="form-help-text">Máximo de palabras clave / términos permitidos en las búsquedas del catálogo avanzado.</small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="catalogSearchLimitPremium">Límite Búsquedas en Catálogo (Premium)</label>
+                    <input 
+                      type="number" 
+                      id="catalogSearchLimitPremium" 
+                      name="catalogSearchLimitPremium" 
+                      defaultValue={globalSettings?.catalogSearchLimitPremium ?? 10} 
+                      min="1"
+                      required 
+                    />
+                    <small className="form-help-text">Cantidad máxima de búsquedas permitidas en el catálogo por periodo mensual para cuentas Premium.</small>
                   </div>
 
                   <div className="form-group">

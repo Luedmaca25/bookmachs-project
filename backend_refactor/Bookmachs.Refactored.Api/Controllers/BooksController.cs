@@ -277,6 +277,30 @@ public class BooksController : ControllerBase
         return Ok(new { synced = count });
     }
 
+    [HttpGet("catalog-search-status")]
+    public async Task<ActionResult<CatalogSearchStatusDto>> GetCatalogSearchStatus()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        try
+        {
+            var status = await _bookService.GetCatalogSearchStatusAsync(userId);
+            return Ok(status);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpGet("catalog")]
     public async Task<ActionResult<PaginatedListDto<BookDto>>> GetCatalog(
         [FromQuery] string? searchTerm,

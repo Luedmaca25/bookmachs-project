@@ -641,7 +641,7 @@ export const SwipePage: React.FC = () => {
                 <button
                   type="submit"
                   className="search-submit-btn"
-                  title="Buscar (Presiona Enter)"
+                  title="Buscar"
                   aria-label="Buscar"
                   onClick={!user?.isPremium ? (e) => {
                     e.preventDefault();
