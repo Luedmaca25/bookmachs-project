@@ -114,7 +114,12 @@ export const CatalogPage: React.FC = () => {
     }
   }, [searchParams]);
 
-  const hasSearchCriteria = searchTerm.trim().length > 0 || categories.length > 0 || conditions.length > 0;
+  const hasSearchCriteria =
+    searchTerm.trim().length > 0 ||
+    categories.length > 0 ||
+    conditions.length > 0 ||
+    filterOptions.isNewlyArrived ||
+    filterOptions.availableNow;
 
   // Estado para panel de filtros colapsable (oculto por defecto)
   const [showFilters, setShowFilters] = useState(false);
@@ -181,6 +186,7 @@ export const CatalogPage: React.FC = () => {
         if (searchTerm.trim()) queryParams.append('searchTerm', searchTerm.trim());
         if (categories.length > 0) queryParams.append('category', categories.join('|'));
         if (conditions.length > 0) queryParams.append('condition', conditions.join(','));
+        if (filterOptions.isNewlyArrived) queryParams.append('isNewlyArrived', 'true');
         queryParams.append('pageNumber', pageNumber.toString());
         queryParams.append('pageSize', pageSize.toString());
         queryParams.append('sortBy', sortBy);
@@ -209,12 +215,12 @@ export const CatalogPage: React.FC = () => {
     return () => {
       abortController.abort();
     };
-  }, [isAuthenticated, user, searchTerm, categories, conditions, pageNumber, pageSize, sortBy, hasSearchCriteria]);
+  }, [isAuthenticated, user, searchTerm, categories, conditions, pageNumber, pageSize, sortBy, filterOptions.isNewlyArrived, hasSearchCriteria]);
 
   // Reset de página al cambiar filtros
   useEffect(() => {
     setPageNumber(1);
-  }, [searchTerm, categories, conditions, sortBy]);
+  }, [searchTerm, categories, conditions, sortBy, filterOptions.isNewlyArrived]);
 
   // Determinar si un libro es Recién Llegado (creado en los últimos 7 días)
   const isNewlyArrived = (createdAtString: string) => {
@@ -655,12 +661,12 @@ export const CatalogPage: React.FC = () => {
               <button type="button" onClick={() => setFilterOptions(prev => ({ ...prev, isNewlyArrived: false }))} title="Quitar recién llegados"><i className="fa-solid fa-xmark"></i></button>
             </span>
           )}
-          {filterOptions.availableNow && (
+          {/* {filterOptions.availableNow && (
             <span className="active-filter-chip">
               Disponibles ahora
               <button type="button" onClick={() => setFilterOptions(prev => ({ ...prev, availableNow: false }))} title="Quitar disponibles ahora"><i className="fa-solid fa-xmark"></i></button>
             </span>
-          )}
+          )} */}
           <button 
             type="button" 
             className="clear-all-filters-btn"
@@ -718,7 +724,7 @@ export const CatalogPage: React.FC = () => {
                   isInternalStock: book.isInternalStock,
                   createdAt: book.createdAt,
                 }}
-                isNewlyArrived={isNewlyArrived(book.createdAt)}
+                isNewlyArrived={filterOptions.isNewlyArrived || isNewlyArrived(book.createdAt)}
                 className="catalog-swipe-card"
                 showInterestButton={true}
                 onInterest={handleInterestBook}

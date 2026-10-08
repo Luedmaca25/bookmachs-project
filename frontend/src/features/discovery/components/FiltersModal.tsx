@@ -458,7 +458,7 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
                 </label>
 
                 {/* Disponibles ahora */}
-                <label className="preference-check-item">
+                {/* <label className="preference-check-item">
                   <input
                     type="checkbox"
                     checked={filters.availableNow}
@@ -469,11 +469,11 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
                   </span>
                   <span className="preference-item-name">Disponibles ahora</span>
                   <span className="preference-item-desc">Muestra libros con stock activo disponible</span>
-                </label>
+                </label> */}
               </div>
 
               {/* Switch iOS inferior */}
-              <div className="preferences-fallback-toggle">
+              {/* <div className="preferences-fallback-toggle">
                 <span className="fallback-toggle-label">Mostrar más opciones si no hay resultados</span>
                 <label className="ios-toggle-switch">
                   <input
@@ -483,7 +483,7 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
                   />
                   <span className="ios-toggle-slider" />
                 </label>
-              </div>
+              </div> */}
             </div>
           )}
         </div>

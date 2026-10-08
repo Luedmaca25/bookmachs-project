@@ -308,7 +308,8 @@ public class BooksController : ControllerBase
         [FromQuery] string? condition,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] string? sortBy = "createdAt")
+        [FromQuery] string? sortBy = "createdAt",
+        [FromQuery] bool isNewlyArrived = false)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
@@ -325,7 +326,8 @@ public class BooksController : ControllerBase
                 condition,
                 pageNumber,
                 pageSize,
-                sortBy);
+                sortBy,
+                isNewlyArrived);
             return Ok(result);
         }
         catch (KeyNotFoundException ex)

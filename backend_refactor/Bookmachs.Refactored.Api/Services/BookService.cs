@@ -24,7 +24,7 @@ public interface IBookService
     Task<SwipeResultDto> SwipeBookAsync(Guid bookId, Guid userId, string action, CancellationToken cancellationToken = default);
     Task<SwipeStatusDto> UndoSwipeAsync(Guid userId, Guid? bookId = null, CancellationToken cancellationToken = default);
     Task<CatalogSearchStatusDto> GetCatalogSearchStatusAsync(Guid userId, CancellationToken cancellationToken = default);
-    Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, CancellationToken cancellationToken = default);
+    Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, bool isNewlyArrived = false, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> ReserveBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
     Task<ReservationResultDto> CancelReservationAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetMyReservationsAsync(Guid userId, CancellationToken cancellationToken = default);
@@ -898,7 +898,7 @@ public class BookService : IBookService
         };
     }
 
-    public async Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, CancellationToken cancellationToken = default)
+    public async Task<PaginatedListDto<BookDto>> GetCatalogAsync(Guid userId, string? searchTerm, string? category, string? condition, int pageNumber, int pageSize, string? sortBy, bool isNewlyArrived = false, CancellationToken cancellationToken = default)
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (user == null)
@@ -1064,13 +1064,20 @@ public class BookService : IBookService
             }
         }
 
-        query = sortBy?.ToLower() switch
+        if (isNewlyArrived)
         {
-            "title" => query.OrderBy(p => p.NombreLibro),
-            "basevalue" => query.OrderBy(p => p.Precio ?? 0),
-            "createdat" => query.OrderByDescending(p => p.FechaRegistro),
-            _ => query.OrderByDescending(p => p.FechaRegistro)
-        };
+            query = query.OrderByDescending(p => p.FechaRegistro).Take(200);
+        }
+        else
+        {
+            query = sortBy?.ToLower() switch
+            {
+                "title" => query.OrderBy(p => p.NombreLibro),
+                "basevalue" => query.OrderBy(p => p.Precio ?? 0),
+                "createdat" => query.OrderByDescending(p => p.FechaRegistro),
+                _ => query.OrderByDescending(p => p.FechaRegistro)
+            };
+        }
 
         int totalCount = await query.CountAsync(cancellationToken);
         int page = pageNumber > 0 ? pageNumber : 1;
