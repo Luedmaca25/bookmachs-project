@@ -879,7 +879,6 @@ export const SwipePage: React.FC = () => {
           imageUrl={currentBook.imageUrl}
           title={currentBook.title}
           author={currentBook.author}
-          condition={currentBook.condition}
           onLike={() => triggerSwipe('right')}
           onDislike={() => triggerSwipe('left')}
           isLikeDisabled={limitReached || !currentBook || !!matchAnimationBookId}

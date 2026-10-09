@@ -8,7 +8,6 @@ interface BookImageZoomModalProps {
   imageUrl?: string;
   title: string;
   author?: string;
-  condition?: string;
   onLike?: () => void;
   onDislike?: () => void;
   isLikeDisabled?: boolean;
@@ -20,7 +19,6 @@ export const BookImageZoomModal: React.FC<BookImageZoomModalProps> = ({
   imageUrl,
   title,
   author,
-  condition,
   onLike,
   onDislike,
   isLikeDisabled = false,
@@ -224,11 +222,6 @@ export const BookImageZoomModal: React.FC<BookImageZoomModalProps> = ({
           </h3>
           <div className="zoom-book-subinfo">
             {author && <span className="zoom-book-author">Autor: <strong>{author}</strong></span>}
-            {/* {condition && (
-              <span className="zoom-condition-pill">
-                <i className="fa-solid fa-check"></i> Estado: {condition}
-              </span>
-            )} */}
           </div>
         </div>
 
