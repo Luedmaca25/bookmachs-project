@@ -9,6 +9,7 @@ import { StepByStepTutorialModal } from './components/StepByStepTutorialModal';
 import { GuestLimitModal } from './components/GuestLimitModal';
 import { UndoSwipePremiumModal } from './components/UndoSwipePremiumModal';
 import { SearchPremiumModal } from './components/SearchPremiumModal';
+import { BookImageZoomModal } from './components/BookImageZoomModal';
 import { apiClient } from '../../lib/apiClient';
 
 const COUNTRIES_LIST = [
@@ -80,6 +81,9 @@ export const SwipePage: React.FC = () => {
 
   // Control de límites diarios (Fase 6)
   const [limitReached, setLimitReached] = useState(false);
+
+  // Control de Modal de Zoom / Inspección de Portada
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
 
   // Determinar si las recomendaciones se están cargando o sincronizando
   const isRecommendationsLoading = loading || isFetching || (!!queryBooks && queryBooks.length > 0 && booksList.length === 0);
@@ -443,6 +447,9 @@ export const SwipePage: React.FC = () => {
     const swipedBook = currentBook;
     const isInternalMatch = direction === 'right' && swipedBook.isInternalStock !== false;
 
+    // Cerrar modal de zoom si estaba abierto
+    setIsZoomOpen(false);
+
     // Guardar el índice del libro actual en el historial antes de avanzar
     setSwipedHistory((prev) => [...prev, currentBookIndex]);
 
@@ -709,6 +716,7 @@ export const SwipePage: React.FC = () => {
               showUndoButton={true}
               canUndo={currentBookIndex > 0 || swipedHistory.length > 0}
               onUndo={handleUndoClick}
+              onOpenZoom={() => setIsZoomOpen(true)}
               isPremium={!!user?.isPremium}
               isDragging={isDragging}
               dragOffset={dragOffset}
@@ -863,6 +871,20 @@ export const SwipePage: React.FC = () => {
         isOpen={showSearchPremiumModal}
         onClose={() => setShowSearchPremiumModal(false)}
       />
+
+      {currentBook && (
+        <BookImageZoomModal
+          isOpen={isZoomOpen}
+          onClose={() => setIsZoomOpen(false)}
+          imageUrl={currentBook.imageUrl}
+          title={currentBook.title}
+          author={currentBook.author}
+          condition={currentBook.condition}
+          onLike={() => triggerSwipe('right')}
+          onDislike={() => triggerSwipe('left')}
+          isLikeDisabled={limitReached || !currentBook || !!matchAnimationBookId}
+        />
+      )}
     </div>
   );
 };

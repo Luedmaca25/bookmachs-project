@@ -16210,3 +16210,495 @@ body.swipe-page-active .app-footer {
   justify-content: flex-end;
 }
 
+/* ==========================================================================
+   BOOK IMAGE ZOOM INSPECTOR (MODAL & TRIGGER BUTTON)
+   Experiencia UX/UI Premium de Inspección Inmersiva de Portadas
+   ========================================================================== */
+
+/* Botón flotante de Zoom en la BookCard del Swipe (Idéntico estilo a Deshacer) */
+.image-zoom-trigger-btn {
+  position: absolute;
+  top: 70px;
+  right: 14px;
+  z-index: 25;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all var(--transition-fast);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.image-zoom-trigger-btn.no-undo {
+  top: 14px;
+}
+
+.image-zoom-trigger-btn i {
+  color: var(--text-primary);
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.image-zoom-trigger-btn:hover {
+  background: var(--accent-primary);
+  color: #ffffff;
+  border-color: var(--accent-primary);
+  transform: scale(1.08);
+  box-shadow: 0 6px 18px rgba(15, 157, 88, 0.25);
+}
+
+.image-zoom-trigger-btn:hover i {
+  color: #ffffff;
+}
+
+.image-zoom-trigger-btn:active {
+  transform: scale(0.94);
+}
+
+/* Modal Overlay Inmersivo a Pantalla Completa */
+.book-zoom-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  background: rgba(6, 17, 12, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  animation: zoomModalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes zoomModalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(18px);
+  }
+}
+
+/* Header Flotante del Modal */
+.book-zoom-modal-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 16px;
+  background: linear-gradient(180deg, rgba(6, 17, 12, 0.95) 0%, rgba(6, 17, 12, 0.7) 70%, transparent 100%);
+  pointer-events: auto;
+}
+
+.zoom-header-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 80%;
+  color: #FFFFFF !important;
+}
+
+.zoom-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #34D399;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.zoom-header-badge i {
+  font-size: 0.78rem;
+  color: #34D399;
+}
+
+.zoom-book-title {
+  margin: 0 !important;
+  color: #FFFFFF !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 600px;
+}
+
+.zoom-book-subinfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.zoom-book-author {
+  margin: 0 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 0.88rem !important;
+  font-weight: 500;
+}
+
+.zoom-book-author strong {
+  color: #FFFFFF !important;
+  font-weight: 700;
+}
+
+.zoom-condition-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: rgba(15, 157, 88, 0.28);
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  border-radius: 9999px;
+  color: #6EE7B7 !important;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.zoom-modal-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #FFFFFF !important;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+
+.zoom-modal-close-btn i {
+  color: #FFFFFF !important;
+  transition: transform 0.2s ease;
+}
+
+.zoom-modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.9);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.08) rotate(90deg);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+.zoom-modal-close-btn:hover i {
+  color: #FFFFFF !important;
+}
+
+.zoom-modal-close-btn:active {
+  transform: scale(0.94);
+}
+
+/* Escenario Central de Inspección */
+.book-zoom-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 80px 20px 100px 20px;
+  overflow: hidden;
+  box-sizing: border-box;
+  touch-action: none;
+}
+
+.zoom-image-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  max-width: 90vw;
+  max-height: 75vh;
+  transform-origin: center center;
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+  will-change: transform;
+}
+
+.zoom-image-container.is-dragging {
+  transition: none !important;
+}
+
+.zoom-image-display {
+  display: block;
+  max-width: 82vw;
+  max-height: 68vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.zoom-tap-hint {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.76rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hintPulse 2.5s infinite;
+}
+
+.zoom-tap-hint i {
+  color: #34D399;
+  font-size: 0.82rem;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.85; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+}
+
+/* Barra de Controles Inferior */
+.book-zoom-modal-footer {
+  position: absolute;
+  bottom: 22px;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+.zoom-controls-toolbar,
+.zoom-quick-actions {
+  pointer-events: auto;
+}
+
+/* Toolbar de Zoom */
+.zoom-controls-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(18, 38, 28, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  padding: 6px 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.zoom-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoom-tool-btn:hover:not(:disabled) {
+  background: rgba(15, 157, 88, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.08);
+}
+
+.zoom-tool-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.zoom-tool-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.zoom-tool-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 6px 14px;
+  color: #FFFFFF;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoom-tool-pill:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.zoom-tool-pill .reset-label {
+  color: #34D399;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 700;
+}
+
+/* Botones de Decisión Rápida (Swipe Continuity) */
+.zoom-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.zoom-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.zoom-action-btn.dislike-action {
+  background: rgba(239, 68, 68, 0.18);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.zoom-action-btn.dislike-action:hover {
+  background: rgba(239, 68, 68, 0.85);
+  color: #FFFFFF;
+  border-color: rgba(239, 68, 68, 1);
+  transform: translateY(-2px) scale(1.04);
+}
+
+.zoom-action-btn.like-action {
+  background: linear-gradient(135deg, #0F9D58 0%, #0B7A44 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  box-shadow: 0 8px 25px rgba(15, 157, 88, 0.4);
+}
+
+.zoom-action-btn.like-action:hover:not(:disabled) {
+  background: linear-gradient(135deg, #10B981 0%, #0F9D58 100%);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 12px 30px rgba(15, 157, 88, 0.55);
+}
+
+.zoom-action-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
+}
+
+.zoom-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Adaptación responsive para dispositivos móviles */
+@media (max-width: 640px) {
+  .book-zoom-modal-header {
+    padding: 24px 16px;
+  }
+
+  .zoom-header-meta {
+    max-width: 75%;
+  }
+
+  .zoom-book-title {
+    font-size: 1.05rem !important;
+    max-width: 220px;
+  }
+
+  .zoom-modal-close-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 1.05rem;
+  }
+
+  .book-zoom-stage {
+    padding: 70px 10px 130px 10px;
+  }
+
+  .zoom-image-display {
+    max-width: 90vw;
+    max-height: 60vh;
+  }
+
+  .book-zoom-modal-footer {
+    bottom: 16px;
+    flex-direction: column;
+    /* gap: 10px; */
+  }
+
+  .zoom-quick-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .zoom-action-btn {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+  }
+
+  .image-zoom-trigger-btn {
+    top: 68px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .image-zoom-trigger-btn.no-undo {
+    top: 14px;
+  }
+}
+

@@ -33,6 +33,7 @@ interface BookCardProps {
   showUndoButton?: boolean;
   canUndo?: boolean;
   onUndo?: () => void;
+  onOpenZoom?: () => void;
   isPremium?: boolean;
   isMatchAnimation?: boolean;
   onTouchStart?: (e: React.TouchEvent) => void;
@@ -59,6 +60,7 @@ export const BookCard: React.FC<BookCardProps> = ({
   showUndoButton = false,
   canUndo = false,
   onUndo,
+  onOpenZoom,
   isPremium = false,
   isMatchAnimation = false,
   onTouchStart,
@@ -142,6 +144,24 @@ export const BookCard: React.FC<BookCardProps> = ({
         <span className="new-arrival-badge">
           <i className="fa-solid fa-star star-gold"></i> Recién Llegado
         </span>
+      )}
+
+      {/* Botón flotante para ampliar portada (Visible en esquina superior derecha) */}
+      {onOpenZoom && (
+        <button
+          type="button"
+          className={`image-zoom-trigger-btn ${!showUndoButton || !onUndo ? 'no-undo' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenZoom();
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          title="Ampliar portada e inspeccionar detalles"
+          aria-label="Ampliar portada"
+        >
+          <i className="fa-solid fa-magnifying-glass-plus"></i>
+        </button>
       )}
 
       <div className="book-card-image-placeholder">
