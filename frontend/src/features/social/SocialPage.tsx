@@ -256,7 +256,7 @@ export const SocialPage: React.FC = () => {
                 <div key={item.id} className="history-timeline-item">
                   <div className="timeline-book-cover">
                     {item.bookImageUrl ? (
-                      <img src={item.bookImageUrl} alt={item.bookTitle} onError={(e) => {
+                      <img src={getFileUrl(item.bookImageUrl)} alt={item.bookTitle} onError={(e) => {
                         (e.target as HTMLImageElement).src = ''; // Ocultar para mostrar fallback
                       }} />
                     ) : (

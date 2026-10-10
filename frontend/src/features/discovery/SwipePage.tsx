@@ -11,6 +11,7 @@ import { UndoSwipePremiumModal } from './components/UndoSwipePremiumModal';
 import { SearchPremiumModal } from './components/SearchPremiumModal';
 import { BookImageZoomModal } from './components/BookImageZoomModal';
 import { apiClient } from '../../lib/apiClient';
+import { getFileUrl } from '../../lib/formatters';
 
 const COUNTRIES_LIST = [
   { name: 'Chile', flag: '/flags/chile.png' },
@@ -138,7 +139,7 @@ export const SwipePage: React.FC = () => {
     nextBooks.forEach((b) => {
       if (b.imageUrl) {
         const img = new Image();
-        img.src = b.imageUrl;
+        img.src = getFileUrl(b.imageUrl);
       }
     });
   }, [currentBookIndex, booksList]);
@@ -231,7 +232,7 @@ export const SwipePage: React.FC = () => {
       for (let i = currentBookIndex + 1; i <= currentBookIndex + 3 && i < books.length; i++) {
         if (books[i]?.imageUrl) {
           const img = new Image();
-          img.src = books[i].imageUrl;
+          img.src = getFileUrl(books[i].imageUrl);
         }
       }
     }

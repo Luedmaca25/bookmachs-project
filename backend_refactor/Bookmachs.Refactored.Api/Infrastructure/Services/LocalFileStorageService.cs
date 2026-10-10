@@ -112,6 +112,7 @@ public class LocalFileStorageService : IFileStorageService
         // 2. Generar nombre de archivo único
         var ext = Path.GetExtension(fileName);
         if (string.IsNullOrEmpty(ext)) ext = ".png";
+        ext = ext.ToLowerInvariant();
         var uniqueFileName = $"{Guid.NewGuid()}{ext}";
         var filePath = Path.Combine(appDataFolder, uniqueFileName);
 
@@ -126,12 +127,23 @@ public class LocalFileStorageService : IFileStorageService
 
     public string? GetSecureUserBookImagePath(Guid userId, string fileName)
     {
-        var filePath = Path.Combine(_environment.ContentRootPath, "App_Data", "books", userId.ToString(), fileName);
+        var appDataFolder = Path.Combine(_environment.ContentRootPath, "App_Data", "books", userId.ToString());
+        if (!Directory.Exists(appDataFolder))
+        {
+            return null;
+        }
+
+        var filePath = Path.Combine(appDataFolder, fileName);
         if (File.Exists(filePath))
         {
             return filePath;
         }
-        return null;
+
+        // Fallback case-insensitive en caso de diferencias de mayúsculas/minúsculas en el sistema de archivos
+        var match = Directory.GetFiles(appDataFolder)
+            .FirstOrDefault(f => string.Equals(Path.GetFileName(f), fileName, StringComparison.OrdinalIgnoreCase));
+
+        return match;
     }
 
     public void DeleteFile(string fileUrl)

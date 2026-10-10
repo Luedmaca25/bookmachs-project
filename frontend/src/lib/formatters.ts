@@ -22,12 +22,49 @@ export const formatRut = (value: string): string => {
  */
 export const getFileUrl = (path: string | undefined | null): string => {
   if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
+
+  const trimmed = path.trim();
+  if (!trimmed) return '';
+
+  // Si ya es una URL absoluta o data/blob URI, retornar directamente
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:')
+  ) {
+    return trimmed;
   }
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5185';
-  return `${baseUrl}${path}`;
+
+  // Base URL configurada en Vite (.env.production o .env.development)
+  const envBase = (import.meta.env.VITE_API_URL ?? '').trim();
+  const baseUrl = envBase || (import.meta.env.DEV ? 'http://localhost:5185' : '/api');
+  const cleanBase = baseUrl.replace(/\/+$/, '');
+
+  // Limpiar posibles duplicaciones accidentales de prefijos (/api/api/...)
+  let cleanPath = trimmed;
+  while (cleanPath.startsWith('/api/api/')) {
+    cleanPath = cleanPath.replace('/api/api/', '/api/');
+  }
+
+  // Idempotencia: Si el path ya contiene la baseUrl al inicio, no volver a concatenar
+  if (cleanBase && (cleanPath === cleanBase || cleanPath.startsWith(`${cleanBase}/`))) {
+    return cleanPath;
+  }
+
+  // Normalizar el slash inicial
+  if (!cleanPath.startsWith('/')) {
+    cleanPath = `/${cleanPath}`;
+  }
+
+  // Si cleanBase es vacío (mismo host), retornar simplemente cleanPath
+  if (!cleanBase) {
+    return cleanPath;
+  }
+
+  return `${cleanBase}${cleanPath}`;
 };
+
 
 /**
  * Obtiene el ícono de FontAwesome representativo para cada categoría / preferencia de lectura

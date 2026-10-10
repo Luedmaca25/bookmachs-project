@@ -53,7 +53,7 @@ public class SocialService : ISocialService
                 : "Bookmachs"),
             BookTitle = e.MatchTransaction?.Book?.Title ?? "Libro sin título",
             BookAuthor = e.MatchTransaction?.Book?.Author ?? "Autor Desconocido",
-            BookImageUrl = e.MatchTransaction?.Book?.ImageUrl ?? string.Empty,
+            BookImageUrl = BookService.FormatImageUrl(e.MatchTransaction?.Book?.ImageUrl) ?? string.Empty,
             LogisticsMethod = e.MatchTransaction?.LogisticsMethod ?? "Intercambio",
             ReviewComment = e.ReviewComment,
             ReviewRating = e.ReviewRating,

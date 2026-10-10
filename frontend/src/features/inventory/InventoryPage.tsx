@@ -274,7 +274,7 @@ export const InventoryPage: React.FC = () => {
                   <div className="match-card-content">
                     <div className="match-card-thumb">
                       {item.bookImageUrl ? (
-                        <img src={item.bookImageUrl} alt={item.bookTitle} />
+                        <img src={getFileUrl(item.bookImageUrl)} alt={item.bookTitle} />
                       ) : (
                         <div className="match-card-thumb-placeholder"><i className="fa-solid fa-book"></i></div>
                       )}
@@ -511,7 +511,7 @@ export const InventoryPage: React.FC = () => {
                         author: book.author,
                         condition: book.condition,
                         description: book.description,
-                        imageUrl: getFileUrl(book.imageUrl),
+                        imageUrl: book.imageUrl,
                         stockBadgeLabel: badgeLabel,
                         stockBadgeIcon: badgeIcon,
                         stockBadgeClass: badgeClass,

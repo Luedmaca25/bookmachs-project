@@ -1441,7 +1441,7 @@ public class BookService : IBookService
         };
     }
 
-    private static string? FormatImageUrl(string? rutaImagen)
+    public static string? FormatImageUrl(string? rutaImagen)
     {
         if (string.IsNullOrWhiteSpace(rutaImagen))
         {
@@ -1454,11 +1454,13 @@ public class BookService : IBookService
             return rutaImagen;
         }
 
-        // Si es un archivo de portada o avatar subido localmente por el usuario (ej: /books/cover/... o /uploads/...)
+        // Si es un archivo de portada o avatar subido localmente por el usuario (ej: /books/cover/... o /uploads/... o /auth/avatar/...)
         if (rutaImagen.StartsWith("/books/cover/", StringComparison.OrdinalIgnoreCase) ||
             rutaImagen.StartsWith("books/cover/", StringComparison.OrdinalIgnoreCase) ||
             rutaImagen.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase) ||
-            rutaImagen.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
+            rutaImagen.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase) ||
+            rutaImagen.StartsWith("/auth/avatar/", StringComparison.OrdinalIgnoreCase) ||
+            rutaImagen.StartsWith("auth/avatar/", StringComparison.OrdinalIgnoreCase))
         {
             return "/" + rutaImagen.TrimStart('/');
         }

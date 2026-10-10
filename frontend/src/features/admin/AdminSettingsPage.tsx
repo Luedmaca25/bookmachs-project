@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
+import { getFileUrl } from '../../lib/formatters';
 
 interface GlobalSettings {
   id: number;
@@ -979,7 +980,7 @@ export const AdminSettingsPage: React.FC = () => {
                 {pendingLogistics.map((item) => (
                   <div key={item.id} className="tag-card active admin-logistics-card">
                     <div className="admin-logistics-card-body">
-                      <img src={item.bookImageUrl || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=100'} alt={item.bookTitle} className="admin-logistics-book-img" />
+                      <img src={getFileUrl(item.bookImageUrl) || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=100'} alt={item.bookTitle} className="admin-logistics-book-img" />
                       <div>
                         <strong className="admin-logistics-book-title">{item.bookTitle}</strong>
                         <div className="admin-logistics-book-user">Solicitado por: <strong>{item.requesterName}</strong></div>

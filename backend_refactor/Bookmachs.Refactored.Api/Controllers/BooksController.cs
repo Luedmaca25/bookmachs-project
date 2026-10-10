@@ -16,6 +16,7 @@ namespace Bookmachs.Refactored.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("[controller]")]
+[Route("api/[controller]")]
 public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;
@@ -481,6 +482,7 @@ public class BooksController : ControllerBase
 
     [AllowAnonymous]
     [HttpGet("/uploads/{fileName}")]
+    [HttpGet("/api/uploads/{fileName}")]
     public IActionResult GetLegacyUpload(string fileName)
     {
         var legacyPath = System.IO.Path.Combine(_environment.ContentRootPath, "wwwroot", "uploads", fileName);
