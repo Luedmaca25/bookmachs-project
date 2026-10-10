@@ -16267,48 +16267,56 @@ body.swipe-page-active .app-footer {
 
 /* Modal Overlay Inmersivo a Pantalla Completa */
 .book-zoom-modal-overlay {
+  gap: 16px;
   position: fixed;
   inset: 0;
   z-index: 999999;
   display: flex;
   flex-direction: column;
-  background: rgba(0,0,0,0.3);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: transparent;
+  /* backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px); */
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   animation: zoomModalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  height: 85vh;
+  align-items: center;
+  justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 @keyframes zoomModalFadeIn {
   from {
     opacity: 0;
-    backdrop-filter: blur(0px);
+    /* backdrop-filter: blur(0px); */
   }
   to {
     opacity: 1;
-    backdrop-filter: blur(18px);
+    /* backdrop-filter: blur(18px); */
   }
 }
 
 /* Header Flotante del Modal */
 .book-zoom-modal-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  /* position: absolute; */
+  /* top: 80px; */
+  /* left: 0; */
+  /* right: 0; */
   z-index: 40;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  padding: 24px 16px;
+  justify-content: end;
+  /* padding: 24px 16px; */
   /* background: linear-gradient(180deg, rgba(6, 17, 12, 0.95) 0%, rgba(6, 17, 12, 0.7) 70%, transparent 100%); */
   pointer-events: auto;
+  width: 100%;
+  padding: 0 16px;
 }
 
 .zoom-header-meta {
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 4px;
   max-width: 80%;
@@ -16385,11 +16393,11 @@ body.swipe-page-active .app-footer {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: #fff;
+  /* backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); */
   border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #FFFFFF !important;
+  color: #000 !important;
   font-size: 1.2rem;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -16398,7 +16406,6 @@ body.swipe-page-active .app-footer {
 }
 
 .zoom-modal-close-btn i {
-  color: #FFFFFF !important;
   transition: transform 0.2s ease;
 }
 
@@ -16419,15 +16426,15 @@ body.swipe-page-active .app-footer {
 
 /* Escenario Central de Inspección */
 .book-zoom-stage {
-  flex: 1;
+  /* flex: 1; */
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   width: 100%;
-  height: 100%;
-  padding: 80px 20px 100px 20px;
-  overflow: hidden;
+  /* height: 100%; */
+  /* padding: 80px 20px 100px 20px; */
+  /* overflow: hidden; */
   box-sizing: border-box;
   touch-action: none;
 }
@@ -16456,7 +16463,7 @@ body.swipe-page-active .app-footer {
   height: auto;
   object-fit: contain;
   border-radius: 14px;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  /* box-shadow: 0 25px 70px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1); */
   pointer-events: none;
 }
 
@@ -16494,16 +16501,16 @@ body.swipe-page-active .app-footer {
 
 /* Barra de Controles Inferior */
 .book-zoom-modal-footer {
-  position: absolute;
-  bottom: 22px;
-  left: 0;
-  right: 0;
+  /* position: absolute; */
+  /* bottom: 22px; */
+  /* left: 0; */
+  /* right: 0; */
   z-index: 40;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
-  padding: 0 20px;
+  /* gap: 32px; */
+  /* padding: 0 20px; */
   pointer-events: none;
 }
 
@@ -16517,7 +16524,7 @@ body.swipe-page-active .app-footer {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.15);
+  background: #f0f0f0;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -16533,9 +16540,9 @@ body.swipe-page-active .app-footer {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: #fff;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #FFFFFF;
+  color: #000;
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -16545,6 +16552,7 @@ body.swipe-page-active .app-footer {
   background: rgba(15, 157, 88, 0.8);
   border-color: rgba(255, 255, 255, 0.3);
   transform: scale(1.08);
+  color: #fff;
 }
 
 .zoom-tool-btn:active:not(:disabled) {
@@ -16564,7 +16572,7 @@ body.swipe-page-active .app-footer {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
   padding: 6px 14px;
-  color: #FFFFFF;
+  color: #000;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -16646,7 +16654,7 @@ body.swipe-page-active .app-footer {
 /* Adaptación responsive para dispositivos móviles */
 @media (max-width: 640px) {
   .book-zoom-modal-header {
-    padding: 24px 16px;
+    /* padding: 24px 16px; */
   }
 
   .zoom-header-meta {
@@ -16665,7 +16673,7 @@ body.swipe-page-active .app-footer {
   }
 
   .book-zoom-stage {
-    padding: 70px 10px 130px 10px;
+    /* padding: 70px 10px 130px 10px; */
   }
 
   .zoom-image-display {
@@ -16674,9 +16682,9 @@ body.swipe-page-active .app-footer {
   }
 
   .book-zoom-modal-footer {
-    bottom: 16px;
-    flex-direction: column;
-    /* gap: 10px; */
+    /* bottom: 16px; */
+    flex-direction: column-reverse;
+    gap: 12px;
   }
 
   .zoom-quick-actions {
@@ -16685,7 +16693,7 @@ body.swipe-page-active .app-footer {
   }
 
   .zoom-action-btn {
-    padding: 8px 14px;
+    padding: 12px 24px;
     font-size: 0.8rem;
   }
 

@@ -213,10 +213,10 @@ export const BookImageZoomModal: React.FC<BookImageZoomModalProps> = ({
       {/* Barra superior con metadatos y botón de cerrar */}
       <div className="book-zoom-modal-header" onClick={(e) => e.stopPropagation()}>
         <div className="zoom-header-meta">
-          {/* <div className="zoom-header-badge">
+          <div className="zoom-header-badge">
             <i className="fa-solid fa-magnifying-glass"></i>
             <span>Inspección de Portada</span>
-          </div> */}
+          </div>
           <h3 id="zoom-modal-book-title" className="zoom-book-title font-heading" title={title}>
             {title}
           </h3>
@@ -310,7 +310,7 @@ export const BookImageZoomModal: React.FC<BookImageZoomModalProps> = ({
             title="Restablecer tamaño (100%)"
           >
             <span>{currentZoomPercent}%</span>
-            {scale !== 1 && <span className="reset-label">Restablecer</span>}
+            {/* {scale !== 1 && <span className="reset-label">Restablecer</span>} */}
           </button>
 
           <button
