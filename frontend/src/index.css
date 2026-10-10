@@ -16458,7 +16458,7 @@ body.swipe-page-active .app-footer {
 .zoom-image-display {
   display: block;
   max-width: 82vw;
-  max-height: 68vh;
+  max-height: calc(95vh - 210px);
   width: auto;
   height: auto;
   object-fit: contain;
