@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getFileUrl } from '../../../lib/formatters';
 
 export interface BookCardData {
@@ -72,11 +72,51 @@ export const BookCard: React.FC<BookCardProps> = ({
   onMouseLeave,
 }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [hasMoreText, setHasMoreText] = useState(false);
+  const descRef = useRef<HTMLParagraphElement>(null);
 
   // Al cambiar de libro, reiniciar el estado de expansión de sinopsis
   useEffect(() => {
     setIsDescriptionExpanded(false);
   }, [book.id]);
+
+  // Verificar si la descripción realmente excede las 2 líneas visibles
+  useEffect(() => {
+    if (!book.description) {
+      setHasMoreText(false);
+      return;
+    }
+
+    const checkOverflow = () => {
+      const el = descRef.current;
+      if (!el) return;
+
+      // Solo evaluamos el desborde cuando está en estado colapsado (2 líneas)
+      if (!isDescriptionExpanded) {
+        const isClamped = el.scrollHeight > el.clientHeight + 1;
+        setHasMoreText(isClamped);
+      }
+    };
+
+    checkOverflow();
+    const frameId = requestAnimationFrame(checkOverflow);
+    const timeoutId = setTimeout(checkOverflow, 100);
+
+    const el = descRef.current;
+    let observer: ResizeObserver | null = null;
+    if (el && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => {
+        checkOverflow();
+      });
+      observer.observe(el);
+    }
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timeoutId);
+      if (observer) observer.disconnect();
+    };
+  }, [book.id, book.description, isDescriptionExpanded]);
 
   const isSwipedRight = className.includes('swiped-right') || swipeDirection === 'right';
   const isSwipedLeft = className.includes('swiped-left') || swipeDirection === 'left';
@@ -271,11 +311,14 @@ export const BookCard: React.FC<BookCardProps> = ({
           <h3>{book.title || 'Descubre Libros'}</h3>
           <span className="book-author">Autor: {book.author || 'Desconocido'}</span>
 
-          <p className={`book-desc ${isDescriptionExpanded ? 'expanded' : ''}`}>
+          <p
+            ref={descRef}
+            className={`book-desc ${isDescriptionExpanded ? 'expanded' : ''}`}
+          >
             {book.description || 'Encuentra tu próximo match.'}
           </p>
 
-          {book.description && book.description.length > 55 && (
+          {hasMoreText && (
             <button
               type="button"
               className="see-more-btn"

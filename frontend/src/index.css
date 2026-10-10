@@ -2830,7 +2830,7 @@ body.swipe-page-active .app-footer {
   overflow-y: auto;
   box-sizing: border-box;
   pointer-events: auto;
-  min-height: 130px;
+  /* min-height: 130px; */
   touch-action: pan-y;
 }
 
@@ -2840,6 +2840,10 @@ body.swipe-page-active .app-footer {
   color: var(--text-primary);
   margin: 0;
   line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .book-author {
@@ -11259,6 +11263,10 @@ body.swipe-page-active .app-footer {
 
 /* 3. Mobile / Small Tablet Breakpoint (max-width: 767px) */
 @media (max-width: 767px) {
+  .guest-limit-modal-overlay {
+    justify-content: flex-end !important;
+  }
+
   /* Barra de Búsqueda Catálogo Responsiva */
   .spotify-search-input-wrapper {
     min-height: 48px;
@@ -12731,7 +12739,7 @@ body.swipe-page-active .app-footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   padding: 1rem;
   box-sizing: border-box;
   animation: fadeIn 0.2s ease;
