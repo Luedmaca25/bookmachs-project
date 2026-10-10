@@ -99,8 +99,20 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
   };
 
   const modalContent = (
-    <div ref={overlayRef} className="help-modal-overlay" onClick={isSubmitting ? undefined : onClose}>
-      <div className="help-modal-card cancel-sub-modal" onClick={(e) => e.stopPropagation()}>
+    <div ref={overlayRef} className="guest-limit-modal-overlay" onClick={isSubmitting ? undefined : onClose}>
+      <div className="guest-limit-modal-card cancel-sub-modal" onClick={(e) => e.stopPropagation()}>
+        {/* Botón de cierre homologado */}
+        <button
+          type="button"
+          className="guest-limit-close-btn"
+          onClick={onClose}
+          disabled={isSubmitting}
+          aria-label="Cerrar modal"
+          title="Cerrar modal"
+        >
+          <i className="fa-solid fa-xmark"></i>
+        </button>
+
         {/* Header del modal */}
         <div className="help-modal-header cancel-sub-header">
           <div className="help-modal-header-title">
@@ -108,14 +120,6 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
               <h3 className="help-modal-title">Cancelar Suscripción</h3>
             </div>
           </div>
-          <button
-            className="help-modal-close-btn"
-            onClick={onClose}
-            disabled={isSubmitting}
-            aria-label="Cerrar modal"
-          >
-            <i className="fa-solid fa-xmark"></i>
-          </button>
         </div>
 
         {/* Cuerpo del modal */}

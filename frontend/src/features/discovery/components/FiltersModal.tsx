@@ -175,25 +175,24 @@ export const FiltersModal: React.FC<FiltersModalProps> = ({
   };
 
   const modalContent = (
-    <div className="filters-modal-overlay" onClick={onClose}>
+    <div className="guest-limit-modal-overlay filters-modal-overlay" onClick={onClose}>
       <div
-        className="filters-modal-sheet"
+        className="guest-limit-modal-card filters-modal-sheet"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="filters-modal-title"
       >
-        {/* Cabecera del modal */}
-        <div className="filters-modal-header">
-          <button
-            type="button"
-            className="filters-modal-close-btn"
-            onClick={onClose}
-            aria-label="Cerrar filtros"
-          >
-            <i className="fa-solid fa-xmark"></i>
-          </button>
-        </div>
+        {/* Botón flotante para cerrar homologado */}
+        <button
+          type="button"
+          className="guest-limit-close-btn"
+          onClick={onClose}
+          aria-label="Cerrar filtros"
+          title="Cerrar filtros"
+        >
+          <i className="fa-solid fa-xmark"></i>
+        </button>
 
         {/* Título y subtítulo */}
         <div className="filters-modal-titles">

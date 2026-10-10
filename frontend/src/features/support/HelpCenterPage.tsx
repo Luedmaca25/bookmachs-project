@@ -942,8 +942,18 @@ export const HelpCenterPage: React.FC = () => {
       {/* MODAL / DRAWER DE CONTACTO Y SOPORTE (Incluye Soporte 24/7)  */}
       {/* ============================================================ */}
       {isContactModalOpen && createPortal(
-        <div className="help-modal-overlay" onClick={() => setIsContactModalOpen(false)}>
-          <div className="help-modal-card support-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="guest-limit-modal-overlay" onClick={() => setIsContactModalOpen(false)}>
+          <div className="guest-limit-modal-card support-modal" onClick={(e) => e.stopPropagation()}>
+            <button 
+              type="button"
+              className="guest-limit-close-btn" 
+              onClick={() => setIsContactModalOpen(false)}
+              aria-label="Cerrar modal"
+              title="Cerrar modal"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
             <div className="help-modal-header">
               <div className="help-modal-header-title">
                 <div className="help-modal-header-icon">
@@ -958,13 +968,6 @@ export const HelpCenterPage: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <button 
-                className="help-modal-close-btn" 
-                onClick={() => setIsContactModalOpen(false)}
-                aria-label="Cerrar modal"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
             </div>
 
             <div className="help-modal-body">

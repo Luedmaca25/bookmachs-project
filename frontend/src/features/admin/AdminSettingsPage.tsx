@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 
@@ -1005,19 +1006,20 @@ export const AdminSettingsPage: React.FC = () => {
       </div>
 
       {/* SENIOR UX MODAL DETALLE DE USUARIO */}
-      {selectedUserDetail && (
-        <div className="modal-overlay">
-          <div className="modal-card admin-modal-card-user">
-            <div className="admin-modal-user-banner">
-              <button 
-                type="button"
-                onClick={() => setSelectedUserDetail(null)}
-                className="admin-modal-user-banner-close"
-                title="Cerrar ventana"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
+      {selectedUserDetail && createPortal(
+        <div className="guest-limit-modal-overlay" onClick={() => setSelectedUserDetail(null)}>
+          <div className="guest-limit-modal-card admin-modal-card-user" onClick={(e) => e.stopPropagation()}>
+            <button 
+              type="button"
+              onClick={() => setSelectedUserDetail(null)}
+              className="guest-limit-close-btn"
+              title="Cerrar ventana"
+              aria-label="Cerrar ventana"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
 
+            <div className="admin-modal-user-banner">
               <div className="admin-modal-user-profile-header">
                 {selectedUserDetail.profileImageUrl ? (
                   <img src={selectedUserDetail.profileImageUrl} alt={selectedUserDetail.name} className="admin-modal-user-avatar-large" />
@@ -1147,27 +1149,27 @@ export const AdminSettingsPage: React.FC = () => {
                 onClick={() => setSelectedUserDetail(null)} 
                 className="cancel-btn"
               >
-                Cerrar Ventana
+                Cerrar
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL DE EDICIÓN DE GUSTO Y MAPEO DE CATEGORÍAS REALES */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card admin-modal-card">
-            <div className="admin-modal-close-bar">
-              <button 
-                type="button" 
-                onClick={closeModal} 
-                className="admin-modal-banner-close"
-                title="Cerrar ventana"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
-            </div>
+      {isModalOpen && createPortal(
+        <div className="guest-limit-modal-overlay" onClick={closeModal}>
+          <div className="guest-limit-modal-card admin-modal-card" onClick={(e) => e.stopPropagation()}>
+            <button 
+              type="button" 
+              onClick={closeModal} 
+              className="guest-limit-close-btn"
+              title="Cerrar ventana"
+              aria-label="Cerrar ventana"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
 
             <form onSubmit={handleSaveTagModal} className="admin-modal-form-body">
               <div className="modal-header">
@@ -1268,7 +1270,8 @@ export const AdminSettingsPage: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

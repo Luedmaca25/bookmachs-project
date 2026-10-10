@@ -12,16 +12,22 @@ export const StepByStepTutorialModal: React.FC<StepByStepTutorialModalProps> = (
   onClose,
   onStartSwiping,
 }) => {
-  // Cerrar con tecla Escape
+  // Cerrar con tecla Escape y bloquear scroll del body
   useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -36,16 +42,16 @@ export const StepByStepTutorialModal: React.FC<StepByStepTutorialModalProps> = (
 
   const modalContent = (
     <div
-      className="modal-overlay tutorial-modal-overlay"
+      className="guest-limit-modal-overlay"
       onClick={handleClose}
     >
       <div
-        className="tutorial-modal-card tutorial-image-modal-card"
+        className="guest-limit-modal-card tutorial-image-modal-card"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botón flotante para cerrar */}
         <button
-          className="tutorial-close-btn tutorial-image-close-btn"
+          className="guest-limit-close-btn"
           onClick={handleClose}
           title="Cerrar"
           aria-label="Cerrar modal"

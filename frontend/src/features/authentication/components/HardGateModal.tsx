@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../../../lib/apiClient';
 import { formatRut, formatPhoneByCountry, getPhonePlaceholder } from '../../../lib/formatters';
@@ -144,9 +145,9 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
     }
   };
 
-  return (
-    <div className="modal-overlay">
-      <div className="modal-card">
+  return createPortal(
+    <div className="guest-limit-modal-overlay">
+      <div className="guest-limit-modal-card modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>📚 Únete a Intercambialibros</h2>
           <p>Para deslizar libros y empezar a intercambiar, debes tener una cuenta activa.</p>
@@ -264,6 +265,7 @@ export const HardGateModal: React.FC<HardGateModalProps> = ({ isOpen, onSuccess 
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

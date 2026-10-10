@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
@@ -624,9 +625,18 @@ export const SocialPage: React.FC = () => {
       )}
 
       {/* Modal para ingresar Calificación y Reseña (Tarea 42) */}
-      {isReviewModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+      {isReviewModalOpen && createPortal(
+        <div className="guest-limit-modal-overlay" onClick={() => setIsReviewModalOpen(false)}>
+          <div className="guest-limit-modal-card modal-card" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="guest-limit-close-btn"
+              onClick={() => setIsReviewModalOpen(false)}
+              aria-label="Cerrar modal"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
             <div className="modal-header">
               <h2><i className="fa-solid fa-pen-to-square"></i> Escribir Reseña / Nota</h2>
               <p>Valora tu experiencia con el libro <strong>"{selectedBookTitle}"</strong></p>
@@ -684,7 +694,8 @@ export const SocialPage: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

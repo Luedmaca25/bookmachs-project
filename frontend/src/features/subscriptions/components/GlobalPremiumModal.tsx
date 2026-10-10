@@ -22,15 +22,22 @@ export const GlobalPremiumModal: React.FC<GlobalPremiumModalProps> = ({
   const navigate = useNavigate();
 
   // Cerrar al presionar tecla Escape
+  // Cerrar al presionar tecla Escape y bloquear scroll del body
   useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -48,14 +55,14 @@ export const GlobalPremiumModal: React.FC<GlobalPremiumModalProps> = ({
       : 'Disfruta de búsquedas directas, catálogo avanzado, swaps ilimitados, reservas de libros y soporte prioritario 24/7.');
 
   const modalContent = (
-    <div className="modal-overlay tutorial-modal-overlay" onClick={onClose}>
+    <div className="guest-limit-modal-overlay" onClick={onClose}>
       <div
-        className="tutorial-modal-card guest-limit-modal-card undo-premium-modal-card"
+        className="guest-limit-modal-card undo-premium-modal-card"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botón flotante para cerrar */}
         <button
-          className="tutorial-close-btn"
+          className="guest-limit-close-btn"
           onClick={onClose}
           title="Cerrar modal"
           aria-label="Cerrar modal"

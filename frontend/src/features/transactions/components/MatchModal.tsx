@@ -100,6 +100,24 @@ export const MatchModal: React.FC<MatchModalProps> = ({
     fetchFee();
   }, [isOpen, book]);
 
+  // Cerrar con Escape y bloquear scroll del body
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   const handleBookChange = (newBookId: string) => {
     setSelectedOfferedBookId(newBookId);
   };
@@ -110,12 +128,12 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   const userHasBooks = hasOfferedBooks && myBooks.length > 0;
 
   return createPortal(
-    <div className="modal-overlay">
-      <div className="modal-card match-modal-card match-modal-card-custom">
+    <div className="guest-limit-modal-overlay" onClick={onClose}>
+      <div className="guest-limit-modal-card match-modal-card match-modal-card-custom" onClick={(e) => e.stopPropagation()}>
         {/* Botón de Cierre Superior */}
         <button 
           type="button" 
-          className="modal-close-btn-top" 
+          className="guest-limit-close-btn" 
           onClick={onClose}
           aria-label="Cerrar modal"
         >

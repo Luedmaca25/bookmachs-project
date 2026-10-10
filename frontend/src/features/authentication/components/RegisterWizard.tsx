@@ -1081,19 +1081,22 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
 
       {/* MODAL PROVISIONAL PARA CONDICIONES DE USO Y PRIVACIDAD */}
       {termsModalOpen && (
-        <div className="register-legal-modal-backdrop" onClick={() => setTermsModalOpen(false)}>
-          <div className="register-legal-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="guest-limit-modal-overlay register-legal-modal-backdrop" onClick={() => setTermsModalOpen(false)}>
+          <div className="guest-limit-modal-card register-legal-modal-card" onClick={(e) => e.stopPropagation()}>
+            <button 
+              type="button" 
+              className="guest-limit-close-btn" 
+              onClick={() => setTermsModalOpen(false)}
+              aria-label="Cerrar modal"
+              title="Cerrar modal"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
             <div className="register-legal-modal-header">
               <h3>
                 {termsModalType === 'terms' ? 'Condiciones de Uso' : 'Política de Privacidad'}
               </h3>
-              <button 
-                type="button" 
-                className="register-legal-modal-close" 
-                onClick={() => setTermsModalOpen(false)}
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
             </div>
 
             <div className="register-legal-modal-body">

@@ -13,16 +13,22 @@ export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Cerrar al presionar tecla Escape
+  // Cerrar al presionar tecla Escape y bloquear scroll del body
   useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;

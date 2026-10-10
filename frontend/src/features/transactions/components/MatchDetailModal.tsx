@@ -63,7 +63,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const [myInventory, setMyInventory] = useState<MyOfferedBook[]>([]);
   const [selectedOfferedId, setSelectedOfferedId] = useState<string>('');
 
-  // Bloquear scroll de html y body mientras el modal de detalle esté abierto
+  // Bloquear scroll de html y body y cerrar con Escape mientras el modal de detalle esté abierto
   useEffect(() => {
     if (isOpen) {
       document.documentElement.style.overflow = 'hidden';
@@ -73,11 +73,21 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
       document.body.style.overflow = '';
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
     return () => {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -177,12 +187,12 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
   const currentMethod = transaction.logisticsMethod || 'Presencial';
 
   return createPortal(
-    <div className="modal-overlay">
-      <div className="modal-card match-modal-card match-modal-card-custom">
+    <div className="guest-limit-modal-overlay" onClick={onClose}>
+      <div className="guest-limit-modal-card match-modal-card match-modal-card-custom" onClick={(e) => e.stopPropagation()}>
         {/* Botón de Cierre Superior */}
         <button 
           type="button" 
-          className="modal-close-btn-top" 
+          className="guest-limit-close-btn" 
           onClick={onClose}
           aria-label="Cerrar modal"
         >
@@ -466,7 +476,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         </div>
 
         {/* ACCIONES FINALES */}
-        <div className="match-actions match-actions-col">
+        {/* <div className="match-actions match-actions-col">
           <button 
             type="button" 
             className="keep-swiping-btn btn-keep-discovering" 
@@ -474,7 +484,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
           >
             {isThankYouPage ? '✓ Entendido, ir a mis Intercambios' : 'Cerrar Detalle'}
           </button>
-        </div>
+        </div> */}
       </div>
     </div>,
     document.body

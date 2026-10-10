@@ -762,11 +762,11 @@ export const CatalogPage: React.FC = () => {
 
       {/* Modal de Mis Reservas Activas (Portal a document.body) */}
       {showReservationsModal && createPortal(
-        <div className="modal-overlay tutorial-modal-overlay animated-fade-in" onClick={() => setShowReservationsModal(false)}>
-          <div className="tutorial-modal-card catalog-reservations-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="guest-limit-modal-overlay animated-fade-in" onClick={() => setShowReservationsModal(false)}>
+          <div className="guest-limit-modal-card catalog-reservations-modal-card" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
-              className="tutorial-close-btn"
+              className="guest-limit-close-btn"
               onClick={() => setShowReservationsModal(false)}
               title="Cerrar modal"
               aria-label="Cerrar modal"
