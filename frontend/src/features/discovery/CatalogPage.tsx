@@ -378,7 +378,7 @@ export const CatalogPage: React.FC = () => {
             </li>
           </ul>
 
-          <button className="paywall-cta-btn font-heading" onClick={() => navigate('/planes')}>
+          <button className="paywall-cta-btn font-heading" onClick={() => navigate('/planes?plan=premium#plan-premium')}>
              Ver Planes y Membresías <i className="fa-solid fa-bolt"></i>
           </button>
         </div>

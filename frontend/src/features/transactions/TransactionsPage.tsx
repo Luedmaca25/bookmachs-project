@@ -590,7 +590,7 @@ export const TransactionsPage: React.FC = () => {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate('/planes');
+                                  navigate('/planes?plan=premium#plan-premium');
                                 }}
                                 style={{ background: '#D97706', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                               >
@@ -716,7 +716,7 @@ export const TransactionsPage: React.FC = () => {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate('/planes');
+                                  navigate('/planes?plan=premium#plan-premium');
                                 }}
                                 style={{ background: '#D97706', color: '#ffffff', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                               >
@@ -888,7 +888,7 @@ export const TransactionsPage: React.FC = () => {
                         {!quota.isPremium && (
                           <button
                             type="button"
-                            onClick={() => navigate('/planes')}
+                            onClick={() => navigate('/planes?plan=premium#plan-premium')}
                             style={{
                               background: '#10b981',
                               color: '#fff',
@@ -973,7 +973,7 @@ export const TransactionsPage: React.FC = () => {
                         type="button"
                         className="confirm-checkout-btn font-heading"
                         style={{ background: '#e11d48', color: '#fff', marginTop: '10px', width: '100%' }}
-                        onClick={() => navigate('/planes')}
+                        onClick={() => navigate('/planes?plan=premium#plan-premium')}
                       >
                         <i className="fa-solid fa-crown"></i> Desbloquear 5 Intercambios con Premium
                       </button>
@@ -1027,7 +1027,7 @@ export const TransactionsPage: React.FC = () => {
                 {!quota.isPremium && (
                   <button
                     type="button"
-                    onClick={() => navigate('/planes')}
+                    onClick={() => navigate('/planes?plan=premium#plan-premium')}
                     style={{
                       background: '#10b981',
                       color: '#fff',
@@ -1099,7 +1099,7 @@ export const TransactionsPage: React.FC = () => {
           {!quota.isPremium && (
             <button
               type="button"
-              onClick={() => navigate('/planes')}
+              onClick={() => navigate('/planes?plan=premium#plan-premium')}
               className="btn-green-inventory"
               style={{ background: '#e11d48', color: '#fff' }}
             >

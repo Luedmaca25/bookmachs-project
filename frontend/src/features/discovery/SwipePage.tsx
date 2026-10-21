@@ -746,7 +746,7 @@ export const SwipePage: React.FC = () => {
               <span className="lock-icon"><i className="fa-solid fa-lock"></i></span>
               <h3>Límite de swipes alcanzado</h3>
               <p>Has consumido tu cuota de swipes del plan gratuito. Pásate a un plan Premium hoy mismo para continuar explorando sin límites.</p>
-              <button className="upsell-trigger-btn font-heading" onClick={() => navigate('/planes')}>
+              <button className="upsell-trigger-btn font-heading" onClick={() => navigate('/planes?plan=premium#plan-premium')}>
                 <i className="fa-solid fa-crown icon-gold"></i> Ver Planes Premium <i className="fa-solid fa-arrow-right-long"></i>
               </button>
             </div>

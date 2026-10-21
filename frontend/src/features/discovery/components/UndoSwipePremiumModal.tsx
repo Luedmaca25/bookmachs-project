@@ -89,7 +89,7 @@ export const UndoSwipePremiumModal: React.FC<UndoSwipePremiumModalProps> = ({
               className="guest-limit-btn-primary undo-premium-cta-btn font-heading"
               onClick={() => {
                 onClose();
-                navigate('/planes');
+                navigate('/planes?plan=premium#plan-premium');
               }}
             >
               <i className="fa-solid fa-crown"></i> Ver Planes y Membresías

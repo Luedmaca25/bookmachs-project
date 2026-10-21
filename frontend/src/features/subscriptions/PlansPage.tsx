@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
@@ -23,6 +23,8 @@ export const PlansPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [highlightPremium, setHighlightPremium] = useState(false);
+  const location = useLocation();
 
   const { data: globalSettings } = useQuery<{ premiumPlanPriceUsd: number }>({
     queryKey: ['globalSettings'],
@@ -77,6 +79,35 @@ export const PlansPage: React.FC = () => {
       handleConfirmWebpay(tokenWs);
     }
   }, []);
+
+  React.useEffect(() => {
+    const hash = window.location.hash || location.hash;
+    const urlParams = new URLSearchParams(window.location.search || location.search);
+    const target = urlParams.get('plan') || (hash ? hash.replace('#', '') : null) || (location.state as any)?.targetPlan;
+
+    if (target === 'premium' || target === 'plan-premium') {
+      setHighlightPremium(true);
+      const scrollToPremium = () => {
+        const premiumEl = document.getElementById('plan-premium');
+        if (premiumEl) {
+          const yOffset = -85; // Margen superior para compensar el header fijo (68px)
+          const y = premiumEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+        }
+      };
+
+      scrollToPremium();
+      const t1 = setTimeout(scrollToPremium, 120);
+      const t2 = setTimeout(scrollToPremium, 350);
+      const t3 = setTimeout(() => setHighlightPremium(false), 2600);
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    }
+  }, [location]);
 
   const handleConfirmWebpay = async (token: string) => {
     setLoadingPlanId('premium');
@@ -187,7 +218,7 @@ export const PlansPage: React.FC = () => {
           const isCancelledPremium = isUserCurrent && user?.isSubscriptionCancelled && plan.id === 'premium';
 
           return (
-            <div key={plan.id} className={`plan-card ${plan.recommended && !isCancelledPremium ? 'recommended' : ''} ${isUserCurrent ? 'current-active' : ''}`}>
+            <div key={plan.id} id={`plan-${plan.id}`} className={`plan-card ${plan.recommended && !isCancelledPremium ? 'recommended' : ''} ${isUserCurrent ? 'current-active' : ''} ${plan.id === 'premium' && highlightPremium ? 'plan-highlight' : ''}`}>
               {/* Badge superior único jerárquico para evitar superposición */}
               {isCancelledPremium ? (
                 <div className="plan-badge-warning">
