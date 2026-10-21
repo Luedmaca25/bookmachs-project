@@ -5,7 +5,6 @@ import { useAuthStore } from '../authentication/store/authStore';
 import { OnboardingWizard } from '../authentication/components/OnboardingWizard';
 import { MatchModal } from '../transactions/components/MatchModal';
 import { BookCard } from './components/BookCard';
-import { StepByStepTutorialModal } from './components/StepByStepTutorialModal';
 import { GuestLimitModal } from './components/GuestLimitModal';
 import { UndoSwipePremiumModal } from './components/UndoSwipePremiumModal';
 import { SearchPremiumModal } from './components/SearchPremiumModal';
@@ -13,14 +12,7 @@ import { BookImageZoomModal } from './components/BookImageZoomModal';
 import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
 
-const COUNTRIES_LIST = [
-  { name: 'Chile', flag: '/flags/chile.png' },
-  { name: 'Argentina', flag: '/flags/argentina.png' },
-  { name: 'Perú', flag: '/flags/peru.png' },
-  { name: 'México', flag: '/flags/mexico.png' },
-  { name: 'Ecuador', flag: '/flags/ecuador.png' },
-  { name: 'España', flag: '/flags/espana.png' }
-];
+
 
 interface BookItem {
   id: string;
@@ -41,8 +33,7 @@ export const SwipePage: React.FC = () => {
   // Control de Onboarding
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
-  // Control del Tutorial Paso a Paso (Solo se abre al presionar el botón)
-  const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
+
 
 
 
@@ -589,36 +580,7 @@ export const SwipePage: React.FC = () => {
 
   return (
     <div className="swipe-page-container">
-      {!isAuthenticated && (
-        <div className="guest-hero-container">
-          <h1 className="guest-hero-title">
-            Más de 100.000 libros <br />
-            <span className="guest-hero-title-highlight">para intercambiar</span>
-          </h1>
-          <p className="guest-hero-subtitle">
-            Más de 100.000 libros para intercambiar, <br />
-            actualizados todos los días.
-          </p>
 
-          <button
-            onClick={() => setIsTutorialOpen(true)}
-            className="guest-tutorial-trigger-btn font-heading"
-          >
-            <i className="fa-solid fa-circle-play"></i> Ver cómo funciona
-          </button>
-
-          <div className="guest-flags-row">
-            {COUNTRIES_LIST.map((country) => (
-              <React.Fragment key={country.name}>
-                <div className="guest-flag-item">
-                  <img src={country.flag} alt={country.name} className="guest-flag-img" />
-                  <span>{country.name}</span>
-                </div>
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      )}
 
       {isRecommendationsLoading ? (
         <div className="swipe-loading-container">
@@ -802,7 +764,7 @@ export const SwipePage: React.FC = () => {
             </h1>
             <div className="user-auth-badge" style={{ gap: '10px' }}>
               <button
-                onClick={() => setIsTutorialOpen(true)}
+                onClick={() => window.dispatchEvent(new CustomEvent('open-tutorial'))}
                 className="header-tutorial-btn font-heading"
                 title="¿Cómo funciona?"
               >
@@ -838,14 +800,7 @@ export const SwipePage: React.FC = () => {
         </>
       )}
 
-      {/* Modal de Tutorial Paso a Paso */}
-      <StepByStepTutorialModal
-        isOpen={isTutorialOpen}
-        onClose={() => setIsTutorialOpen(false)}
-        onStartSwiping={() => {
-          setIsTutorialOpen(false);
-        }}
-      />
+
 
       <MatchModal
         isOpen={matchOpen}

@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../features/authentication/store/authStore';
 import { GlobalPremiumModal } from '../../features/subscriptions/components/GlobalPremiumModal';
+import { StepByStepTutorialModal } from '../../features/discovery/components/StepByStepTutorialModal';
 import { apiClient } from '../../lib/apiClient';
 
 export const MainLayout: React.FC = () => {
@@ -11,6 +12,13 @@ export const MainLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [premiumModalInfo, setPremiumModalInfo] = useState<{ featureName?: string; icon?: string } | null>(null);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenTutorial = () => setIsTutorialOpen(true);
+    window.addEventListener('open-tutorial', handleOpenTutorial);
+    return () => window.removeEventListener('open-tutorial', handleOpenTutorial);
+  }, []);
   const location = useLocation();
 
   // Consulta de matches para verificar si el usuario tiene matches pendientes de confirmar/pagar
@@ -164,6 +172,20 @@ export const MainLayout: React.FC = () => {
 
         {/* MENÚ DESKTOP (Pantallas > 768px) */}
         <nav className="app-nav desktop-nav">
+          <button
+            type="button"
+            className="header-tutorial-pill-btn desktop-tutorial-pill"
+            onClick={() => setIsTutorialOpen(true)}
+            aria-label="Ver cómo funciona"
+            title="Ver cómo funciona"
+          >
+            <i className="fa-regular fa-circle-play tutorial-play-icon"></i>
+            <div className="tutorial-pill-text">
+              <span>Ver cómo</span>
+              <span>funciona</span>
+            </div>
+          </button>
+
           <Link to="/" className="nav-link">Descubrir</Link>
           
           {isAuthenticated && user && (
@@ -229,6 +251,19 @@ export const MainLayout: React.FC = () => {
         {/* ACCIONES MÓVIL: PERFIL Y MENÚ HAMBURGUESA */}
         <div className="header-mobile-actions">
           <button
+            type="button"
+            className="header-tutorial-pill-btn"
+            onClick={() => setIsTutorialOpen(true)}
+            aria-label="Ver cómo funciona"
+            title="Ver cómo funciona"
+          >
+            <i className="fa-regular fa-circle-play tutorial-play-icon"></i>
+            <div className="tutorial-pill-text">
+              <span>Ver cómo</span>
+              <span>funciona</span>
+            </div>
+          </button>
+          <button
             className={`mobile-profile-btn ${location.pathname === '/auth' ? 'active' : ''}`}
             aria-label="Mi perfil"
             title="Mi perfil"
@@ -263,6 +298,17 @@ export const MainLayout: React.FC = () => {
               <Link to="/" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
                 <i className="fa-solid fa-fire"></i> Descubrir
               </Link>
+
+              <button
+                type="button"
+                className="offcanvas-link offcanvas-tutorial-link"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setIsTutorialOpen(true);
+                }}
+              >
+                <i className="fa-regular fa-circle-play"></i> ¿Cómo funciona?
+              </button>
 
               {isAuthenticated && user && (
                 <>
@@ -468,6 +514,12 @@ export const MainLayout: React.FC = () => {
         onClose={() => setPremiumModalOpen(false)}
         featureName={premiumModalInfo?.featureName}
         icon={premiumModalInfo?.icon}
+      />
+
+      {/* MODAL GLOBAL DE TUTORIAL PASO A PASO */}
+      <StepByStepTutorialModal
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
       />
     </div>
   );

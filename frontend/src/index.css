@@ -2006,17 +2006,7 @@ body.swipe-page-active .app-container {
 }
 
 .guest-hero-container {
-  padding: 0;
-  margin: 0 0 0.15rem 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  width: 100%;
-  max-width: 440px;
-  box-sizing: border-box;
+  display: none !important;
 }
 
 .guest-hero-title {
@@ -8478,6 +8468,75 @@ body.swipe-page-active .app-footer {
 /* ==========================================================================
    Navegación Móvil Offcanvas Estilo Bootstrap 5 & Responsividad
    ========================================================================== */
+/* Botón tipo píldora "Ver cómo funciona" en el Header */
+.header-tutorial-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1.5px solid #0F9D58;
+  color: #0F9D58;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(15, 157, 88, 0.12);
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.header-tutorial-pill-btn:hover {
+  background: rgba(15, 157, 88, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(15, 157, 88, 0.2);
+}
+
+.header-tutorial-pill-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.header-tutorial-pill-btn .tutorial-play-icon {
+  font-size: 1.45rem;
+  color: #0F9D58;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-tutorial-pill-btn .tutorial-pill-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.12;
+}
+
+.header-tutorial-pill-btn .tutorial-pill-text span {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  color: #0F9D58;
+  letter-spacing: -0.01em;
+}
+
+.desktop-tutorial-pill {
+  /* margin-left: 0.5rem;
+  margin-right: 0.5rem; */
+}
+
+.offcanvas-tutorial-link {
+  color: #0F9D58 !important;
+  font-weight: 700 !important;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
 .header-mobile-actions {
   display: none;
   align-items: center;
@@ -17064,5 +17123,30 @@ body.swipe-page-active .app-footer {
   .book-condition-circle-badge.pos-first {
     top: 14px;
     right: 14px;
+  }
+}
+/* Ajustes responsivos para el botón tutorial y logo en pantallas pequeñas */
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0 10px !important;
+  }
+  .app-header .brand-logo-img {
+    height: 48px !important;
+    max-height: 48px;
+    max-width: 135px;
+    object-fit: contain;
+  }
+  .header-mobile-actions {
+    gap: 0.35rem !important;
+  }
+  .header-tutorial-pill-btn {
+    padding: 3px 8px;
+    gap: 5px;
+  }
+  .header-tutorial-pill-btn .tutorial-play-icon {
+    font-size: 1.25rem;
+  }
+  .header-tutorial-pill-btn .tutorial-pill-text span {
+    font-size: 9.5px;
   }
 }
