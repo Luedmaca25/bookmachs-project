@@ -204,6 +204,25 @@ export const BookCard: React.FC<BookCardProps> = ({
         </button>
       )}
 
+      {/* Badge circular flotante con el estado del libro (Debajo de los botones superiores derechos) */}
+      {book.condition && (
+        <div
+          className={`book-condition-circle-badge ${
+            showUndoButton && onUndo
+              ? onOpenZoom
+                ? 'pos-third'
+                : 'pos-second'
+              : onOpenZoom
+              ? 'pos-second'
+              : 'pos-first'
+          }`}
+          title={`Estado: ${book.condition}`}
+        >
+          <span className="condition-circle-label">Estado:</span>
+          <span className="condition-circle-val">{book.condition}</span>
+        </div>
+      )}
+
       <div className="book-card-image-placeholder">
         {/* Sellos dinámicos estilo Tinder circulares (Corazón 💚 / Equis ❌) */}
         <div
@@ -277,30 +296,6 @@ export const BookCard: React.FC<BookCardProps> = ({
       </div>
 
       <div className="book-card-floating-wrapper">
-        <div className='badges'>
-          {/* Etiqueta de referencia de stock */}
-          {book.stockBadgeLabel ? (
-            <span className={`stock-type-badge ${book.stockBadgeClass || 'internal'}`}>
-              <i className={book.stockBadgeIcon || "fa-solid fa-book-bookmark"}></i> {book.stockBadgeLabel}
-            </span>
-          ) : book.isInternalStock !== false ? (
-            <span className="stock-type-badge internal">
-              <img src="/icon-paquete.png" alt="Intercambia libros" /> Intercambia libros
-            </span>
-          ) : (
-            <span className="stock-type-badge external">
-              <i className="fa-solid fa-user"></i> Externo
-            </span>
-          )}
-
-          {/* Filas de etiquetas de estado */}
-          {book.condition && (
-            <span className="stock-type-badge internal">
-              <i className="fa-solid fa-check"></i> Estado: {book.condition}
-            </span>
-          )}
-        </div>
-
         <div className="book-card-info">
           {book.isFallbackCategory && (
             <div className="fallback-category-badge">
@@ -318,28 +313,42 @@ export const BookCard: React.FC<BookCardProps> = ({
             {book.description || 'Encuentra tu próximo match.'}
           </p>
 
-          {hasMoreText && (
-            <button
-              type="button"
-              className="see-more-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDescriptionExpanded(!isDescriptionExpanded);
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-            >
-              {isDescriptionExpanded ? (
-                <>
-                  Ver menos <i className="fa-solid fa-chevron-up"></i>
-                </>
+          <div className="book-card-info-bottom-row">
+            {hasMoreText && (
+              <button
+                type="button"
+                className="see-more-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDescriptionExpanded(!isDescriptionExpanded);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+              >
+                {isDescriptionExpanded ? (
+                  <>
+                    Ver menos <i className="fa-solid fa-chevron-up"></i>
+                  </>
+                ) : (
+                  <>
+                    Ver más <i className="fa-solid fa-chevron-down"></i>
+                  </>
+                )}
+              </button>
+            )}
+
+            <div className="book-source-bottom-badge">
+              {book.stockBadgeLabel ? (
+                <span className={`stock-pill-badge ${book.stockBadgeClass || 'internal'}`}>
+                  {book.stockBadgeIcon && <i className={book.stockBadgeIcon}></i>} {book.stockBadgeLabel}
+                </span>
+              ) : book.isInternalStock !== false ? (
+                <span className="stock-pill-badge internal">Intercambia libros</span>
               ) : (
-                <>
-                  Ver más <i className="fa-solid fa-chevron-down"></i>
-                </>
+                <span className="stock-pill-badge user">Usuario</span>
               )}
-            </button>
-          )}
+            </div>
+          </div>
 
           {((showInterestButton && onInterest) || (showReserveButton && onReserve)) && (
             <div className="catalog-card-footer">

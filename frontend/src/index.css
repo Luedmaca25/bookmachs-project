@@ -2394,6 +2394,137 @@ body.swipe-page-active .app-footer {
   border: 1.5px solid #6366f1;
 }
 
+/* Badge circular flotante para Estado del libro en el Swipe */
+.book-condition-circle-badge {
+  position: absolute;
+  top: 126px;
+  right: 14px;
+  z-index: 24;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(15, 157, 88, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+  transition: all var(--transition-fast);
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.book-condition-circle-badge.pos-third {
+  top: 126px;
+}
+
+.book-condition-circle-badge.pos-second {
+  top: 70px;
+}
+
+.book-condition-circle-badge.pos-first {
+  top: 14px;
+}
+
+.book-condition-circle-badge:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 16px rgba(15, 157, 88, 0.22);
+  border-color: #0F9D58;
+}
+
+.book-condition-circle-badge .condition-circle-label {
+  font-size: 7.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0F9D58;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.book-condition-circle-badge .condition-circle-val {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #0F9D58;
+  line-height: 1.1;
+  max-width: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fila inferior de información de la tarjeta */
+.book-card-info-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 6px;
+  gap: 8px;
+}
+
+.book-card-info-bottom-row .see-more-btn {
+  margin: 0;
+}
+
+.book-source-bottom-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Badge tipo píldora en la esquina inferior derecha */
+.stock-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stock-pill-badge.internal {
+  color: #0F9D58;
+  border: 1.5px solid #0F9D58;
+}
+
+.stock-pill-badge.user,
+.stock-pill-badge.external {
+  color: #0F9D58;
+  border: 1.5px solid #0F9D58;
+}
+
+.stock-pill-badge.badge-status-exchanged {
+  color: #0F9D58;
+  border: 1.5px solid #0F9D58;
+}
+
+.stock-pill-badge.badge-status-inexchange {
+  color: #d97706;
+  border: 1.5px solid #d97706;
+}
+
+.stock-pill-badge.badge-status-reserved {
+  color: #6366f1;
+  border: 1.5px solid #6366f1;
+}
+
 /* Animación exclusiva de la portada/imagen al deslizar (la card y su fondo se mantienen 100% fijos) */
 .swipe-card-img.swiped-right,
 .book-fallback-icon-wrapper.swiped-right {
@@ -16913,5 +17044,25 @@ body.swipe-page-active .app-footer {
 
   .image-zoom-trigger-btn.no-undo {
     top: 14px;
+  }
+
+  .book-condition-circle-badge {
+    width: 40px;
+    height: 40px;
+  }
+
+  .book-condition-circle-badge.pos-third {
+    top: 122px;
+    right: 14px;
+  }
+
+  .book-condition-circle-badge.pos-second {
+    top: 68px;
+    right: 14px;
+  }
+
+  .book-condition-circle-badge.pos-first {
+    top: 14px;
+    right: 14px;
   }
 }
