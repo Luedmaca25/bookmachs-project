@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../authentication/store/authStore';
+import { GlobalPremiumModal } from '../subscriptions/components/GlobalPremiumModal';
 import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
 import { MatchModal } from '../transactions/components/MatchModal';
@@ -35,7 +37,10 @@ interface MatchTransaction {
 export const InventoryPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<'interested' | 'offered'>('interested');
+  const { user } = useAuthStore();
+  const isPremium = Boolean(user?.isPremium);
+  const [activeTab, setActiveTab] = useState<'interested' | 'offered' | 'reservations'>('interested');
+  const [premiumModalOpen, setPremiumModalOpen] = useState(false);
 
   // Datos de libros que le interesan (Matches / Likes)
   const [likedMatches, setLikedMatches] = useState<MatchTransaction[]>([]);
@@ -44,6 +49,11 @@ export const InventoryPage: React.FC = () => {
   // Datos de libros propios para intercambiar
   const [offeredBooks, setOfferedBooks] = useState<MyBookItem[]>([]);
   const [loadingOffered, setLoadingOffered] = useState(false);
+
+  // Datos de reservas activas (Premium)
+  const [myReservations, setMyReservations] = useState<any[]>([]);
+  const [loadingReservations, setLoadingReservations] = useState(false);
+  const [actionLoadingBookId, setActionLoadingBookId] = useState<string | null>(null);
 
   // Modal de propuesta (Pantalla 5)
   const [selectedProposal, setSelectedProposal] = useState<MatchTransaction | null>(null);
@@ -66,7 +76,10 @@ export const InventoryPage: React.FC = () => {
   useEffect(() => {
     fetchLikedMatches();
     fetchOfferedBooks();
-  }, []);
+    if (isPremium) {
+      fetchMyReservations();
+    }
+  }, [isPremium]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -74,11 +87,77 @@ export const InventoryPage: React.FC = () => {
     const addParam = params.get('add');
     if (tabParam === 'offered' || addParam === 'true') {
       setActiveTab('offered');
+    } else if (tabParam === 'reservations') {
+      if (isPremium) {
+        setActiveTab('reservations');
+      } else {
+        setPremiumModalOpen(true);
+      }
     }
     if (addParam === 'true') {
       setShowAddForm(true);
     }
-  }, [location.search]);
+  }, [location.search, isPremium]);
+
+  const fetchMyReservations = async () => {
+    if (!isPremium) return;
+    setLoadingReservations(true);
+    try {
+      const data = await apiClient.get<any[]>('/books/my-reservations');
+      setMyReservations(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Error al cargar reservas:', err);
+    } finally {
+      setLoadingReservations(false);
+    }
+  };
+
+  const handleCancelReservation = async (bookId: string) => {
+    try {
+      await apiClient.post(`/books/${bookId}/cancel-reservation`);
+      await fetchMyReservations();
+      setFormSuccess('Reserva liberada con éxito.');
+    } catch (err: any) {
+      setFormError(err.message || 'No se pudo liberar la reserva.');
+    }
+  };
+
+  const handleInitiateExchange = async (book: any) => {
+    try {
+      setActionLoadingBookId(book.id);
+      interface SwipeResponse {
+        success: boolean;
+        isMatch: boolean;
+        matchTransactionId?: string;
+      }
+      const response = await apiClient.post<SwipeResponse>(`/books/${book.id}/swipe`, { action: 'like' });
+
+      if (response && response.isMatch && response.matchTransactionId) {
+        setSelectedProposal({
+          id: response.matchTransactionId,
+          bookId: book.id,
+          bookTitle: book.title,
+          bookAuthor: book.author,
+          bookImageUrl: book.imageUrl,
+          bookCondition: book.condition || 'Bueno',
+          feeAmount: book.baseValue || 0,
+          paymentStatus: 'Pending',
+          logisticsStatus: 'Pending',
+          isCrossBorder: false
+        });
+        setMatchModalOpen(true);
+      } else {
+        await fetchLikedMatches();
+        setActiveTab('interested');
+        setFormSuccess(`¡"${book.title}" ha sido añadido a tu lista de libros de interés! Selecciona con qué libro intercambiarlo.`);
+      }
+    } catch (err: any) {
+      console.error('Error al iniciar intercambio:', err);
+      setFormError(err.message || 'No se pudo iniciar el intercambio para este libro.');
+    } finally {
+      setActionLoadingBookId(null);
+    }
+  };
 
   const fetchLikedMatches = async () => {
     setLoadingMatches(true);
@@ -222,6 +301,30 @@ export const InventoryPage: React.FC = () => {
             <i className="fa-solid fa-book-bookmark"></i>
           </button>
           <p>Tengo para intercambiar ({offeredBooks.length})</p>
+        </div>
+
+        <div className='libreta-tab'>
+          <button
+            type="button"
+            onClick={() => {
+              if (!isPremium) {
+                setPremiumModalOpen(true);
+              } else {
+                setActiveTab('reservations');
+                fetchMyReservations();
+              }
+            }}
+            className={`libreta-tab-btn libreta-tab-btn-reservas ${activeTab === 'reservations' ? 'active' : ''}`}
+            title={!isPremium ? "Función Premium: Reservas de 48 horas" : "Ver mis reservas"}
+          >
+            <i className="fa-solid fa-clock"></i>
+            <span className="libreta-tab-crown-badge" title="Función Premium">
+              <i className="fa-solid fa-crown"></i>
+            </span>
+          </button>
+          <p>
+            Reservas {isPremium ? `(${myReservations.length})` : ''}
+          </p>
         </div>
       </div>
 
@@ -577,6 +680,88 @@ export const InventoryPage: React.FC = () => {
         </div>
       )}
 
+      {/* CONTENIDO DE PESTAÑA: RESERVAS (PREMIUM) */}
+      {activeTab === 'reservations' && (
+        <div className="tab-reservations-content">
+          {loadingReservations ? (
+            <div className="inventory-loading">Cargando tus reservas activas...</div>
+          ) : myReservations.length === 0 ? (
+            <div className="empty-reservations-state">
+              <div className="empty-reservations-icon">
+                <i className="fa-solid fa-clock"></i>
+              </div>
+              <h4>No tienes ninguna reserva activa</h4>
+              <p>
+                Como usuario Premium puedes reservar libros del catálogo durante 48 horas para congelar el stock a tu favor mientras decides tu intercambio.
+              </p>
+              <button
+                type="button"
+                className="add-book-trigger-btn font-heading"
+                onClick={() => navigate('/catalogo')}
+              >
+                <i className="fa-solid fa-book-open"></i> Explorar Catálogo
+              </button>
+            </div>
+          ) : (
+            <div className="reservations-list">
+              {myReservations.map((item) => (
+                <div key={item.id} className="reservation-item-card">
+                  <div className="reservation-item-cover">
+                    {item.imageUrl ? (
+                      <img src={getFileUrl(item.imageUrl)} alt={item.title} />
+                    ) : (
+                      <div className="reservation-item-fallback">
+                        <i className="fa-solid fa-book"></i>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="reservation-item-details">
+                    <h4 className="reservation-item-title font-heading">{item.title}</h4>
+                    <span className="reservation-item-author">por {item.author}</span>
+                    <div className="reservation-pills-row">
+                      <span className="reservation-timer-pill">
+                        <i className="fa-solid fa-clock"></i> Reserva Activa (48 hrs)
+                      </span>
+                      {item.condition && (
+                        <span className="reservation-condition-pill">
+                          {item.condition}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="reservation-item-actions">
+                    <button
+                      type="button"
+                      className="reservation-exchange-btn font-heading"
+                      onClick={() => handleInitiateExchange(item)}
+                      disabled={actionLoadingBookId === item.id}
+                      title="Iniciar propuesta de intercambio para este libro"
+                    >
+                      {actionLoadingBookId === item.id ? (
+                        <><i className="fa-solid fa-circle-notch fa-spin"></i> Conectando...</>
+                      ) : (
+                        <><i className="fa-solid fa-arrows-rotate"></i> Iniciar Intercambio</>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="reservation-cancel-btn"
+                      onClick={() => handleCancelReservation(item.id)}
+                      title="Liberar reserva"
+                    >
+                      <i className="fa-solid fa-trash-can"></i> Liberar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Modal de Propuesta de Intercambio (Pantalla 5) */}
       <MatchModal
         isOpen={matchModalOpen}
@@ -595,6 +780,14 @@ export const InventoryPage: React.FC = () => {
           setMatchModalOpen(false);
           navigate(`/transacciones?checkout=${txId}`);
         }}
+      />
+
+      {/* Modal Global para Promoción de Funciones Premium */}
+      <GlobalPremiumModal
+        isOpen={premiumModalOpen}
+        onClose={() => setPremiumModalOpen(false)}
+        featureName="la Reserva de Libros por 48 Horas"
+        icon="fa-solid fa-clock"
       />
     </div>
   );

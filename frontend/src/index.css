@@ -9254,6 +9254,7 @@ body.swipe-page-active .app-footer {
 }
 
 .libreta-tab-btn {
+  position: relative;
   flex: 1;
   width: 50px;
   height: 50px;
@@ -9264,6 +9265,28 @@ body.swipe-page-active .app-footer {
   font-weight: 700;
   cursor: pointer;
   font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.libreta-tab-crown-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  font-size: 9.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.45);
+  border: 1.5px solid #ffffff;
+  pointer-events: none;
 }
 
 .libreta-tab-btn.active {

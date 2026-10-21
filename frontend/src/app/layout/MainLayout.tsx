@@ -295,10 +295,6 @@ export const MainLayout: React.FC = () => {
             </div>
 
             <div className="offcanvas-body">
-              <Link to="/" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
-                <i className="fa-solid fa-fire"></i> Descubrir
-              </Link>
-
               <button
                 type="button"
                 className="offcanvas-link offcanvas-tutorial-link"
@@ -309,6 +305,10 @@ export const MainLayout: React.FC = () => {
               >
                 <i className="fa-regular fa-circle-play"></i> ¿Cómo funciona?
               </button>
+
+              <Link to="/" className="offcanvas-link" onClick={() => setMobileMenuOpen(false)}>
+                <i className="fa-solid fa-fire"></i> Descubrir
+              </Link>
 
               {isAuthenticated && user && (
                 <>
