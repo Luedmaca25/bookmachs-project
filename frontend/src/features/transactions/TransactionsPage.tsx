@@ -1237,19 +1237,7 @@ export const TransactionsPage: React.FC = () => {
                   </button>
                 )}
 
-                {hasOfferedBooks && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedDetailTx(tx);
-                      setIsThankYouMode(false);
-                      setDetailModalOpen(true);
-                    }}
-                    className="btn-view-proposal-link"
-                  >
-                    📋 Ver propuesta de libros y fecha límite
-                  </button>
-                )}
+
               </div>
             </div>
           ))}
