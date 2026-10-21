@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../authentication/store/authStore';
 import { GlobalPremiumModal } from '../subscriptions/components/GlobalPremiumModal';
@@ -55,6 +55,16 @@ export const InventoryPage: React.FC = () => {
   const [loadingReservations, setLoadingReservations] = useState(false);
   const [actionLoadingBookId, setActionLoadingBookId] = useState<string | null>(null);
 
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const scrollToForm = () => {
+    if (formRef.current) {
+      const yOffset = -80; // Compensar header fijo de 68px + margen
+      const y = formRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    }
+  };
+
   // Modal de propuesta (Pantalla 5)
   const [selectedProposal, setSelectedProposal] = useState<MatchTransaction | null>(null);
   const [matchModalOpen, setMatchModalOpen] = useState(false);
@@ -82,6 +92,17 @@ export const InventoryPage: React.FC = () => {
   }, [isPremium]);
 
   useEffect(() => {
+    const handleScrollEvent = () => {
+      setActiveTab('offered');
+      setShowAddForm(true);
+      setTimeout(scrollToForm, 120);
+    };
+
+    window.addEventListener('scroll-to-add-book', handleScrollEvent);
+    return () => window.removeEventListener('scroll-to-add-book', handleScrollEvent);
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
     const addParam = params.get('add');
@@ -96,6 +117,7 @@ export const InventoryPage: React.FC = () => {
     }
     if (addParam === 'true') {
       setShowAddForm(true);
+      setTimeout(scrollToForm, 200);
     }
   }, [location.search, isPremium]);
 
@@ -349,6 +371,7 @@ export const InventoryPage: React.FC = () => {
                 onClick={() => {
                   setActiveTab('offered');
                   setShowAddForm(true);
+                  setTimeout(scrollToForm, 100);
                 }}
                 className="no-offered-btn"
               >
@@ -462,14 +485,20 @@ export const InventoryPage: React.FC = () => {
           <div className="add-book-bar">
             <button
               className="add-book-trigger-btn font-heading"
-              onClick={() => setShowAddForm(!showAddForm)}
+              onClick={() => {
+                const nextState = !showAddForm;
+                setShowAddForm(nextState);
+                if (nextState) {
+                  setTimeout(scrollToForm, 100);
+                }
+              }}
             >
               {showAddForm ? 'Regresar' : '＋ Agregar un Libro'}
             </button>
           </div>
 
           {showAddForm ? (
-            <div className="inventory-form-card">
+            <div ref={formRef} id="detalles-libro-ofrecer" className="inventory-form-card">
               <h2><i className="fa-solid fa-book-open"></i> Detalles del Libro a Ofrecer</h2>
               <p className="inventory-form-desc">
                 Intercambialibros es una red exclusiva de intercambio. Recuerda que no asignas ningún precio en dinero a tu libro.

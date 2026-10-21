@@ -9468,6 +9468,7 @@ body.swipe-page-active .app-footer {
   border-radius: 12px;
   border: 1px solid var(--border-color);
   margin-bottom: 1.5rem;
+  scroll-margin-top: 80px;
 }
 
 .inventory-form-desc {

@@ -462,6 +462,11 @@ export const MainLayout: React.FC = () => {
 
         <Link 
           to={isAuthenticated ? "/libreta?tab=offered&add=true" : "/auth"} 
+          onClick={() => {
+            if (location.pathname === '/libreta') {
+              window.dispatchEvent(new CustomEvent('scroll-to-add-book'));
+            }
+          }}
           className={`bottom-nav-item upload-highlight ${location.pathname === '/libreta' && location.search.includes('add') ? 'active' : ''}`}
         >
           <div className="pill-upload-circle">
