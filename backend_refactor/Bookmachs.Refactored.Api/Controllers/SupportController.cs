@@ -7,6 +7,7 @@ using Bookmachs.Refactored.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Bookmachs.Refactored.Api.Services;
 
 namespace Bookmachs.Refactored.Api.Controllers;
 
@@ -15,11 +16,16 @@ namespace Bookmachs.Refactored.Api.Controllers;
 public class SupportController : ControllerBase
 {
     private readonly BookmachsDbContext _dbContext;
+    private readonly ISendGridEmailService _emailService;
     private readonly ILogger<SupportController> _logger;
 
-    public SupportController(BookmachsDbContext dbContext, ILogger<SupportController> logger)
+    public SupportController(
+        BookmachsDbContext dbContext,
+        ISendGridEmailService emailService,
+        ILogger<SupportController> logger)
     {
         _dbContext = dbContext;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -32,7 +38,7 @@ public class SupportController : ControllerBase
             systemTime = DateTime.UtcNow,
             services = new[]
             {
-                new { name = "Motor de Intercambio (Bookmachs)", status = "online", uptime = "99.9%" },
+                new { name = "Motor de Intercambio (Intercambialibros)", status = "online", uptime = "99.9%" },
                 new { name = "Pasarela de Pagos (Transbank Webpay)", status = "online", uptime = "99.9%" },
                 new { name = "Catálogo e Inventario Ecolectura", status = "online", uptime = "99.8%" },
                 new { name = "Canal de Soporte 24/7", status = "active", uptime = "100%" }
@@ -78,7 +84,7 @@ public class SupportController : ControllerBase
         if (isPremium)
         {
             var encodedGreeting = Uri.EscapeDataString(
-                $"Hola equipo Bookmachs. Soy usuario Premium ({userName} - {request.Email}). " +
+                $"Hola equipo Intercambialibros. Soy usuario Premium ({userName} - {request.Email}). " +
                 $"Mi ticket prioritario es #{ticketId}. Asunto: {request.Subject}. Detalle: {request.Message}");
             whatsappUrl = $"https://wa.me/56987654321?text={encodedGreeting}";
         }
@@ -95,6 +101,29 @@ public class SupportController : ControllerBase
             HasWhatsAppAccess = isPremium,
             WhatsAppUrl = isPremium ? whatsappUrl : null
         };
+
+        // Enviar correo de confirmación de ticket al usuario
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _emailService.SendSupportTicketConfirmationEmailAsync(request.Email, new SupportTicketEmailData
+                {
+                    UserName = userName,
+                    TicketId = ticketId,
+                    Subject = request.Subject,
+                    Category = request.Category,
+                    Priority = response.Priority,
+                    EstimatedResponseTime = response.EstimatedResponseTime,
+                    HasWhatsAppAccess = isPremium,
+                    WhatsAppUrl = response.WhatsAppUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar correo de confirmación de ticket de soporte #{TicketId}", ticketId);
+            }
+        });
 
         return Ok(response);
     }

@@ -118,13 +118,28 @@ public class ExchangeFulfillmentJob : IExchangeFulfillmentJob
 
                 await _dbContext.TimelineEvents.AddAsync(timelineEvent, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
+
+                if (tx.RequesterUser?.Email != null)
+                {
+                    var offeredBook = await _dbContext.Books
+                        .FirstOrDefaultAsync(b => b.OwnerId == tx.RequesterUserId, cancellationToken);
+
+                    await _emailService.SendFulfillmentExpiredEmailAsync(tx.RequesterUser.Email, new ExchangeExpiredEmailData
+                    {
+                        UserName = tx.RequesterUser.Name ?? "Lector",
+                        TransactionId = tx.BuyOrder ?? tx.Id.ToString("N")[..8],
+                        BookToReceiveTitle = tx.Book?.Title ?? "Libro solicitado",
+                        BookToOfferTitle = offeredBook?.Title ?? "Libro ofrecido",
+                        ExpirationDate = DateTime.UtcNow.ToString("dd/MM/yyyy")
+                    });
+                }
             }
         }
 
         _logger.LogInformation("Procesamiento diario de entregas finalizado con éxito.");
     }
 
-    private static string GetLogisticsInstructions(string? method) => (method?.ToLowerInvariant()) switch
+    public static string GetLogisticsInstructions(string? method) => (method?.ToLowerInvariant()) switch
     {
         "donacion" => "Sube la fotografía del lugar comunitario o colegio donde realizaste la donación de tu ejemplar para validación previa.",
         "envio" => "Carga el número de orden de seguimiento o voucher de la encomienda enviada a Patronato 447, Recoleta, Santiago, Chile.",

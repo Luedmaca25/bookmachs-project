@@ -11,6 +11,7 @@ using Bookmachs.Refactored.Api.Dtos;
 using Bookmachs.Refactored.Api.Infrastructure.Persistence;
 using Bookmachs.Refactored.Api.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Bookmachs.Refactored.Api.Services;
 
@@ -61,6 +62,7 @@ public class AuthService : IAuthService
     private readonly ISendGridEmailService _sendGridEmailService;
     private readonly ICacheService _cacheService;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         BookmachsDbContext dbContext,
@@ -69,7 +71,8 @@ public class AuthService : IAuthService
         ITwilioVerifyService twilioVerifyService,
         ISendGridEmailService sendGridEmailService,
         ICacheService cacheService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<AuthService> logger)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
@@ -78,6 +81,7 @@ public class AuthService : IAuthService
         _sendGridEmailService = sendGridEmailService;
         _cacheService = cacheService;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(string email, string password, string name, string documentoIdentidad, string pais, string telefono, CancellationToken cancellationToken = default)
@@ -108,8 +112,24 @@ public class AuthService : IAuthService
         await _dbContext.Users.AddAsync(user, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var token = _jwtTokenGenerator.GenerateToken(user);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _sendGridEmailService.SendWelcomeEmailAsync(user.Email, new WelcomeEmailData
+                {
+                    UserName = user.Name,
+                    UploadBookUrl = "https://www.intercambialibros.cl/libreta",
+                    DiscoverUrl = "https://www.intercambialibros.cl/"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar correo de bienvenida a {Email}", user.Email);
+            }
+        });
 
+        var token = _jwtTokenGenerator.GenerateToken(user);
         return MapToAuthResponse(user, token);
     }
 
@@ -240,6 +260,23 @@ public class AuthService : IAuthService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         _twilioVerifyService.ClearPhoneVerification(normalizedPhone);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _sendGridEmailService.SendWelcomeEmailAsync(user.Email, new WelcomeEmailData
+                {
+                    UserName = user.Name,
+                    UploadBookUrl = "https://www.intercambialibros.cl/libreta",
+                    DiscoverUrl = "https://www.intercambialibros.cl/"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar correo de bienvenida a {Email}", user.Email);
+            }
+        });
 
         var token = _jwtTokenGenerator.GenerateToken(user);
         return MapToAuthResponse(user, token);
@@ -549,7 +586,7 @@ public class AuthService : IAuthService
         // Por seguridad (prevenir enumeración de cuentas), responder con mensaje neutro exitoso
         if (user == null)
         {
-            return (true, "Si el correo está registrado en Bookmachs, recibirás un enlace para restablecer tu contraseña.");
+            return (true, "Si el correo está registrado en Intercambialibros, recibirás un enlace para restablecer tu contraseña.");
         }
 
         // Generar token criptográficamente seguro
@@ -565,19 +602,19 @@ public class AuthService : IAuthService
         baseUrl = baseUrl.TrimEnd('/');
         var resetLink = $"{baseUrl}/recuperar-password?token={token}&email={Uri.EscapeDataString(user.Email)}";
 
-        // Preparar modelo de datos para la plantilla dinámica de SendGrid
+        // Preparar modelo de datos para el correo
         var emailData = new PasswordResetEmailData
         {
             UserName = !string.IsNullOrWhiteSpace(user.Name) ? user.Name : "Lector",
             UserEmail = user.Email,
             ResetLink = resetLink,
             ExpirationMinutes = 60,
-            SupportEmail = _configuration["SendGrid:FromEmail"] ?? "notificaciones@bookmachs.com"
+            SupportEmail = _configuration["SendGrid:FromEmail"] ?? "soporte@intercambialibros.cl"
         };
 
         await _sendGridEmailService.SendPasswordResetEmailAsync(user.Email, emailData);
 
-        return (true, "Si el correo está registrado en Bookmachs, recibirás un enlace para restablecer tu contraseña.");
+        return (true, "Si el correo está registrado en Intercambialibros, recibirás un enlace para restablecer tu contraseña.");
     }
 
     public async Task<(bool Success, string Message)> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken cancellationToken = default)

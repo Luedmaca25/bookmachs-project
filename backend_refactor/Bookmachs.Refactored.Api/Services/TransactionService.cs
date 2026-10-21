@@ -32,15 +32,18 @@ public class TransactionService : ITransactionService
     private readonly BookmachsDbContext _dbContext;
     private readonly EcolecturaDbContext _ecolecturaDbContext;
     private readonly IPaymentGatewayService _paymentService;
+    private readonly ISendGridEmailService _emailService;
 
     public TransactionService(
         BookmachsDbContext dbContext,
         EcolecturaDbContext ecolecturaDbContext,
-        IPaymentGatewayService paymentService)
+        IPaymentGatewayService paymentService,
+        ISendGridEmailService emailService)
     {
         _dbContext = dbContext;
         _ecolecturaDbContext = ecolecturaDbContext;
         _paymentService = paymentService;
+        _emailService = emailService;
     }
 
     public async Task<IEnumerable<MatchTransactionDto>> GetMyMatchesAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -676,6 +679,42 @@ public class TransactionService : ITransactionService
                 // Descontar stock y registrar el ajuste en Ecolectura (evitando duplicidad si ya estaba reservado)
                 await DeductStockAndLogAdjustmentAsync(transaction.BookId, transaction.Id, transaction.RequesterUserId, wasAlreadyReserved, cancellationToken);
 
+                // Enviar correo de confirmación de pago y nueva orden vía SendGrid
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var requester = await _dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == transaction.RequesterUserId);
+                        var offeredBook = transaction.OfferedBookId.HasValue
+                            ? await _dbContext.Books.AsNoTracking().FirstOrDefaultAsync(b => b.Id == transaction.OfferedBookId.Value)
+                            : await _dbContext.Books.AsNoTracking().FirstOrDefaultAsync(b => b.OwnerId == transaction.RequesterUserId);
+
+                        if (requester?.Email != null)
+                        {
+                            await _emailService.SendPaymentConfirmationEmailAsync(requester.Email, new ExchangePaymentConfirmedEmailData
+                            {
+                                UserName = requester.Name ?? "Lector",
+                                BuyOrder = transaction.BuyOrder ?? transaction.Id.ToString("N")[..8],
+                                PaymentDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm UTC"),
+                                FeeAmount = transaction.FeeAmount,
+                                DeadlineDate = DateTime.UtcNow.AddDays(5).ToString("dd/MM/yyyy"),
+                                LogisticsMethod = transaction.LogisticsMethod ?? "Presencial",
+                                LogisticsInstructions = Bookmachs.Refactored.Api.Jobs.ExchangeFulfillmentJob.GetLogisticsInstructions(transaction.LogisticsMethod),
+                                BookToReceiveTitle = book?.Title ?? "Libro Seleccionado",
+                                BookToReceiveAuthor = book?.Author ?? "Desconocido",
+                                BookToReceiveImageUrl = BookService.FormatImageUrl(book?.ImageUrl) ?? string.Empty,
+                                BookToOfferTitle = offeredBook?.Title ?? "Libro en Tu Libreta",
+                                BookToOfferAuthor = offeredBook?.Author ?? "Desconocido",
+                                BookToOfferImageUrl = BookService.FormatImageUrl(offeredBook?.ImageUrl) ?? string.Empty
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[TransactionService] Error al enviar correo de confirmación de pago: {ex.Message}");
+                    }
+                });
+
                 var successRes = new WebpayConfirmResultDto
                 {
                     Success = true,
@@ -1039,6 +1078,34 @@ public class TransactionService : ITransactionService
             await _dbContext.TimelineEvents.AddAsync(timelineEvent, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
+
+        // Notificar al usuario por correo que el intercambio se completó con éxito
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var requester = await _dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == transaction.RequesterUserId);
+                var offeredBook = transaction.OfferedBookId.HasValue
+                    ? await _dbContext.Books.AsNoTracking().FirstOrDefaultAsync(b => b.Id == transaction.OfferedBookId.Value)
+                    : await _dbContext.Books.AsNoTracking().FirstOrDefaultAsync(b => b.OwnerId == transaction.RequesterUserId);
+
+                if (requester?.Email != null)
+                {
+                    await _emailService.SendExchangeCompletedEmailAsync(requester.Email, new ExchangeCompletedEmailData
+                    {
+                        UserName = requester.Name ?? "Lector",
+                        BookReceivedTitle = transaction.Book?.Title ?? "Libro Seleccionado",
+                        BookOfferedTitle = offeredBook?.Title ?? "Libro en Tu Libreta",
+                        CompletedDate = DateTime.UtcNow.ToString("dd/MM/yyyy"),
+                        SocialTimelineUrl = "https://www.intercambialibros.cl/social"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionService] Error al enviar correo de intercambio completado: {ex.Message}");
+            }
+        });
 
         return new LogisticsResultDto
         {
