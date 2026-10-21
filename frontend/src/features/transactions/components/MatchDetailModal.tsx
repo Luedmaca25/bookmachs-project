@@ -296,19 +296,22 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
         </div>
 
         {/* SECCIÓN LOGÍSTICA & SUBIDA DE COMPROBANTES */}
-        <div className="fee-estimate-container mt-04" style={{ marginTop: '1rem' }}>
-          <div style={{ color: 'var(--neon)', fontWeight: '700', fontSize: '0.95rem', marginBottom: '0.4rem' }}>
-            {currentMethod === 'IntercambioDoble' ? '🔄 Intercambio Doble (Sin Entrega Inmediata)' : currentMethod === 'Donacion' ? '🎁 Donación Comunitaria' : currentMethod === 'Envio' ? '📦 Envío por Encomienda' : '📍 Dirección de Entrega'}
-          </div>
-          <p className="match-modal-subtitle" style={{ textAlign: 'center', margin: '0 0 1rem 0' }}>
-            {currentMethod === 'IntercambioDoble'
-              ? 'Has conservado tu libro para un segundo intercambio exclusivo con otro usuario particular.'
-              : currentMethod === 'Donacion' 
-              ? 'Sube la foto del colegio o espacio comunitario para proceso de validación previa.'
-              : currentMethod === 'Envio' 
-              ? 'Registra el N° de seguimiento y comprobante de envío.'
-              : 'Entrega tu libro en la ubicación acordada.'}
-          </p>
+        {currentMethod !== 'Presencial' && (
+          <div className="fee-estimate-container mt-04" style={{ marginTop: '1rem' }}>
+            <div style={{ color: 'var(--neon)', fontWeight: '700', fontSize: '0.95rem', marginBottom: '0.4rem' }}>
+              {currentMethod === 'IntercambioDoble'
+                ? '🔄 Intercambio Doble (Sin Entrega Inmediata)'
+                : currentMethod === 'Donacion'
+                ? '🎁 Donación Comunitaria'
+                : '📦 Envío por Encomienda'}
+            </div>
+            <p className="match-modal-subtitle" style={{ textAlign: 'center', margin: '0 0 1rem 0' }}>
+              {currentMethod === 'IntercambioDoble'
+                ? 'Has conservado tu libro para un segundo intercambio exclusivo con otro usuario particular.'
+                : currentMethod === 'Donacion'
+                ? 'Sube la foto del colegio o espacio comunitario para proceso de validación previa.'
+                : 'Registra el N° de seguimiento y comprobante de envío.'}
+            </p>
 
           {currentMethod === 'Donacion' && (
             <form onSubmit={handleSubmitLogistics}>
@@ -416,36 +419,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
             </div>
           )}
 
-          {currentMethod === 'Presencial' && (
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--neon)', marginBottom: '0.3rem' }}>
-                📍 Patronato 447, Recoleta, Santiago, Chile
-              </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 0.8rem 0' }}>
-                Presenta el código <strong>#{transaction.id.substring(0, 8).toUpperCase()}</strong> al entregar tu ejemplar.
-              </p>
 
-              {transaction.logisticsStatus === 'Delivered' ? (
-                <div style={{ background: 'rgba(15, 157, 88, 0.1)', border: '1px solid #0F9D58', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#0F9D58' }}>
-                    ✅ Libro Recibido por Administrador
-                  </div>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-primary)', margin: '0.2rem 0 0 0' }}>
-                    Un administrador de Intercambialibros ha confirmado la recepción del libro presencialmente.
-                  </p>
-                </div>
-              ) : (
-                <div style={{ background: 'rgba(243, 156, 18, 0.1)', border: '1px solid #f39c12', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#e67e22' }}>
-                    ⏳ En Espera de Entrega Presencial y Confirmación Admin
-                  </div>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-primary)', margin: '0.2rem 0 0 0', lineHeight: '1.4' }}>
-                    Lleva tu libro al local físico. El intercambio permanecerá en estatus <strong>"En Espera"</strong> hasta que entregues el libro y un administrador de Intercambialibros confirme la recepción.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
 
           {currentMethod === 'IntercambioDoble' && (
             <div style={{ background: 'rgba(182, 255, 0, 0.08)', padding: '1.1rem', borderRadius: '10px', border: '1px solid rgba(182, 255, 0, 0.35)', textAlign: 'center' }}>
@@ -474,6 +448,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
             </div>
           )}
         </div>
+      )}
 
         {/* ACCIONES FINALES */}
         {/* <div className="match-actions match-actions-col">
