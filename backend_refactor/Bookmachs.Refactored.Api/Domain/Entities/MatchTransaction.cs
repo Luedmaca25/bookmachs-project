@@ -40,6 +40,18 @@ public class MatchTransaction
     // Identificador único de orden de compra compatible con pasarelas como Transbank (máx 26 car)
     public string? BuyOrder { get; set; }
 
+    // Datos de Despacho y Ubicación para Envío (CPanel Pedidos)
+    public string? ShippingAddress { get; set; }
+    public string? ShippingCity { get; set; }
+    public string? ShippingRegion { get; set; }
+    public string? TrackingNumber { get; set; }
+    public string? CourierName { get; set; }
+    public string? AdminNotes { get; set; }
+
+    // Módulo Post Venta
+    public string? PostSaleStatus { get; set; }
+    public string? PostSaleNotes { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime StatusUpdatedAt { get; set; } = DateTime.UtcNow;
 }

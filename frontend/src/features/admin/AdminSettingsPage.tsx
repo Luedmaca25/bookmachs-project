@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
+import { AdminDashboardView } from './components/AdminDashboardView';
+import { AdminOrdersView } from './components/AdminOrdersView';
+import { AdminPostSaleView } from './components/AdminPostSaleView';
 
 interface GlobalSettings {
   id: number;
@@ -81,7 +84,7 @@ interface AdminUserDetail {
 
 export const AdminSettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'global' | 'tags' | 'users' | 'logistics'>('global');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'postventa' | 'users' | 'tags' | 'global' | 'logistics'>('dashboard');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Estados para Modal de Edición de Gustos y Mapeos
@@ -374,16 +377,28 @@ export const AdminSettingsPage: React.FC = () => {
       )}
 
       <div className="admin-header">
-        <h2>Panel CMS de Administración</h2>
-        <p>Configura parámetros del sistema, gestiona usuarios y administra el catálogo dinámico de gustos.</p>
+        <h2>Panel CMS & CPanel de Administración</h2>
+        <p>Control de intercambios, métricas de ventas por fecha, pedidos y ubicación, etiquetas de despacho y post venta.</p>
       </div>
 
       <div className="admin-tabs">
         <button 
-          className={`tab-btn ${activeTab === 'global' ? 'active' : ''}`}
-          onClick={() => setActiveTab('global')}
+          className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActiveTab('dashboard')}
         >
-          <i className="fa-solid fa-sliders"></i> Ajustes Generales
+          <i className="fa-solid fa-chart-pie"></i> Métricas & Ventas
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
+          onClick={() => setActiveTab('orders')}
+        >
+          <i className="fa-solid fa-boxes-packing"></i> Intercambios (Pedidos)
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'postventa' ? 'active' : ''}`}
+          onClick={() => setActiveTab('postventa')}
+        >
+          <i className="fa-solid fa-headset"></i> Vista Post Venta
         </button>
         <button 
           className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
@@ -398,14 +413,32 @@ export const AdminSettingsPage: React.FC = () => {
           <i className="fa-solid fa-tags"></i> Catálogo de Gustos & Mapeo
         </button>
         <button 
+          className={`tab-btn ${activeTab === 'global' ? 'active' : ''}`}
+          onClick={() => setActiveTab('global')}
+        >
+          <i className="fa-solid fa-sliders"></i> Ajustes Generales
+        </button>
+        <button 
           className={`tab-btn ${activeTab === 'logistics' ? 'active' : ''}`}
           onClick={() => setActiveTab('logistics')}
         >
-          <i className="fa-solid fa-boxes-packing"></i> Confirmar Envíos Presenciales
+          <i className="fa-solid fa-store"></i> Envíos Presenciales
         </button>
       </div>
 
       <div className="admin-content">
+        {activeTab === 'dashboard' && (
+          <AdminDashboardView onGoToOrders={() => setActiveTab('orders')} />
+        )}
+
+        {activeTab === 'orders' && (
+          <AdminOrdersView onShowToast={showToast} />
+        )}
+
+        {activeTab === 'postventa' && (
+          <AdminPostSaleView onShowToast={showToast} />
+        )}
+
         {activeTab === 'global' && (
           <div className="admin-settings-section">
             <h3>Límites Globales y Parámetros de Suscripción</h3>

@@ -78,8 +78,16 @@ public class BookmachsDbContext : DbContext
             entity.Property(t => t.LogisticsStatus).IsRequired().HasMaxLength(20);
             entity.Property(t => t.LogisticsMethod).HasMaxLength(50);
             entity.Property(t => t.PaymentHoldId).HasMaxLength(100);
-            entity.Property(t => t.BuyOrder).HasMaxLength(26);
+            entity.Property(t => t.BuyOrder).HasMaxLength(50);
             entity.HasIndex(t => t.BuyOrder).IsUnique().HasFilter("[BuyOrder] IS NOT NULL");
+            entity.Property(t => t.ShippingAddress).HasMaxLength(300);
+            entity.Property(t => t.ShippingCity).HasMaxLength(100);
+            entity.Property(t => t.ShippingRegion).HasMaxLength(100);
+            entity.Property(t => t.TrackingNumber).HasMaxLength(100);
+            entity.Property(t => t.CourierName).HasMaxLength(100);
+            entity.Property(t => t.AdminNotes).HasMaxLength(1000);
+            entity.Property(t => t.PostSaleStatus).HasMaxLength(50);
+            entity.Property(t => t.PostSaleNotes).HasMaxLength(1000);
 
             // Relación de Match con el Solicitante (Requester)
             entity.HasOne(t => t.RequesterUser)
