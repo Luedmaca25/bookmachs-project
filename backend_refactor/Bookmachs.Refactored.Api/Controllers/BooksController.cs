@@ -32,9 +32,11 @@ public class BooksController : ControllerBase
 
     [AllowAnonymous]
     [HttpGet("guest-random")]
-    public async Task<ActionResult<IEnumerable<BookDto>>> GetGuestRandom([FromQuery] int count = 10)
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetGuestRandom(
+        [FromQuery] int count = 10,
+        [FromQuery] string? category = "Ficción, Novelas y Relatos")
     {
-        var result = await _bookService.GetGuestBooksAsync(count);
+        var result = await _bookService.GetGuestBooksAsync(count, category);
         return Ok(result);
     }
 

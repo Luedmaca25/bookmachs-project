@@ -56,7 +56,7 @@ export const SwipePage: React.FC = () => {
       if (isAuthenticated) {
         return apiClient.get<BookItem[]>('/books/recommendations?limit=50');
       } else {
-        return apiClient.get<BookItem[]>('/books/guest-random?count=10');
+        return apiClient.get<BookItem[]>('/books/guest-random?count=10&category=Ficci%C3%B3n%2C%20Novelas%20y%20Relatos');
       }
     },
     enabled: !isRestoringSession && !showWizard,
@@ -96,7 +96,7 @@ export const SwipePage: React.FC = () => {
     try {
       const endpoint = isAuthenticated
         ? '/books/recommendations?limit=50'
-        : '/books/guest-random?count=20';
+        : '/books/guest-random?count=20&category=Ficci%C3%B3n%2C%20Novelas%20y%20Relatos';
       const newBooks = await apiClient.get<BookItem[]>(endpoint);
       if (newBooks && newBooks.length > 0) {
         setBooksList((prev) => {

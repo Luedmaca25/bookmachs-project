@@ -16,7 +16,7 @@ namespace Bookmachs.Refactored.Api.Services;
 public interface IBookService
 {
     Task<BookDto> GetGuestRandomAsync(CancellationToken cancellationToken = default);
-    Task<IEnumerable<BookDto>> GetGuestBooksAsync(int count = 10, CancellationToken cancellationToken = default);
+    Task<IEnumerable<BookDto>> GetGuestBooksAsync(int count = 10, string? category = "Ficción, Novelas y Relatos", CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetMyInventoryAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<BookDto> UploadBookAsync(Guid userId, string title, string author, string description, string condition, string? category, decimal baseValue, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetRecommendationsAsync(Guid userId, int limit, CancellationToken cancellationToken = default);
@@ -55,7 +55,7 @@ public class BookService : IBookService
 
     public async Task<BookDto> GetGuestRandomAsync(CancellationToken cancellationToken = default)
     {
-        var books = await GetGuestBooksAsync(1, cancellationToken);
+        var books = await GetGuestBooksAsync(1, "Ficción, Novelas y Relatos", cancellationToken);
         return books.FirstOrDefault() ?? new BookDto
         {
             Id = Guid.NewGuid(),
@@ -71,12 +71,36 @@ public class BookService : IBookService
         };
     }
 
-    public async Task<IEnumerable<BookDto>> GetGuestBooksAsync(int count = 10, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<BookDto>> GetGuestBooksAsync(int count = 10, string? category = "Ficción, Novelas y Relatos", CancellationToken cancellationToken = default)
     {
-        // Consultar directamente a toda la base de datos (90.000+ libros con stock activo) con orden aleatorio real
-        var productList = await _ecolecturaDbContext.Productos
+        // Pre-configuración: Los usuarios sin cuenta ven únicamente libros de la categoría "Ficción, Novelas y Relatos"
+        var targetCategory = string.IsNullOrWhiteSpace(category) ? "Ficción, Novelas y Relatos" : category;
+        var mappedItems = _homologationService.GetMappedItemsForConcepts(new[] { targetCategory });
+
+        var categoryOnlyIds = mappedItems
+            .Where(m => !m.SubcategoryId.HasValue)
+            .Select(m => m.CategoryId)
+            .Distinct()
+            .ToList();
+
+        var subcategoryIds = mappedItems
+            .Where(m => m.SubcategoryId.HasValue)
+            .Select(m => m.SubcategoryId!.Value)
+            .Distinct()
+            .ToList();
+
+        var query = _ecolecturaDbContext.Productos
             .AsNoTracking()
-            .Where(p => p.Activo && p.Stock > 0)
+            .Where(p => p.Activo && p.Stock > 0);
+
+        if (categoryOnlyIds.Any() || subcategoryIds.Any())
+        {
+            query = query.Where(p =>
+                (p.IdCategoriaProducto.HasValue && categoryOnlyIds.Contains(p.IdCategoriaProducto.Value)) ||
+                (p.IdSubcategoria.HasValue && subcategoryIds.Contains(p.IdSubcategoria.Value)));
+        }
+
+        var productList = await query
             .OrderBy(p => Guid.NewGuid())
             .Take(count)
             .Select(p => new
@@ -111,7 +135,7 @@ public class BookService : IBookService
             string? categoryName = _homologationService.GetConceptNameForProduct(
                 prod.IdCategoriaProducto,
                 prod.IdSubcategoria
-            );
+            ) ?? targetCategory;
 
             return new BookDto
             {
