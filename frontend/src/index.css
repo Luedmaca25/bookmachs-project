@@ -18414,3 +18414,112 @@ body.swipe-page-active .app-footer {
     background: transparent !important;
   }
 }
+
+
+/* ==========================================================================
+   Register Wizard - Birth Date Segmented Input (DD / MM / AAAA)
+   ========================================================================== */
+.register-birthdate-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+  height: 56px;
+  background: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 6px 14px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.register-birthdate-container:focus-within {
+  border-color: #0F9D58;
+  box-shadow: 0 0 0 3px rgba(15, 157, 88, 0.12);
+}
+
+.register-birthdate-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.register-birthdate-field-year {
+  flex: 1.4;
+}
+
+.register-birthdate-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #9CA3AF;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  margin-bottom: 2px;
+  user-select: none;
+}
+
+.register-birthdate-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #111827;
+  text-align: center;
+  padding: 0;
+  line-height: 1.2;
+  -moz-appearance: textfield;
+}
+
+.register-birthdate-input::-webkit-outer-spin-button,
+.register-birthdate-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.register-birthdate-input::placeholder {
+  color: #D1D5DB;
+  font-weight: 400;
+}
+
+.register-birthdate-separator {
+  font-size: 1.3rem;
+  color: #D1D5DB;
+  font-weight: 300;
+  margin: 0 4px;
+  user-select: none;
+  align-self: center;
+}
+
+.register-birthdate-cal-btn {
+  background: #F3F4F6;
+  border: none;
+  border-radius: 10px;
+  color: #4B5563;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.register-birthdate-cal-btn:hover {
+  background: #E5E7EB;
+  color: #0F9D58;
+}
+
+.register-birthdate-hint {
+  font-size: 0.8rem;
+  color: #6B7280;
+  margin: 6px 0 0 4px;
+}

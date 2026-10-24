@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../../../lib/apiClient';
 
@@ -105,7 +105,17 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
   // Datos del formulario
   const [firstName, setFirstName] = useState(user?.name ? user.name.split(' ')[0] : '');
   const [lastName, setLastName] = useState(user?.lastName || (user?.name && user.name.split(' ').length > 1 ? user.name.split(' ').slice(1).join(' ') : ''));
-  const [birthDate, setBirthDate] = useState('');
+  const initialBirthDate = user?.birthDate ? user.birthDate.split('T')[0] : '';
+  const [birthDate, setBirthDate] = useState(initialBirthDate);
+  const [birthDay, setBirthDay] = useState(initialBirthDate ? (initialBirthDate.split('-')[2] || '') : '');
+  const [birthMonth, setBirthMonth] = useState(initialBirthDate ? (initialBirthDate.split('-')[1] || '') : '');
+  const [birthYear, setBirthYear] = useState(initialBirthDate ? (initialBirthDate.split('-')[0] || '') : '');
+
+  // Referencias para inputs segmentados de fecha (Día, Mes, Año)
+  const dayInputRef = useRef<HTMLInputElement>(null);
+  const monthInputRef = useRef<HTMLInputElement>(null);
+  const yearInputRef = useRef<HTMLInputElement>(null);
+  const hiddenDatePickerRef = useRef<HTMLInputElement>(null);
   const [gender, setGender] = useState<string>('');
   const [genderOption, setGenderOption] = useState<'Mujer' | 'Hombre' | 'Otro' | ''>('');
   const [customGender, setCustomGender] = useState<string>('');
@@ -242,13 +252,145 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
     setStep(3);
   };
 
+  // Sincronizar foco cuando entra al paso 3
+  useEffect(() => {
+    if (step === 3) {
+      const timer = setTimeout(() => {
+        dayInputRef.current?.focus();
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
+
+  // Manejadores para fecha segmentada
+  const handleDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+    setBirthDay(val);
+    if (val.length === 2) {
+      monthInputRef.current?.focus();
+    }
+  };
+
+  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+    setBirthMonth(val);
+    if (val.length === 2) {
+      yearInputRef.current?.focus();
+    }
+  };
+
+  const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setBirthYear(val);
+  };
+
+  const handleDayKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowRight' && (e.currentTarget.selectionStart === birthDay.length || birthDay.length === 2)) {
+      monthInputRef.current?.focus();
+    }
+  };
+
+  const handleMonthKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !birthMonth) {
+      dayInputRef.current?.focus();
+    } else if (e.key === 'ArrowLeft' && e.currentTarget.selectionStart === 0) {
+      dayInputRef.current?.focus();
+    } else if (e.key === 'ArrowRight' && (e.currentTarget.selectionStart === birthMonth.length || birthMonth.length === 2)) {
+      yearInputRef.current?.focus();
+    }
+  };
+
+  const handleYearKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !birthYear) {
+      monthInputRef.current?.focus();
+    } else if (e.key === 'ArrowLeft' && e.currentTarget.selectionStart === 0) {
+      monthInputRef.current?.focus();
+    }
+  };
+
+  const handleDatePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const paste = e.clipboardData.getData('text').trim();
+    const parts = paste.split(/[\/\-\.]/);
+    if (parts.length === 3) {
+      e.preventDefault();
+      const p1 = parts[0].replace(/\D/g, '');
+      const p2 = parts[1].replace(/\D/g, '');
+      const p3 = parts[2].replace(/\D/g, '');
+      if (p1.length === 4) {
+        // YYYY-MM-DD
+        setBirthYear(p1.slice(0, 4));
+        setBirthMonth(p2.slice(0, 2));
+        setBirthDay(p3.slice(0, 2));
+      } else {
+        // DD-MM-YYYY
+        setBirthDay(p1.slice(0, 2));
+        setBirthMonth(p2.slice(0, 2));
+        setBirthYear(p3.slice(0, 4));
+      }
+      yearInputRef.current?.focus();
+    }
+  };
+
   // Validar y avanzar en Paso 3: Fecha de Nacimiento
   const handleStep3Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!birthDate) {
-      setError('Por favor ingresa tu fecha de nacimiento.');
+
+    if (!birthDay.trim() || !birthMonth.trim() || !birthYear.trim()) {
+      setError('Por favor completa el día, mes y año de tu nacimiento.');
       return;
     }
+
+    const d = parseInt(birthDay, 10);
+    const m = parseInt(birthMonth, 10);
+    const y = parseInt(birthYear, 10);
+
+    if (isNaN(d) || isNaN(m) || isNaN(y)) {
+      setError('Por favor ingresa una fecha válida.');
+      return;
+    }
+
+    if (d < 1 || d > 31) {
+      setError('El día ingresado no es válido (1 a 31).');
+      return;
+    }
+
+    if (m < 1 || m > 12) {
+      setError('El mes ingresado no es válido (1 a 12).');
+      return;
+    }
+
+    const currentYear = new Date().getFullYear();
+    if (y < 1920 || y > currentYear) {
+      setError(`El año debe ser entre 1920 y ${currentYear}.`);
+      return;
+    }
+
+    // Comprobar validez en calendario (días reales de cada mes y bisiesto)
+    const dateObj = new Date(y, m - 1, d);
+    if (dateObj.getFullYear() !== y || dateObj.getMonth() !== m - 1 || dateObj.getDate() !== d) {
+      setError('La fecha ingresada no corresponde a un día válido del calendario.');
+      return;
+    }
+
+    const now = new Date();
+    if (dateObj > now) {
+      setError('La fecha de nacimiento no puede ser una fecha futura.');
+      return;
+    }
+
+    let age = now.getFullYear() - y;
+    const mDiff = now.getMonth() - (m - 1);
+    if (mDiff < 0 || (mDiff === 0 && now.getDate() < d)) {
+      age--;
+    }
+
+    if (age < 12) {
+      setError('Debes tener al menos 12 años para registrarte en Bookmachs.');
+      return;
+    }
+
+    const formattedIsoDate = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    setBirthDate(formattedIsoDate);
     setError(null);
     setStep(4);
   };
@@ -405,7 +547,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
         const response = await apiClient.post<any>('/auth/complete-onboarding', {
           phone: fullPhone,
           code: otpCode,
-          birthDate: birthDate ? new Date(birthDate).toISOString() : null,
+          birthDate: birthDate ? new Date(birthDate.includes('T') ? birthDate : `${birthDate}T12:00:00Z`).toISOString() : null,
           gender,
           pais: selectedCountry.name
         });
@@ -420,7 +562,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
           password,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          birthDate: birthDate ? new Date(birthDate).toISOString() : null,
+          birthDate: birthDate ? new Date(birthDate.includes('T') ? birthDate : `${birthDate}T12:00:00Z`).toISOString() : null,
           gender,
           telefono: fullPhone,
           verificationCode: otpCode,
@@ -611,19 +753,119 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({
             </div>
 
             <div className="register-inputs-stack">
-              <div className="register-input-with-icon">
+              <div className="register-birthdate-container">
+                <div className="register-birthdate-field">
+                  <label className="register-birthdate-label">Día</label>
+                  <input
+                    ref={dayInputRef}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
+                    placeholder="DD"
+                    className="register-birthdate-input"
+                    value={birthDay}
+                    onChange={handleDayChange}
+                    onKeyDown={handleDayKeyDown}
+                    onPaste={handleDatePaste}
+                    autoComplete="bday-day"
+                    autoFocus
+                    required
+                  />
+                </div>
+
+                <span className="register-birthdate-separator">/</span>
+
+                <div className="register-birthdate-field">
+                  <label className="register-birthdate-label">Mes</label>
+                  <input
+                    ref={monthInputRef}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={2}
+                    placeholder="MM"
+                    className="register-birthdate-input"
+                    value={birthMonth}
+                    onChange={handleMonthChange}
+                    onKeyDown={handleMonthKeyDown}
+                    onPaste={handleDatePaste}
+                    autoComplete="bday-month"
+                    required
+                  />
+                </div>
+
+                <span className="register-birthdate-separator">/</span>
+
+                <div className="register-birthdate-field register-birthdate-field-year">
+                  <label className="register-birthdate-label">Año</label>
+                  <input
+                    ref={yearInputRef}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    placeholder="AAAA"
+                    className="register-birthdate-input"
+                    value={birthYear}
+                    onChange={handleYearChange}
+                    onKeyDown={handleYearKeyDown}
+                    onPaste={handleDatePaste}
+                    autoComplete="bday-year"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className="register-birthdate-cal-btn"
+                  title="Abrir calendario"
+                  onClick={() => {
+                    if (hiddenDatePickerRef.current) {
+                      if ('showPicker' in HTMLInputElement.prototype && typeof hiddenDatePickerRef.current.showPicker === 'function') {
+                        try {
+                          hiddenDatePickerRef.current.showPicker();
+                        } catch {
+                          hiddenDatePickerRef.current.focus();
+                          hiddenDatePickerRef.current.click();
+                        }
+                      } else {
+                        hiddenDatePickerRef.current.focus();
+                        hiddenDatePickerRef.current.click();
+                      }
+                    }
+                  }}
+                >
+                  <i className="fa-regular fa-calendar"></i>
+                </button>
+
                 <input
+                  ref={hiddenDatePickerRef}
                   type="date"
-                  className="register-clean-input date-input"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  max={new Date().toISOString().split('T')[0]}
-                  autoFocus
-                  required
                   tabIndex={-1}
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    opacity: 0,
+                    width: 0,
+                    height: 0,
+                    pointerEvents: 'none'
+                  }}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const [y, m, d] = e.target.value.split('-');
+                      setBirthYear(y || '');
+                      setBirthMonth(m || '');
+                      setBirthDay(d || '');
+                      setBirthDate(e.target.value);
+                    }
+                  }}
                 />
-                <i className="fa-regular fa-calendar register-input-trailing-icon"></i>
               </div>
+              <p className="register-birthdate-hint">
+                Introduce el día, mes y año usando el teclado de tu dispositivo.
+              </p>
             </div>
 
             <div className="register-footer-actions">
