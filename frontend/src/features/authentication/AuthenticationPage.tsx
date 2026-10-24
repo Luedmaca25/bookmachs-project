@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { OnboardingWizard } from './components/OnboardingWizard';
@@ -56,6 +56,28 @@ export const AuthenticationPage: React.FC = () => {
   const [prefError, setPrefError] = useState<string | null>(null);
   const [prefSuccess, setPrefSuccess] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
+
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestTagsRef = useRef<string[]>(selectedTags);
+
+  useEffect(() => {
+    latestTagsRef.current = selectedTags;
+  }, [selectedTags]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        if (latestTagsRef.current && latestTagsRef.current.length > 0) {
+          apiClient.post<boolean>('/auth/preferences', latestTagsRef.current).catch(() => {});
+        }
+      }
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
 
   // Avatar upload states
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -301,27 +323,17 @@ export const AuthenticationPage: React.FC = () => {
     }
   };
 
-  const handleTagToggle = (tagName: string) => {
-    setPrefSuccess(false);
-    if (selectedTags.includes(tagName)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tagName));
-    } else {
-      setSelectedTags([...selectedTags, tagName]);
-    }
-  };
-
-  const handleSavePreferences = async () => {
-    setPrefError(null);
-    setPrefSuccess(false);
-
-    if (selectedTags.length === 0) {
+  const savePreferencesToBackend = async (tagsToSave: string[], navigateHome = false) => {
+    if (tagsToSave.length === 0) {
       setPrefError('Debes seleccionar al menos una preferencia de lectura.');
       return;
     }
 
     setSavingPrefs(true);
+    setPrefError(null);
+
     try {
-      await apiClient.post<boolean>('/auth/preferences', selectedTags);
+      await apiClient.post<boolean>('/auth/preferences', tagsToSave);
       
       const token = localStorage.getItem('token');
       if (token) {
@@ -329,7 +341,16 @@ export const AuthenticationPage: React.FC = () => {
         loginAction(updatedProfile, token);
       }
       setPrefSuccess(true);
-      navigate('/');
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+      successTimerRef.current = setTimeout(() => {
+        setPrefSuccess(false);
+      }, 3000);
+
+      if (navigateHome) {
+        navigate('/');
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setPrefError(err.message || 'Error al guardar tus gustos de lectura.');
@@ -339,6 +360,36 @@ export const AuthenticationPage: React.FC = () => {
     } finally {
       setSavingPrefs(false);
     }
+  };
+
+  const handleTagToggle = (tagName: string) => {
+    // Si solo hay un elemento seleccionado y el usuario intenta deseleccionarlo, no pasa nada
+    if (selectedTags.includes(tagName) && selectedTags.length <= 1) {
+      return;
+    }
+
+    const nextSelectedTags = selectedTags.includes(tagName)
+      ? selectedTags.filter((t) => t !== tagName)
+      : [...selectedTags, tagName];
+
+    setSelectedTags(nextSelectedTags);
+    latestTagsRef.current = nextSelectedTags;
+    setPrefError(null);
+
+    // Guardar automáticamente las preferencias sin necesidad de presionar guardar
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    autoSaveTimerRef.current = setTimeout(() => {
+      savePreferencesToBackend(nextSelectedTags, false);
+    }, 350);
+  };
+
+  const handleSavePreferences = async () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    await savePreferencesToBackend(selectedTags, true);
   };
 
   // Render Phone Verification Wizard if authenticated but phone unverified
