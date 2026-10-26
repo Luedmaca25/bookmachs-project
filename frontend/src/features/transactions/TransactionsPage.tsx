@@ -128,8 +128,11 @@ export const TransactionsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (checkoutId && matches.length > 0) {
-      const tx = matches.find((m) => m.id === checkoutId);
+    const hasCheckout = searchParams.has('checkout');
+    if (hasCheckout && matches.length > 0) {
+      const tx = checkoutId
+        ? matches.find((m) => m.id === checkoutId)
+        : (matches.find((m) => m.paymentStatus === 'Pending') || matches[0]);
       if (tx) {
         setSelectedTx(tx);
         setCheckoutSuccess(false);
@@ -139,10 +142,10 @@ export const TransactionsPage: React.FC = () => {
       } else {
         setSelectedTx(null);
       }
-    } else {
+    } else if (!hasCheckout) {
       setSelectedTx(null);
     }
-  }, [checkoutId, matches]);
+  }, [checkoutId, searchParams, matches]);
 
   // Modal de Detalle de Intercambio y Thank You Page
   const [detailModalOpen, setDetailModalOpen] = useState(false);
