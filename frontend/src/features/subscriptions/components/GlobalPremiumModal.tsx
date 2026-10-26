@@ -101,11 +101,7 @@ export const GlobalPremiumModal: React.FC<GlobalPremiumModalProps> = ({
             </li>
             <li>
               <i className="fa-solid fa-circle-check"></i>
-              <span>Reserva anticipada de libros de stock interno por 48 horas</span>
-            </li>
-            <li>
-              <i className="fa-solid fa-circle-check"></i>
-              <span>Canal de Soporte prioritario y mediación 24/7</span>
+              <span>Reserva libros de stock interno por 48 horas</span>
             </li>
           </ul>
 

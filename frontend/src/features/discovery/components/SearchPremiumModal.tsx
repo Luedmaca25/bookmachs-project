@@ -83,7 +83,7 @@ export const SearchPremiumModal: React.FC<SearchPremiumModalProps> = ({
             </li>
             <li>
               <i className="fa-solid fa-circle-check"></i>
-              <span>Reserva anticipada de libros de stock interno en un clic</span>
+              <span>Reserva libros de stock interno en un clic</span>
             </li>
           </ul>
 

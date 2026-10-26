@@ -215,11 +215,21 @@ export const BookCard: React.FC<BookCardProps> = ({
               : onOpenZoom
               ? 'pos-second'
               : 'pos-first'
-          }`}
+          } ${book.condition.includes(' ') || book.condition.length > 7 ? 'multi-word' : ''}`}
           title={`Estado: ${book.condition}`}
         >
-          <span className="condition-circle-label">Estado:</span>
-          <span className="condition-circle-val">{book.condition}</span>
+          {/* <span className="condition-circle-label">Estado</span> */}
+          <span className="condition-circle-val">
+            {book.condition.includes(' ') ? (
+              book.condition.split(' ').map((word, idx) => (
+                <span key={idx} className="condition-word-line">
+                  {word}
+                </span>
+              ))
+            ) : (
+              book.condition
+            )}
+          </span>
         </div>
       )}
 
