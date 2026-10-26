@@ -668,7 +668,7 @@ export const TransactionsPage: React.FC = () => {
                     <div className="radio-card-content">
                       <div className="radio-card-header">
                         <span className="radio-card-title">
-                          <i className="fa-solid fa-truck-fast"></i> 3. Envío por Encomienda a Local
+                          <i className="fa-solid fa-truck-fast"></i> 3. Entrega y recibe por correo
                         </span>
                         <span className="radio-card-badge badge-courier">Pagas envío del libro que envías y del libro que recibes</span>
                       </div>
