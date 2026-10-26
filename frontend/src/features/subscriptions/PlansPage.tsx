@@ -57,11 +57,15 @@ export const PlansPage: React.FC = () => {
       swipes: 'Swipes ilimitados',
       matches: '5 intercambios al mes**',
       features: [
-        'Acceso a Catálogo Avanzado en Grilla',
-        'Búsqueda directa por título, autor o palabras clave (hasta 10)',
-        'Early Access a libros Recién Llegados',
-        'Reserva de libros por 48 horas',
-        'Soporte premium 24/7'
+        'Deshacer último Swipe (botón Rewind para corregir descartes)',
+        'Búsqueda directa instantánea en Swipe y Catálogo (hasta 10 palabras clave)',
+        'Acceso completo a Catálogo Avanzado en Grilla interactiva',
+        'Filtros avanzados de exploración (por categoría, temas y estado)',
+        'Reserva de libros de stock interno por 48 horas en Tu Libreta',
+        'Beneficio exclusivo: hasta 2 Intercambios Dobles al mes (sin entrega inmediata)',
+        'Opción de Donación Comunitaria en intercambios (hasta 2 al mes)',
+        'Early Access y alertas de libros recién ingresados a plataforma',
+        'Soporte prioritario 24/7'
       ],
       recommended: true
     }
