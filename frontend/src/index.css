@@ -127,6 +127,10 @@ body {
   overscroll-behavior-x: none;
 }
 
+.step-back-action-container {
+  margin-top: 16px;
+}
+
 /* Evitar zoom automático en dispositivos móviles (iOS/Android) al hacer focus en inputs */
 @media (max-width: 768px) {
 

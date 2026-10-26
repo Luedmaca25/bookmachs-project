@@ -629,12 +629,12 @@ export const TransactionsPage: React.FC = () => {
                     <div className="radio-card-content">
                       <div className="radio-card-header">
                         <span className="radio-card-title">
-                          <i className="fa-solid fa-store"></i> 2. Entrega y Recibe en Local Físico
+                          <i className="fa-solid fa-store"></i> 2. Entrega y Recibe en Local
                         </span>
-                        <span className="radio-card-badge badge-free">Sin costo extra</span>
+                        {/* <span className="radio-card-badge badge-free">Sin costo extra</span> */}
                       </div>
                       <p className="radio-card-desc">
-                        Lleva tu libro directamente a nuestro local en <strong>Patronato 447, Recoleta, Santiago, Chile</strong>. Sin recargos ni tiempos de espera de encomiendas.
+                        <strong>Patronato 447, Recoleta, Santiago, Chile.</strong>
                       </p>
                     </div>
                   </div>
@@ -648,12 +648,14 @@ export const TransactionsPage: React.FC = () => {
                     <div className="radio-card-content">
                       <div className="radio-card-header">
                         <span className="radio-card-title">
-                          <i className="fa-solid fa-truck-fast"></i> 3. Envío por Encomienda a Local Físico
+                          <i className="fa-solid fa-truck-fast"></i> 3. Envío por Encomienda a Local
                         </span>
                         <span className="radio-card-badge badge-courier">Pagas envío del libro que envías y del libro que recibes</span>
                       </div>
                       <p className="radio-card-desc">
-                        Envía tu libro a la dirección física de Intercambialibros en <strong>Patronato 447, Recoleta, Santiago, Chile</strong> vía Starken o Chilexpress. Podrás subir tu comprobante de envío o voucher una vez realizado el pago*.
+                        Envía tu libro a <strong>Patronato 447, Recoleta, Santiago, Chile</strong> con <strong>envío pagado.</strong>
+                        <br/><br/>
+                        Una vez recibido se enviará el libro a tu dirección con envío por pagar.
                         <br/><br/>
                         <i>*El libro que despachas como el que recibes, lo paga el usuario.</i>
                       </p>
