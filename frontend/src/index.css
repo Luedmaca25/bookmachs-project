@@ -11488,6 +11488,20 @@ body.swipe-page-active .app-footer {
   }
 }
 
+/* Animación para iconos PNG transparentes usando drop-shadow circular en lugar de box-shadow rectangular */
+@keyframes pulseTimeIcon {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 1px 3px rgba(255, 128, 0, 0.45));
+  }
+
+  50% {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 7px rgba(255, 128, 0, 0.85));
+  }
+}
+
 /* Badge de Matches Pendientes en Menú Superior Desktop y Offcanvas */
 .desktop-nav-time-badge {
   display: inline-flex;
@@ -11503,23 +11517,30 @@ body.swipe-page-active .app-footer {
   object-fit: contain;
   display: inline-block;
   vertical-align: middle;
-  animation: pulseTimeAlert 2s infinite ease-in-out;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none !important;
+  animation: pulseTimeIcon 2s infinite ease-in-out;
 }
 
 .offcanvas-time-badge {
   display: inline-flex;
   align-items: center;
-  margin-left: 8px;
+  justify-content: center;
+  margin-left: 0;
   vertical-align: middle;
 }
 
 .offcanvas-time-img {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
   display: inline-block;
   vertical-align: middle;
-  animation: pulseTimeAlert 2s infinite ease-in-out;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none !important;
+  animation: pulseTimeIcon 2s infinite ease-in-out;
 }
 
 /* Botón Central Destacado "Subir" */
