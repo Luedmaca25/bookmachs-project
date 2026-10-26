@@ -116,12 +116,11 @@ export const SwipePage: React.FC = () => {
     if (
       booksList.length > 0 &&
       currentBookIndex >= booksList.length - 10 &&
-      !isFetchingMore &&
-      !limitReached
+      !isFetchingMore
     ) {
       fetchMoreBooks();
     }
-  }, [currentBookIndex, booksList.length, isFetchingMore, limitReached]);
+  }, [currentBookIndex, booksList.length, isFetchingMore]);
 
   // Precargar las siguientes portadas de libros para evitar cualquier parpadeo de carga
   useEffect(() => {
@@ -275,7 +274,7 @@ export const SwipePage: React.FC = () => {
 
   // Gestos de arrastre Touch (Móvil) y Mouse (Escritorio)
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (limitReached || !currentBook || swipeDirection || matchAnimationBookId) return;
+    if (!currentBook || swipeDirection || matchAnimationBookId) return;
     setIsDragging(true);
     dragModeRef.current = 'none';
     setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
@@ -330,7 +329,7 @@ export const SwipePage: React.FC = () => {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (limitReached || !currentBook || swipeDirection || matchAnimationBookId) return;
+    if (!currentBook || swipeDirection || matchAnimationBookId) return;
     setIsDragging(true);
     dragModeRef.current = 'none';
     setDragStart({ x: e.clientX, y: e.clientY });
@@ -431,10 +430,20 @@ export const SwipePage: React.FC = () => {
   };
 
   const triggerSwipe = async (direction: 'left' | 'right') => {
-    // Si la acción es "like" (derecha) y ya se alcanzó el límite de likes, no permitir más likes
     if (matchAnimationBookId) return;
-    if (direction === 'right' && limitReached) return;
     if (!currentBook) return;
+
+    if (direction === 'right') {
+      if (!isAuthenticated && guestSwipesCount >= 5) {
+        setShowGuestLimitModal(true);
+        return;
+      }
+      if (isAuthenticated && !user?.isPremium && (limitReached || swipesConsumed >= swipeLimit)) {
+        setLimitReached(true);
+        setShowGuestLimitModal(true);
+        return;
+      }
+    }
 
     const swipedBook = currentBook;
     const isInternalMatch = direction === 'right' && swipedBook.isInternalStock !== false;
@@ -500,9 +509,22 @@ export const SwipePage: React.FC = () => {
       return;
     }
 
+    // Si usuario autenticado free ya llegó al límite e intenta dar like
+    if (!user?.isPremium && direction === 'right' && (limitReached || swipesConsumed >= swipeLimit)) {
+      setLimitReached(true);
+      setShowGuestLimitModal(true);
+      return;
+    }
+
     // 1. Incrementar el contador local de swipes únicamente al dar "like" (derecha)
+    let reachedLimitThisSwipe = false;
     if (direction === 'right' && !user?.isPremium) {
-      setSwipesConsumed((prev) => prev + 1);
+      const nextConsumed = swipesConsumed + 1;
+      setSwipesConsumed(nextConsumed);
+      if (nextConsumed >= swipeLimit) {
+        reachedLimitThisSwipe = true;
+        setLimitReached(true);
+      }
     }
 
     // 2. Si es match interno confirmado, mostrar animación de sello ¡Match! antes del deslizamiento
@@ -514,6 +536,9 @@ export const SwipePage: React.FC = () => {
           setMatchAnimationBookId(null);
           setSwipeDirection(null);
           setCurrentBookIndex((prev) => prev + 1);
+          if (reachedLimitThisSwipe) {
+            setShowGuestLimitModal(true);
+          }
         }, 220);
       }, 700);
     } else {
@@ -521,6 +546,9 @@ export const SwipePage: React.FC = () => {
       setTimeout(() => {
         setSwipeDirection(null);
         setCurrentBookIndex((prev) => prev + 1);
+        if (reachedLimitThisSwipe) {
+          setShowGuestLimitModal(true);
+        }
       }, 220);
     }
 
@@ -545,6 +573,11 @@ export const SwipePage: React.FC = () => {
         if (typeof response.swipeLimit === 'number') {
           setSwipeLimit(response.swipeLimit);
         }
+        if (typeof response.swipesConsumed === 'number' && typeof response.swipeLimit === 'number') {
+          if (response.swipesConsumed >= response.swipeLimit) {
+            setLimitReached(true);
+          }
+        }
       }
 
       if (action === 'like') {
@@ -555,7 +588,7 @@ export const SwipePage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      // Validar si el error fue por límite mensual (403 Forbidden o código MonthlyLimitExceeded)
+      // Validar si el error fue por límite diario/mensual (403 Forbidden o código DailyLimitExceeded / MonthlyLimitExceeded)
       const isLimitError = err.message && (
         err.message.includes('403') || 
         err.message.includes('DailyLimitExceeded') ||
@@ -564,6 +597,9 @@ export const SwipePage: React.FC = () => {
       
       if (isLimitError) {
         setLimitReached(true);
+        if (direction === 'right') {
+          setShowGuestLimitModal(true);
+        }
       } else {
         console.error('Error al registrar swipe:', err);
       }
@@ -590,7 +626,7 @@ export const SwipePage: React.FC = () => {
         </div>
       ) : error ? (
         <div className="swipe-error-state">{error}</div>
-      ) : !currentBook && !limitReached ? (
+      ) : !currentBook ? (
         <div className="swipe-empty-state">
           <span className="empty-icon"><i className="fa-solid fa-book-open"></i></span>
           <h3>No hay más recomendaciones por ahora</h3>
@@ -684,7 +720,7 @@ export const SwipePage: React.FC = () => {
               isDragging={isDragging}
               dragOffset={dragOffset}
               swipeDirection={swipeDirection}
-              className={limitReached ? 'blurred-card' : ''}
+              className=""
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -716,8 +752,14 @@ export const SwipePage: React.FC = () => {
             </button>
             <button 
               className="control-btn like-btn" 
-              onClick={() => triggerSwipe('right')}
-              disabled={limitReached || !currentBook || !!matchAnimationBookId}
+              onClick={() => {
+                if (limitReached || (!user?.isPremium && isAuthenticated && swipesConsumed >= swipeLimit)) {
+                  setShowGuestLimitModal(true);
+                  return;
+                }
+                triggerSwipe('right');
+              }}
+              disabled={!currentBook || !!matchAnimationBookId}
               title={limitReached ? "Límite de me gusta alcanzado" : "Me interesa"}
             >
               <i className="fa-solid fa-heart"></i>
@@ -740,17 +782,6 @@ export const SwipePage: React.FC = () => {
               <div className="notebook-banner-subtitle">Tus likes se guardan automáticamente</div>
             </div>
           </div>
-
-          {limitReached && (
-            <div className="card-blur-overlay">
-              <span className="lock-icon"><i className="fa-solid fa-lock"></i></span>
-              <h3>Límite de swipes alcanzado</h3>
-              <p>Has consumido tu cuota de swipes del plan gratuito. Pásate a un plan Premium hoy mismo para continuar explorando sin límites.</p>
-              <button className="upsell-trigger-btn font-heading" onClick={() => navigate('/planes?plan=premium#plan-premium')}>
-                <i className="fa-solid fa-crown icon-gold"></i> Ver Planes Premium <i className="fa-solid fa-arrow-right-long"></i>
-              </button>
-            </div>
-          )}
         </div>
       )}
 
@@ -816,6 +847,8 @@ export const SwipePage: React.FC = () => {
       <GuestLimitModal
         isOpen={showGuestLimitModal}
         onClose={() => setShowGuestLimitModal(false)}
+        isAuthenticated={isAuthenticated}
+        limit={swipeLimit}
       />
 
       <UndoSwipePremiumModal
@@ -835,9 +868,15 @@ export const SwipePage: React.FC = () => {
           imageUrl={currentBook.imageUrl}
           title={currentBook.title}
           author={currentBook.author}
-          onLike={() => triggerSwipe('right')}
+          onLike={() => {
+            if (limitReached || (!user?.isPremium && isAuthenticated && swipesConsumed >= swipeLimit)) {
+              setShowGuestLimitModal(true);
+              return;
+            }
+            triggerSwipe('right');
+          }}
           onDislike={() => triggerSwipe('left')}
-          isLikeDisabled={limitReached || !currentBook || !!matchAnimationBookId}
+          isLikeDisabled={!currentBook || !!matchAnimationBookId}
         />
       )}
     </div>

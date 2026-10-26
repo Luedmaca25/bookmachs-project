@@ -5,11 +5,15 @@ import { useNavigate } from 'react-router-dom';
 interface GuestLimitModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isAuthenticated?: boolean;
+  limit?: number;
 }
 
 export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
   isOpen,
   onClose,
+  isAuthenticated = false,
+  limit = 40,
 }) => {
   const navigate = useNavigate();
 
@@ -32,6 +36,15 @@ export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const handleActionClick = () => {
+    onClose();
+    if (isAuthenticated) {
+      navigate('/planes?plan=premium#plan-premium');
+    } else {
+      navigate('/auth');
+    }
+  };
 
   const modalContent = (
     <div
@@ -57,21 +70,28 @@ export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
           </div>
 
           <h2 className="guest-limit-title font-heading">
-            ¡Alcanzaste el límite de 5 swipes como invitado!
+            {isAuthenticated
+              ? `¡Alcanzaste el límite de ${limit} swipes diarios!`
+              : '¡Alcanzaste el límite de 5 swipes como invitado!'}
           </h2>
 
           <p className="guest-limit-description">
-            Has explorado 5 libros como invitado. Inicia sesión o regístrate en <strong>Intercambialibros</strong> para conservar los libros que te gustaron en tu libreta y recibir propuestas de intercambio.
+            {isAuthenticated ? (
+              <>
+                Has explorado {limit} libros hoy en tu cuenta gratuita. Pásate al <strong>Plan Premium</strong> para continuar descubriendo libros sin límites y recibir propuestas de intercambio.
+              </>
+            ) : (
+              <>
+                Has explorado 5 libros como invitado. Inicia sesión o regístrate en <strong>Intercambialibros</strong> para conservar los libros que te gustaron en tu libreta y recibir propuestas de intercambio.
+              </>
+            )}
           </p>
 
           <div className="guest-limit-actions">
             <button
               type="button"
               className="guest-limit-btn-bumble font-heading"
-              onClick={() => {
-                onClose();
-                navigate('/auth');
-              }}
+              onClick={handleActionClick}
             >
               Conseguir más me gusta
             </button>
