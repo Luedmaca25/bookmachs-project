@@ -1004,7 +1004,7 @@ export const TransactionsPage: React.FC = () => {
       <div className="transactions-header">
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1>Tus Matches y Transacciones</h1>
+            <h1>Intercambios por realizar</h1>
             <p>Aquí puedes monitorear tus propuestas activas, realizar el pago de fee y revisar la logística.</p>
           </div>
           {quota && (
@@ -1158,7 +1158,7 @@ export const TransactionsPage: React.FC = () => {
                   <p className="author-p">Autor: {tx.bookAuthor}</p>
                   <p className="owner-p">Dueño: <strong>{tx.ownerName}</strong></p>
                   
-                  <div className="match-card-badges">
+                  {/* <div className="match-card-badges">
                     {tx.isAvailable === false ? (
                       <span className="badge-failed" style={{ backgroundColor: '#e74c3c', color: '#fff' }}>
                         <i className="fa-solid fa-triangle-exclamation"></i> Libro No Disponible
@@ -1180,7 +1180,7 @@ export const TransactionsPage: React.FC = () => {
                         Logística: {tx.logisticsStatus}
                       </span>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
