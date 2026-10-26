@@ -19,6 +19,7 @@ export interface MatchTransactionDetail {
   paymentStatus: string;
   logisticsStatus: string;
   logisticsMethod: string | null;
+  shippingAddress?: string | null;
   isCrossBorder: boolean;
   createdAt: string;
   
@@ -288,6 +289,12 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 ${transaction.feeAmount.toLocaleString('es-CL')} CLP
               </span>
             </div>
+            {transaction.shippingAddress && (
+              <div className="fee-row fee-detail-row">
+                <span>Dirección de Despacho:</span>
+                <span style={{ fontWeight: 600 }}>{transaction.shippingAddress}</span>
+              </div>
+            )}
             <div className="fee-row fee-detail-row-final">
               <span>Fecha Límite para Entrega:</span>
               <span className={daysRemaining <= 1 ? 'fee-error-msg' : ''}>{formattedDeadlineDate}</span>

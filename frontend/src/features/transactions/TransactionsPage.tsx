@@ -21,6 +21,7 @@ interface MatchTransaction {
   paymentStatus: string;
   logisticsStatus: string;
   logisticsMethod: string | null;
+  shippingAddress?: string | null;
   isCrossBorder: boolean;
   isAvailable?: boolean;
   isInternalStock?: boolean;
@@ -88,6 +89,8 @@ export const TransactionsPage: React.FC = () => {
 
   // Selección Logística de la Pantalla 11 (Radio Cards)
   const [selectedMethod, setSelectedMethod] = useState<'Donacion' | 'Presencial' | 'Envio' | 'IntercambioDoble'>('Presencial');
+  const [shippingAddress, setShippingAddress] = useState<string>('');
+  const [addressError, setAddressError] = useState<string | null>(null);
   // const [trackingNumber, setTrackingNumber] = useState<string>('');
   // const [evidencePhoto, setEvidencePhoto] = useState<string>('');
 
@@ -137,8 +140,15 @@ export const TransactionsPage: React.FC = () => {
         setSelectedTx(tx);
         setCheckoutSuccess(false);
         setCheckoutError(null);
+        setAddressError(null);
         setAcceptCrossBorder(false);
         setActiveStep(1);
+        if (tx.shippingAddress) {
+          setShippingAddress(tx.shippingAddress);
+        }
+        if (tx.logisticsMethod === 'Envio' || tx.logisticsMethod === 'Donacion' || tx.logisticsMethod === 'IntercambioDoble' || tx.logisticsMethod === 'Presencial') {
+          setSelectedMethod(tx.logisticsMethod as any);
+        }
       } else {
         setSelectedTx(null);
       }
@@ -258,7 +268,8 @@ export const TransactionsPage: React.FC = () => {
         returnUrl: returnUrl,
         acceptCrossBorder: acceptCrossBorder,
         offeredBookId: selectedOfferedBookId,
-        logisticsMethod: selectedMethod
+        logisticsMethod: selectedMethod,
+        shippingAddress: selectedMethod === 'Envio' ? shippingAddress.trim() : null
       };
 
       const response = await apiClient.post<any>('/transactions/webpay-start', payload);
@@ -372,9 +383,15 @@ export const TransactionsPage: React.FC = () => {
               <div className="summary-row">
                 <span>Método de Entrega:</span>
                 <span className="badge-hold badge-hold-neon">
-                  {selectedMethod === 'IntercambioDoble' ? '🔄 Intercambio Doble (Sin entrega inmediata)' : selectedMethod === 'Donacion' ? 'Donación Comunitaria' : selectedMethod === 'Presencial' ? 'Entrega Presencial Santiago' : 'Envío por Encomienda'}
+                  {selectedMethod === 'IntercambioDoble' ? '🔄 Intercambio Doble (Sin entrega inmediata)' : selectedMethod === 'Donacion' ? 'Donación Comunitaria' : selectedMethod === 'Presencial' ? 'Entrega Presencial Santiago' : 'Envío por Encomienda a Local'}
                 </span>
               </div>
+              {selectedMethod === 'Envio' && shippingAddress && (
+                <div className="summary-row">
+                  <span>Dirección de Despacho:</span>
+                  <strong>{shippingAddress}</strong>
+                </div>
+              )}
               <div className="summary-row">
                 <span>Estado de Pago:</span>
                 <span className="hold-status-locked" style={{ color: '#0F9D58' }}>PAGO COMPLETADO ✅</span>
@@ -642,7 +659,10 @@ export const TransactionsPage: React.FC = () => {
                   {/* Opción 3: Envío por Encomienda Santiago Chile */}
                   <div 
                     className={`logistics-radio-card ${selectedMethod === 'Envio' ? 'selected' : ''}`}
-                    onClick={() => setSelectedMethod('Envio')}
+                    onClick={() => {
+                      setSelectedMethod('Envio');
+                      if (addressError) setAddressError(null);
+                    }}
                   >
                     <div className="radio-indicator"></div>
                     <div className="radio-card-content">
@@ -656,7 +676,40 @@ export const TransactionsPage: React.FC = () => {
                         Envía tu libro a <strong>Patronato 447, Recoleta, Santiago, Chile</strong> con <strong>envío pagado.</strong>
                         <br/><br/>
                         Una vez recibido se enviará el libro a tu dirección con envío por pagar.
-                        <br/><br/>
+                      </p>
+
+                      <div 
+                        className={`shipping-address-field-wrapper ${addressError && selectedMethod === 'Envio' ? 'has-error' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMethod('Envio');
+                        }}
+                      >
+                        <i className="fa-solid fa-location-dot shipping-address-pin"></i>
+                        <input
+                          type="text"
+                          className="shipping-address-input"
+                          placeholder="Indica tu dirección de envío aquí"
+                          value={shippingAddress}
+                          onChange={(e) => {
+                            setShippingAddress(e.target.value);
+                            if (addressError) setAddressError(null);
+                          }}
+                          onFocus={() => {
+                            setSelectedMethod('Envio');
+                            if (addressError) setAddressError(null);
+                          }}
+                        />
+                        <i className="fa-solid fa-chevron-right shipping-address-chevron"></i>
+                      </div>
+
+                      {addressError && selectedMethod === 'Envio' && (
+                        <div className="shipping-address-error-text">
+                          <i className="fa-solid fa-circle-exclamation"></i> {addressError}
+                        </div>
+                      )}
+
+                      <p className="radio-card-desc shipping-address-disclaimer">
                         <i>*El libro que despachas como el que recibes, lo paga el usuario.</i>
                       </p>
                     </div>
@@ -775,6 +828,10 @@ export const TransactionsPage: React.FC = () => {
                       if (selectedMethod === 'IntercambioDoble' && isDoubleDisabled) {
                         setSelectedMethod('Presencial');
                       }
+                      if (selectedMethod === 'Envio' && !shippingAddress.trim()) {
+                        setAddressError('Por favor indica tu dirección de envío para recibir el libro.');
+                        return;
+                      }
                       setActiveStep(3);
                     }}
                   >
@@ -807,15 +864,39 @@ export const TransactionsPage: React.FC = () => {
                       <div className="summary-row">
                         <span>Opción de Entrega:</span>
                         <strong className="icon-neon">
-                          {selectedMethod === 'IntercambioDoble' ? '🔄 Intercambio Doble' : selectedMethod === 'Donacion' ? '🎁 Donación Comunitaria' : selectedMethod === 'Presencial' ? '🏪 Entrega Presencial Santiago' : '📦 Envío Encomienda'}
+                          {selectedMethod === 'IntercambioDoble' ? '🔄 Intercambio Doble' : selectedMethod === 'Donacion' ? '🎁 Donación Comunitaria' : selectedMethod === 'Presencial' ? '🏪 Entrega Presencial Santiago' : '📦 Envío por Encomienda a Local'}
                         </strong>
                       </div>
+                      {selectedMethod === 'Envio' && shippingAddress && (
+                        <div className="summary-row">
+                          <span>Dirección de Entrega:</span>
+                          <strong>{shippingAddress}</strong>
+                        </div>
+                      )}
                       
                       <div className="fee-total-row">
                         <span>Tarifa de servicio (Fee):</span>
                         <strong className="fee-total-amount">${Math.round(selectedTx.feeAmount).toLocaleString('es-CL')} CLP</strong>
                       </div>
                     </div>
+
+                    {selectedMethod === 'Envio' && (
+                      <div style={{
+                        marginTop: '1rem',
+                        padding: '10px 14px',
+                        background: 'rgba(15, 157, 88, 0.08)',
+                        border: '1px solid rgba(15, 157, 88, 0.25)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: 'var(--text-primary)',
+                        lineHeight: '1.4'
+                      }}>
+                        <div style={{ fontWeight: 700, color: 'var(--neon)', marginBottom: '4px' }}>
+                          <i className="fa-solid fa-truck-fast"></i> Envío por Encomienda a Local:
+                        </div>
+                        Envía tu libro a <strong>Patronato 447, Recoleta, Santiago, Chile</strong> con envío pagado. Una vez recibido en bodega, se despachará tu libro a <strong>{shippingAddress}</strong> con envío por pagar.
+                      </div>
+                    )}
 
                     {selectedMethod === 'Donacion' && (
                       <div style={{

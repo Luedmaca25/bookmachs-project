@@ -295,6 +295,7 @@ public class MatchTransactionDto
     public string PaymentStatus { get; set; } = "Pending";
     public string LogisticsStatus { get; set; } = "Pending";
     public string? LogisticsMethod { get; set; }
+    public string? ShippingAddress { get; set; }
     public bool IsCrossBorder { get; set; }
     public bool IsAvailable { get; set; } = true;
     public bool IsInternalStock { get; set; } = false;

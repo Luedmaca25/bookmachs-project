@@ -196,7 +196,8 @@ public class TransactionsController : ControllerBase
                 request.ReturnUrl,
                 request.AcceptCrossBorder,
                 request.LogisticsMethod,
-                request.OfferedBookId);
+                request.OfferedBookId,
+                request.ShippingAddress);
 
             if (!result.Success)
             {
@@ -298,7 +299,8 @@ public class TransactionsController : ControllerBase
                 userId,
                 request.LogisticsMethod,
                 request.TrackingNumber,
-                request.EvidencePhotoBase64);
+                request.EvidencePhotoBase64,
+                request.ShippingAddress);
 
             if (!result.Success)
             {
@@ -368,6 +370,7 @@ public class UpdateLogisticsRequest
     public string LogisticsMethod { get; set; } = string.Empty;
     public string? TrackingNumber { get; set; }
     public string? EvidencePhotoBase64 { get; set; }
+    public string? ShippingAddress { get; set; }
 }
 
 public class CheckoutCardRequest
@@ -384,6 +387,7 @@ public class WebpayStartRequest
     public bool AcceptCrossBorder { get; set; }
     public string? LogisticsMethod { get; set; }
     public Guid? OfferedBookId { get; set; }
+    public string? ShippingAddress { get; set; }
 }
 
 public class WebpayConfirmRequest

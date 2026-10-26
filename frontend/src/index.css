@@ -8427,6 +8427,87 @@ body.swipe-page-active .app-footer {
   margin-bottom: 0;
 }
 
+/* Campo de Dirección de Envío por Encomienda (Paso 2) */
+.shipping-address-field-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin: 12px 0 8px 0;
+  transition: all 0.2s ease;
+  cursor: text;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.shipping-address-field-wrapper:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.shipping-address-field-wrapper:focus-within {
+  border-color: var(--neon);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 157, 88, 0.16);
+}
+
+.shipping-address-field-wrapper.has-error {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.04);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.14);
+}
+
+.shipping-address-pin {
+  font-size: 1.25rem;
+  color: #1e293b;
+  flex-shrink: 0;
+}
+
+.shipping-address-input {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #0f172a;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  font-family: inherit;
+}
+
+.shipping-address-input::placeholder {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.shipping-address-chevron {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.shipping-address-error-text {
+  font-size: 0.82rem;
+  color: #dc2626;
+  font-weight: 600;
+  margin: -2px 0 8px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shipping-address-disclaimer {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .radio-card-expand {
   margin-top: 1rem;
   padding-top: 1rem;

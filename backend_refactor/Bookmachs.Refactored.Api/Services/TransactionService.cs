@@ -17,11 +17,11 @@ public interface ITransactionService
     Task<bool> DeleteMatchAsync(Guid matchTransactionId, Guid userId, CancellationToken cancellationToken = default);
     Task<FeeEstimationDto> EstimateFeeAsync(Guid bookId, Guid requesterUserId, CancellationToken cancellationToken = default);
     Task<CheckoutResultDto> CheckoutCardAsync(Guid matchTransactionId, string cardToken, Guid requesterUserId, bool acceptCrossBorder, CancellationToken cancellationToken = default);
-    Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, Guid? offeredBookId = null, CancellationToken cancellationToken = default);
+    Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, Guid? offeredBookId = null, string? shippingAddress = null, CancellationToken cancellationToken = default);
     Task<WebpayConfirmResultDto> WebpayConfirmAsync(string token, CancellationToken cancellationToken = default);
     Task<WebpayConfirmResultDto> WebpayCancelAsync(string? tbkToken, string? buyOrder, CancellationToken cancellationToken = default);
     Task<ExchangeQuotaDto> GetExchangeQuotaAsync(Guid userId, CancellationToken cancellationToken = default);
-    Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, CancellationToken cancellationToken = default);
+    Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, string? shippingAddress = null, CancellationToken cancellationToken = default);
     Task<WebhookProcessResultDto> ProcessMercadoPagoWebhookAsync(string type, string action, string dataId, CancellationToken cancellationToken = default);
     Task<LogisticsResultDto> ConfirmAdminBookReceiptAsync(Guid matchTransactionId, Guid adminUserId, CancellationToken cancellationToken = default);
     Task<IEnumerable<MatchTransactionDto>> GetPendingAdminLogisticsAsync(CancellationToken cancellationToken = default);
@@ -162,6 +162,7 @@ public class TransactionService : ITransactionService
                 PaymentStatus = t.PaymentStatus,
                 LogisticsStatus = t.LogisticsStatus,
                 LogisticsMethod = t.LogisticsMethod,
+                ShippingAddress = t.ShippingAddress,
                 IsCrossBorder = t.IsCrossBorder,
                 IsAvailable = isAvailable,
                 IsInternalStock = t.Book?.IsInternalStock ?? (t.OwnerUserId == null),
@@ -284,7 +285,7 @@ public class TransactionService : ITransactionService
         });
     }
 
-    public async Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, Guid? offeredBookId = null, CancellationToken cancellationToken = default)
+    public async Task<WebpayStartResultDto> WebpayStartAsync(Guid matchTransactionId, Guid requesterUserId, string returnUrl, bool acceptCrossBorder, string? logisticsMethod = null, Guid? offeredBookId = null, string? shippingAddress = null, CancellationToken cancellationToken = default)
     {
         var transaction = await _dbContext.MatchTransactions
             .Include(t => t.Book)
@@ -551,6 +552,11 @@ public class TransactionService : ITransactionService
         if (!string.IsNullOrEmpty(logisticsMethod))
         {
             transaction.LogisticsMethod = logisticsMethod;
+        }
+
+        if (!string.IsNullOrEmpty(shippingAddress))
+        {
+            transaction.ShippingAddress = shippingAddress.Trim();
         }
 
         // Transbank Webpay Plus exige que buyOrder tenga un largo máximo de 26 caracteres alfanuméricos
@@ -933,7 +939,7 @@ public class TransactionService : ITransactionService
         };
     }
 
-    public async Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, CancellationToken cancellationToken = default)
+    public async Task<LogisticsResultDto> UpdateLogisticsAsync(Guid matchTransactionId, Guid requesterUserId, string logisticsMethod, string? trackingNumber, string? evidencePhotoBase64, string? shippingAddress = null, CancellationToken cancellationToken = default)
     {
         var transaction = await _dbContext.MatchTransactions
             .Include(t => t.Book)
@@ -1020,6 +1026,10 @@ public class TransactionService : ITransactionService
         }
 
         transaction.LogisticsMethod = logisticsMethod;
+        if (!string.IsNullOrEmpty(shippingAddress))
+        {
+            transaction.ShippingAddress = shippingAddress.Trim();
+        }
         transaction.LogisticsStatus = "En Espera";
         transaction.StatusUpdatedAt = Bookmachs.Refactored.Api.Helpers.DateTimeHelper.GetSantiagoTime();
 
@@ -1141,6 +1151,7 @@ public class TransactionService : ITransactionService
             PaymentStatus = t.PaymentStatus,
             LogisticsStatus = t.LogisticsStatus,
             LogisticsMethod = t.LogisticsMethod,
+            ShippingAddress = t.ShippingAddress,
             IsCrossBorder = t.IsCrossBorder,
             IsAvailable = t.Book?.IsAvailable ?? false,
             CreatedAt = t.CreatedAt
