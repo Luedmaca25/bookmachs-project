@@ -2404,89 +2404,63 @@ body.swipe-page-active .app-footer {
   border: 1.5px solid #6366f1;
 }
 
-/* Badge circular flotante para Estado del libro en el Swipe */
-.book-condition-circle-badge {
-  position: absolute;
-  top: 126px;
-  right: 14px;
-  z-index: 24;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(15, 157, 88, 0.4);
-  display: flex;
-  flex-direction: column;
+/* Botón y contenedor para Estado del libro junto al badge de stock en el Swipe */
+.book-bottom-badges-container {
+  margin-left: auto;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.book-bottom-badges-container .book-source-bottom-badge {
+  margin-left: 0;
+}
+
+.book-condition-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #0F9D58;
+  border: 1.5px solid #0F9D58;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  outline: none;
+  font-family: inherit;
   user-select: none;
   -webkit-user-select: none;
   pointer-events: auto;
-  transition: all var(--transition-fast);
-  padding: 2px;
-  box-sizing: border-box;
 }
 
-.book-condition-circle-badge.pos-third {
-  top: 126px;
+.book-condition-badge-btn:hover {
+  background-color: #0F9D58;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(15, 157, 88, 0.25);
 }
 
-.book-condition-circle-badge.pos-second {
-  top: 70px;
+.book-condition-badge-btn:active {
+  transform: scale(0.97);
 }
 
-.book-condition-circle-badge.pos-first {
-  top: 14px;
+.book-condition-badge-btn i {
+  font-size: 10px;
+  color: inherit;
 }
 
-.book-condition-circle-badge:hover {
-  transform: scale(1.06);
-  box-shadow: 0 6px 16px rgba(15, 157, 88, 0.22);
-  border-color: #0F9D58;
-}
-
-.book-condition-circle-badge .condition-circle-label {
-  font-size: 6.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #0F9D58;
-  line-height: 1;
-  margin-bottom: 1.5px;
-  opacity: 0.9;
-}
-
-.book-condition-circle-badge .condition-circle-val {
-  font-size: 8.5px;
+.book-condition-badge-btn strong {
   font-weight: 800;
-  color: #0F9D58;
-  line-height: 1.05;
-  max-width: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.book-condition-circle-badge.multi-word .condition-circle-val {
-  font-size: 7.5px;
-  line-height: 0.98;
-}
-
-.book-condition-circle-badge .condition-word-line {
-  display: block;
-  white-space: nowrap;
-}
-
-.book-condition-circle-badge:not(.multi-word) .condition-circle-val {
-  font-size: 8px;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
 }
 
 /* Fila inferior de información de la tarjeta */
@@ -13516,6 +13490,127 @@ body.swipe-page-active .app-footer {
 }
 
 /* ==========================================================================
+   Book Condition Guide Modal
+   ========================================================================== */
+.book-condition-modal-card {
+  max-width: 520px;
+}
+
+.book-condition-modal-body {
+  padding: 2rem 1.6rem 1.8rem;
+}
+
+.book-condition-icon-wrapper {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(15, 157, 88, 0.12);
+  border: 1.5px solid rgba(15, 157, 88, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #0F9D58;
+  margin-bottom: 1.15rem;
+  box-shadow: 0 8px 24px rgba(15, 157, 88, 0.18);
+}
+
+.book-condition-guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.book-condition-guide-card {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.book-condition-guide-card.is-current-condition {
+  background: rgba(15, 157, 88, 0.04);
+  border-color: #0F9D58;
+  box-shadow: 0 4px 14px rgba(15, 157, 88, 0.12);
+}
+
+.book-condition-guide-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.book-condition-pill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
+.condition-badge-nuevo .book-condition-pill-tag {
+  background: rgba(16, 185, 129, 0.14);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.condition-badge-muy-bueno .book-condition-pill-tag {
+  background: rgba(14, 165, 233, 0.14);
+  color: #0284c7;
+  border: 1px solid rgba(14, 165, 233, 0.35);
+}
+
+.condition-badge-bueno .book-condition-pill-tag {
+  background: rgba(99, 102, 241, 0.14);
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+
+.condition-badge-normal .book-condition-pill-tag {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.condition-badge-reliquias .book-condition-pill-tag {
+  background: rgba(168, 85, 247, 0.14);
+  color: #7e22ce;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.current-book-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0F9D58;
+  background: rgba(15, 157, 88, 0.14);
+  border: 1px solid rgba(15, 157, 88, 0.3);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.book-condition-guide-desc {
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.48;
+  margin: 0;
+}
+
+/* ==========================================================================
    Catalog Reservations Modal (Tema Claro Homologado)
    ========================================================================== */
 .catalog-reservations-modal-card {
@@ -17260,40 +17355,6 @@ body.swipe-page-active .app-footer {
 
   .image-zoom-trigger-btn.no-undo {
     top: 14px;
-  }
-
-  .book-condition-circle-badge {
-    width: 42px;
-    height: 42px;
-  }
-
-  .book-condition-circle-badge .condition-circle-label {
-    font-size: 6px;
-    margin-bottom: 1px;
-  }
-
-  .book-condition-circle-badge.multi-word .condition-circle-val {
-    font-size: 8.5px;
-    line-height: 0.95;
-  }
-
-  .book-condition-circle-badge:not(.multi-word) .condition-circle-val {
-    font-size: 8.5px;
-  }
-
-  .book-condition-circle-badge.pos-third {
-    top: 122px;
-    right: 14px;
-  }
-
-  .book-condition-circle-badge.pos-second {
-    top: 68px;
-    right: 14px;
-  }
-
-  .book-condition-circle-badge.pos-first {
-    top: 14px;
-    right: 14px;
   }
 }
 /* Ajustes responsivos para el botón tutorial y logo en pantallas pequeñas */

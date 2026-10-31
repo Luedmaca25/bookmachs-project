@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getFileUrl } from '../../../lib/formatters';
+import { BookConditionModal } from './BookConditionModal';
 
 export interface BookCardData {
   id: string;
@@ -73,6 +74,7 @@ export const BookCard: React.FC<BookCardProps> = ({
 }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [hasMoreText, setHasMoreText] = useState(false);
+  const [isConditionModalOpen, setIsConditionModalOpen] = useState(false);
   const descRef = useRef<HTMLParagraphElement>(null);
 
   // Al cambiar de libro, reiniciar el estado de expansión de sinopsis
@@ -204,35 +206,6 @@ export const BookCard: React.FC<BookCardProps> = ({
         </button>
       )}
 
-      {/* Badge circular flotante con el estado del libro (Debajo de los botones superiores derechos) */}
-      {book.condition && (
-        <div
-          className={`book-condition-circle-badge ${
-            showUndoButton && onUndo
-              ? onOpenZoom
-                ? 'pos-third'
-                : 'pos-second'
-              : onOpenZoom
-              ? 'pos-second'
-              : 'pos-first'
-          } ${book.condition.includes(' ') || book.condition.length > 7 ? 'multi-word' : ''}`}
-          title={`Estado: ${book.condition}`}
-        >
-          {/* <span className="condition-circle-label">Estado</span> */}
-          <span className="condition-circle-val">
-            {book.condition.includes(' ') ? (
-              book.condition.split(' ').map((word, idx) => (
-                <span key={idx} className="condition-word-line">
-                  {word}
-                </span>
-              ))
-            ) : (
-              book.condition
-            )}
-          </span>
-        </div>
-      )}
-
       <div className="book-card-image-placeholder">
         {/* Sellos dinámicos estilo Tinder circulares (Corazón 💚 / Equis ❌) */}
         <div
@@ -347,16 +320,36 @@ export const BookCard: React.FC<BookCardProps> = ({
               </button>
             )}
 
-            <div className="book-source-bottom-badge">
-              {book.stockBadgeLabel ? (
-                <span className={`stock-pill-badge ${book.stockBadgeClass || 'internal'}`}>
-                  {book.stockBadgeIcon && <i className={book.stockBadgeIcon}></i>} {book.stockBadgeLabel}
-                </span>
-              ) : book.isInternalStock !== false ? (
-                <span className="stock-pill-badge internal">Intercambia libros</span>
-              ) : (
-                <span className="stock-pill-badge user">Usuario</span>
+            <div className="book-bottom-badges-container">
+              {book.condition && (
+                <button
+                  type="button"
+                  className="book-condition-badge-btn book-condition-circle-badge"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsConditionModalOpen(true);
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  title={`Estado: ${book.condition} (Presiona para ver guía de estados)`}
+                  aria-label={`Estado: ${book.condition}`}
+                >
+                  {/* <i className="fa-solid fa-circle-info"></i> */}
+                  <span>{book.condition}</span>
+                </button>
               )}
+
+              <div className="book-source-bottom-badge">
+                {book.stockBadgeLabel ? (
+                  <span className={`stock-pill-badge ${book.stockBadgeClass || 'internal'}`}>
+                    {book.stockBadgeIcon && <i className={book.stockBadgeIcon}></i>} {book.stockBadgeLabel}
+                  </span>
+                ) : book.isInternalStock !== false ? (
+                  <span className="stock-pill-badge internal">Intercambia libros</span>
+                ) : (
+                  <span className="stock-pill-badge user">Usuario</span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -398,6 +391,12 @@ export const BookCard: React.FC<BookCardProps> = ({
           )}
         </div>
       </div>
+
+      <BookConditionModal
+        isOpen={isConditionModalOpen}
+        onClose={() => setIsConditionModalOpen(false)}
+        currentCondition={book.condition}
+      />
     </div>
   );
 };
