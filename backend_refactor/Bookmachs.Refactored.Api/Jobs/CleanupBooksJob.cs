@@ -33,7 +33,7 @@ public class CleanupBooksJob
 
         try
         {
-            // 1. Liberar reservas de libros expiradas (> 48 horas)
+            // 1. Liberar reservas de libros expiradas (> 4 horas)
             var expiredReservedBooks = await _dbContext.Books
                 .Where(b => b.IsReserved && b.ReservedUntil < DateTime.UtcNow)
                 .ToListAsync();
@@ -74,7 +74,7 @@ public class CleanupBooksJob
                             EstadoActual = product.Activo,
                             IdUsuario = null,
                             FechaActualizacion = DateTime.UtcNow,
-                            Justificacion = $"Restitución de stock por expiración de reserva (48 hrs) en Bookmachs. Libro ID: {book.Id}."
+                            Justificacion = $"Restitución de stock por expiración de reserva (4 hrs) en Bookmachs. Libro ID: {book.Id}."
                         };
 
                         await _ecolecturaDbContext.AjustesInventario.AddAsync(adjustment);

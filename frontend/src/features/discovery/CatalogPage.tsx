@@ -374,7 +374,7 @@ export const CatalogPage: React.FC = () => {
             </li>
             <li>
               <span className="benefit-bullet"><i className="fa-solid fa-check"></i></span>
-              <span>Reserva de stock en un clic por hasta 48 horas</span>
+              <span>Reserva hasta 2 libros simultáneos por 4 horas</span>
             </li>
           </ul>
 
@@ -576,7 +576,7 @@ export const CatalogPage: React.FC = () => {
             type="button"
             className="toggle-filters-btn my-reservations-btn"
             onClick={() => { refetchReservations(); setShowReservationsModal(true); }}
-            title="Ver mis reservas de 48 horas"
+            title="Ver mis reservas activas (máx. 2 por 4 horas)"
           >
             <i className="fa-solid fa-bookmark"></i>
             <span>Mis Reservas</span>
@@ -779,10 +779,10 @@ export const CatalogPage: React.FC = () => {
                 <i className="fa-solid fa-bookmark"></i>
               </div>
               <h3 className="reservations-modal-title font-heading">
-                Mis Reservas Activas (48 hrs)
+                Mis Reservas Activas (4 hrs - máx. 2)
               </h3>
               <p className="reservations-modal-subtitle">
-                Estos libros están apartados exclusivamente para ti. Nadie más puede tomarlos ni reservarlos mientras continúe tu reserva activa.
+                Estos libros están apartados exclusivamente para ti por hasta 4 horas (máximo 2 reservas simultáneas). Si no concretas el intercambio dentro de ese plazo, el libro volverá a estar disponible para todos los usuarios.
               </p>
             </div>
 
@@ -794,7 +794,7 @@ export const CatalogPage: React.FC = () => {
                   </div>
                   <h4>No tienes ninguna reserva activa</h4>
                   <p>
-                    Cuando encuentres un libro de tu interés en el catálogo, usa el botón <strong>Reservar</strong> para congelar el stock a tu favor durante 48 horas.
+                    Cuando encuentres un libro de tu interés en el catálogo, usa el botón <strong>Reservar</strong> para congelar el stock a tu favor durante 4 horas (máx. 2 reservas simultáneas).
                   </p>
                 </div>
               ) : (
@@ -816,7 +816,7 @@ export const CatalogPage: React.FC = () => {
                         <span className="reservation-item-author">por {item.author}</span>
                         <div className="reservation-pills-row">
                           <span className="reservation-timer-pill">
-                            <i className="fa-solid fa-clock"></i> Reserva Activa (48 hrs)
+                            <i className="fa-solid fa-clock"></i> Reserva Activa (4 hrs)
                           </span>
                           {item.condition && (
                             <span className="reservation-condition-pill">

@@ -562,7 +562,7 @@ export const AuthenticationPage: React.FC = () => {
                     </li>
                     <li className="profile-premium-benefit-item">
                       <i className="fa-solid fa-circle-check"></i>
-                      <span><strong>Reserva de libros por 48 horas</strong> para congelar stock antes de intercambiar</span>
+                      <span><strong>Reserva hasta 2 libros simultáneos por 4 horas</strong> para congelar stock antes de intercambiar</span>
                     </li>
                     <li className="profile-premium-benefit-item">
                       <i className="fa-solid fa-circle-check"></i>

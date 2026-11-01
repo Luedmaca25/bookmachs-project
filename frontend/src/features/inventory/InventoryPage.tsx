@@ -337,7 +337,7 @@ export const InventoryPage: React.FC = () => {
               }
             }}
             className={`libreta-tab-btn libreta-tab-btn-reservas ${activeTab === 'reservations' ? 'active' : ''}`}
-            title={!isPremium ? "Función Premium: Reservas de 48 horas" : "Ver mis reservas"}
+            title={!isPremium ? "Función Premium: Reservas por 4 horas" : "Ver mis reservas"}
           >
             <i className="fa-solid fa-clock"></i>
             <span className="libreta-tab-crown-badge" title="Función Premium">
@@ -625,7 +625,7 @@ export const InventoryPage: React.FC = () => {
                   badgeIcon = 'fa-solid fa-box-open';
                   badgeClass = 'badge-status-inexchange';
                 } else if (book.exchangeStatus === 'Reserved') {
-                  badgeLabel = 'Reservado por 48h';
+                  badgeLabel = 'Reservado por 4h';
                   badgeIcon = 'fa-solid fa-clock';
                   badgeClass = 'badge-status-reserved';
                 } else if (isDoubleCommitmentActive || book.exchangeStatus === 'DoubleExchangeCommitment') {
@@ -721,7 +721,7 @@ export const InventoryPage: React.FC = () => {
               </div>
               <h4>No tienes ninguna reserva activa</h4>
               <p>
-                Como usuario Premium puedes reservar libros del catálogo durante 48 horas para congelar el stock a tu favor mientras decides tu intercambio.
+                Como usuario Premium puedes reservar hasta 2 libros simultáneos durante 4 horas para congelar el stock a tu favor mientras decides y concretas tu intercambio.
               </p>
               <button
                 type="button"
@@ -750,7 +750,7 @@ export const InventoryPage: React.FC = () => {
                     <span className="reservation-item-author">por {item.author}</span>
                     <div className="reservation-pills-row">
                       <span className="reservation-timer-pill">
-                        <i className="fa-solid fa-clock"></i> Reserva Activa (48 hrs)
+                        <i className="fa-solid fa-clock"></i> Reserva Activa (4 hrs)
                       </span>
                       {item.condition && (
                         <span className="reservation-condition-pill">
@@ -815,7 +815,7 @@ export const InventoryPage: React.FC = () => {
       <GlobalPremiumModal
         isOpen={premiumModalOpen}
         onClose={() => setPremiumModalOpen(false)}
-        featureName="la Reserva de Libros por 48 Horas"
+        featureName="la Reserva de Libros por 4 Horas (máx. 2 simultáneas)"
         icon="fa-solid fa-clock"
       />
     </div>

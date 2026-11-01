@@ -61,7 +61,7 @@ export const PlansPage: React.FC = () => {
         'Búsqueda directa instantánea en Swipe y Catálogo (hasta 10 palabras clave)',
         'Acceso completo a Catálogo Avanzado en Grilla interactiva',
         'Filtros avanzados de exploración (por categoría, temas y estado)',
-        'Reserva de libros de stock interno por 48 horas en Tu Libreta',
+        'Reserva hasta 2 libros simultáneos por 4 horas (si no finalizas el intercambio, el libro vuelve a estar disponible para todos los usuarios)',
         'Beneficio exclusivo: hasta 2 Intercambios Dobles al mes (sin entrega inmediata)',
         'Opción de Donación Comunitaria en intercambios (hasta 2 al mes)',
         'Early Access y alertas de libros recién ingresados a plataforma',

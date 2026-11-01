@@ -50,8 +50,8 @@ const FAQS_DATA: FaqItem[] = [
   {
     id: 'f6',
     category: 'profile',
-    question: '¿Cómo reservo un libro por 48 horas con el Plan Premium?',
-    answer: 'Si tienes el Plan Premium activo, al abrir cualquier libro en el Catálogo verás el botón "Reservar 48 hrs". Al hacer clic, el ejemplar queda bloqueado exclusivamente para ti durante 48 horas completas, impidiendo que otros lectores o compradores de Ecolectura lo adquieran mientras decides tu intercambio.'
+    question: '¿Cómo reservo un libro con el Plan Premium?',
+    answer: 'Si tienes el Plan Premium activo, al abrir cualquier libro en el Catálogo verás el botón "Reservar". Puedes mantener hasta 2 reservas simultáneas por 4 horas completas para congelar el stock a tu favor. Si transcurridas las 4 horas no has finalizado el intercambio, el libro volverá a estar disponible automáticamente para todos los usuarios.'
   },
   {
     id: 'f7',

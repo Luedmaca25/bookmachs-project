@@ -141,7 +141,7 @@ export const CancelSubscriptionModal: React.FC<CancelSubscriptionModalProps> = (
               <li>
                 <i className="fa-solid fa-circle-check text-green"></i>
                 <span>
-                  <strong>Conservarás tus beneficios Premium</strong> (swipes ilimitados, 5 intercambios al mes, catálogo avanzado, reservas de 48 hrs y soporte 24/7) hasta el <strong>{formattedEndDate}</strong>.
+                  <strong>Conservarás tus beneficios Premium</strong> (swipes ilimitados, 5 intercambios al mes, catálogo avanzado, reservas por 4 hrs y soporte 24/7) hasta el <strong>{formattedEndDate}</strong>.
                 </span>
               </li>
               <li>

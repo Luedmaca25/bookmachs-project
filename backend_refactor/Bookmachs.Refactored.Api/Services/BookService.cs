@@ -1170,6 +1170,15 @@ public class BookService : IBookService
             throw new InvalidOperationException("El libro ya se encuentra reservado por otro usuario.");
         }
 
+        // Validar límite máximo de 2 reservas activas simultáneas para usuarios Premium
+        var activeReservationsCount = await _dbContext.Books
+            .CountAsync(b => b.IsReserved && b.ReservedByUserId == userId && b.ReservedUntil > DateTime.UtcNow && b.Id != book.Id, cancellationToken);
+
+        if (activeReservationsCount >= 2)
+        {
+            throw new InvalidOperationException("Has alcanzado el límite máximo de 2 reservas activas simultáneas permitidas en tu Plan Premium. Debes concretar el intercambio o esperar a que expire una reserva para poder apartar otro libro.");
+        }
+
         // Si el origen del libro es de Ecolectura, descontar stock de la base de datos de Ecolectura y registrar AjusteInventario
         if (book.IsInternalStock)
         {
@@ -1205,7 +1214,7 @@ public class BookService : IBookService
                 EstadoActual = product.Activo,
                 IdUsuario = null,
                 FechaActualizacion = DateTime.UtcNow,
-                Justificacion = $"Reserva de libro por 48 horas en Bookmachs. Usuario: {user.Email ?? userId.ToString()}. Libro ID: {book.Id}."
+                Justificacion = $"Reserva de libro por 4 horas en Bookmachs. Usuario: {user.Email ?? userId.ToString()}. Libro ID: {book.Id}."
             };
 
             await _ecolecturaDbContext.AjustesInventario.AddAsync(adjustment, cancellationToken);
@@ -1213,7 +1222,7 @@ public class BookService : IBookService
         }
 
         book.IsReserved = true;
-        book.ReservedUntil = DateTime.UtcNow.AddHours(48);
+        book.ReservedUntil = DateTime.UtcNow.AddHours(4);
         book.ReservedByUserId = userId;
 
         _dbContext.Books.Update(book);
@@ -1226,7 +1235,7 @@ public class BookService : IBookService
             ReservedByUserId = book.ReservedByUserId.Value,
             ReservedUntil = book.ReservedUntil.Value,
             Success = true,
-            Message = "Libro reservado con éxito por 48 horas."
+            Message = "Libro reservado con éxito por 4 horas."
         };
     }
 
