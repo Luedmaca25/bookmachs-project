@@ -6,6 +6,7 @@ import { OnboardingWizard } from '../authentication/components/OnboardingWizard'
 import { MatchModal } from '../transactions/components/MatchModal';
 import { BookCard } from './components/BookCard';
 import { GuestLimitModal } from './components/GuestLimitModal';
+import { GuestMatchPremiumModal } from './components/GuestMatchPremiumModal';
 import { UndoSwipePremiumModal } from './components/UndoSwipePremiumModal';
 import { SearchPremiumModal } from './components/SearchPremiumModal';
 import { BookImageZoomModal } from './components/BookImageZoomModal';
@@ -238,6 +239,8 @@ export const SwipePage: React.FC = () => {
     return saved ? parseInt(saved, 10) : 0;
   });
   const [showGuestLimitModal, setShowGuestLimitModal] = useState<boolean>(false);
+  const [showGuestMatchPremiumModal, setShowGuestMatchPremiumModal] = useState<boolean>(false);
+  const [guestMatchedBook, setGuestMatchedBook] = useState<BookItem | null>(null);
   const [matchAnimationBookId, setMatchAnimationBookId] = useState<string | null>(null);
 
   // Estados y lógica del buscador superior de BookCard
@@ -490,7 +493,15 @@ export const SwipePage: React.FC = () => {
             setMatchAnimationBookId(null);
             setSwipeDirection(null);
             setCurrentBookIndex((prev) => prev + 1);
-            if (direction === 'right' && newCount >= 5) {
+
+            const hasSeenFirstMatchNotice = localStorage.getItem('guest_first_match_premium_shown');
+            if (!hasSeenFirstMatchNotice) {
+              localStorage.setItem('guest_first_match_premium_shown', 'true');
+              setGuestMatchedBook(swipedBook);
+              setTimeout(() => {
+                setShowGuestMatchPremiumModal(true);
+              }, 250);
+            } else if (direction === 'right' && newCount >= 5) {
               setShowGuestLimitModal(true);
             }
           }, 220);
@@ -849,6 +860,12 @@ export const SwipePage: React.FC = () => {
         onClose={() => setShowGuestLimitModal(false)}
         isAuthenticated={isAuthenticated}
         limit={swipeLimit}
+      />
+
+      <GuestMatchPremiumModal
+        isOpen={showGuestMatchPremiumModal}
+        onClose={() => setShowGuestMatchPremiumModal(false)}
+        book={guestMatchedBook}
       />
 
       <UndoSwipePremiumModal
