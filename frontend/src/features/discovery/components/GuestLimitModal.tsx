@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../../../lib/apiClient';
 
 interface GuestLimitModalProps {
   isOpen: boolean;
   onClose: () => void;
   isAuthenticated?: boolean;
   limit?: number;
+  baseLimit?: number;
 }
 
 export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
@@ -14,8 +17,21 @@ export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
   onClose,
   isAuthenticated = false,
   limit = 40,
+  baseLimit,
 }) => {
   const navigate = useNavigate();
+
+  // Obtener la configuración global para conocer el límite base oficial del plan free
+  const { data: globalSettings } = useQuery<{ dailySwipeLimitFree?: number }>({
+    queryKey: ['globalSettings'],
+    queryFn: () => apiClient.get<any>('/globalsettings'),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  // El límite a comunicar para usuarios con cuenta free debe estar topado al valor oficial configurado (por defecto 40),
+  // para evitar confusiones si el usuario recibió bonos por 24h que eleven temporalmente su cuota efectiva (ej. 90).
+  const configuredFreeLimit = baseLimit ?? globalSettings?.dailySwipeLimitFree ?? 40;
+  const displayLimit = isAuthenticated ? Math.min(limit, configuredFreeLimit) : 5;
 
   // Cerrar al presionar tecla Escape y bloquear scroll del body
   useEffect(() => {
@@ -71,14 +87,14 @@ export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
 
           <h2 className="guest-limit-title font-heading">
             {isAuthenticated
-              ? `¡Alcanzaste el límite de ${limit} swipes diarios!`
+              ? `¡Alcanzaste el límite de ${displayLimit} swipes diarios!`
               : '¡Alcanzaste el límite de 5 swipes como invitado!'}
           </h2>
 
           <p className="guest-limit-description">
             {isAuthenticated ? (
               <>
-                Has explorado {limit} libros hoy en tu cuenta gratuita. Pásate al <strong>Plan Premium</strong> para continuar descubriendo libros sin límites y recibir propuestas de intercambio.
+                Has explorado {displayLimit} libros hoy en tu cuenta gratuita. Pásate al <strong>Plan Premium</strong> para continuar descubriendo libros sin límites y recibir propuestas de intercambio.
               </>
             ) : (
               <>

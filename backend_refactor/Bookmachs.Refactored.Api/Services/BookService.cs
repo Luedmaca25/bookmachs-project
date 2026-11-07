@@ -295,19 +295,50 @@ public class BookService : IBookService
             .Select(b => b.Id.ToString())
             .ToListAsync(cancellationToken);
 
-        // Conjunto de IDs en formato string para rápida exclusión
-        var excludedIds = new HashSet<string>(swipedBookGuids, StringComparer.OrdinalIgnoreCase);
+        // Conjunto de IDs en formato string para rápida exclusión normalizada
+        var excludedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in swipedBookGuids)
+        {
+            if (string.IsNullOrWhiteSpace(id)) continue;
+            var clean = id.Trim();
+            excludedIds.Add(clean);
+            if (Guid.TryParse(clean, out var parsed))
+            {
+                excludedIds.Add(parsed.ToString("D"));
+                excludedIds.Add(parsed.ToString("N"));
+                excludedIds.Add(parsed.ToString("B"));
+            }
+        }
         foreach (var myGuid in myBookGuids)
         {
             excludedIds.Add(myGuid.ToString("D"));
+            excludedIds.Add(myGuid.ToString("N"));
         }
         foreach (var unavId in unavailableBookIds)
         {
-            excludedIds.Add(unavId);
+            if (!string.IsNullOrWhiteSpace(unavId))
+            {
+                var clean = unavId.Trim();
+                excludedIds.Add(clean);
+                if (Guid.TryParse(clean, out var parsed))
+                {
+                    excludedIds.Add(parsed.ToString("D"));
+                    excludedIds.Add(parsed.ToString("N"));
+                }
+            }
         }
         foreach (var resId in reservedByOthersGuids)
         {
-            excludedIds.Add(resId);
+            if (!string.IsNullOrWhiteSpace(resId))
+            {
+                var clean = resId.Trim();
+                excludedIds.Add(clean);
+                if (Guid.TryParse(clean, out var parsed))
+                {
+                    excludedIds.Add(parsed.ToString("D"));
+                    excludedIds.Add(parsed.ToString("N"));
+                }
+            }
         }
 
         var resultList = new List<BookDto>();
@@ -364,7 +395,13 @@ public class BookService : IBookService
 
                 foreach (var prod in randomizedPrefProducts)
                 {
-                    if (excludedIds.Contains(prod.IdProducto)) continue;
+                    var prodIdClean = prod.IdProducto?.Trim();
+                    if (string.IsNullOrEmpty(prodIdClean) || excludedIds.Contains(prodIdClean)) continue;
+                    if (Guid.TryParse(prodIdClean, out var prodGuid))
+                    {
+                        if (excludedIds.Contains(prodGuid.ToString("D")) || excludedIds.Contains(prodGuid.ToString("N")))
+                            continue;
+                    }
 
                     Guid bookId = Guid.TryParse(prod.IdProducto, out var parsedGuid) ? parsedGuid : Guid.Empty;
                     string? imageUrl = FormatImageUrl(prod.RutaImagen);
@@ -433,7 +470,13 @@ public class BookService : IBookService
 
             foreach (var prod in randomizedFallbackProducts)
             {
-                if (excludedIds.Contains(prod.IdProducto)) continue;
+                var prodIdClean = prod.IdProducto?.Trim();
+                if (string.IsNullOrEmpty(prodIdClean) || excludedIds.Contains(prodIdClean)) continue;
+                if (Guid.TryParse(prodIdClean, out var prodGuid))
+                {
+                    if (excludedIds.Contains(prodGuid.ToString("D")) || excludedIds.Contains(prodGuid.ToString("N")))
+                        continue;
+                }
 
                 Guid bookId = Guid.TryParse(prod.IdProducto, out var parsedGuid) ? parsedGuid : Guid.Empty;
                 string? imageUrl = FormatImageUrl(prod.RutaImagen);

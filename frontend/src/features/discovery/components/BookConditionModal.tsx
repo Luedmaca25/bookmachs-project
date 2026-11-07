@@ -120,7 +120,7 @@ export const BookConditionModal: React.FC<BookConditionModalProps> = ({
               return (
                 <div
                   key={cond.title}
-                  className={`book-condition-guide-card`}
+                  className={`book-condition-guide-card ${isCurrent ? 'is-current' : ''}`.trim()}
                 >
                   <div className="book-condition-guide-header">
                     <div className="book-condition-guide-title-row">

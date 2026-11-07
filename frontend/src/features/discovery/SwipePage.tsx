@@ -81,12 +81,43 @@ export const SwipePage: React.FC = () => {
   // Determinar si las recomendaciones se están cargando o sincronizando
   const isRecommendationsLoading = loading || isFetching || (!!queryBooks && queryBooks.length > 0 && booksList.length === 0);
 
-  // Inicializar la lista de libros cuando se recibe la respuesta inicial de React Query
+  // Obtener los IDs de libros descartados o ya interactuados para excluirlos de inmediato
+  const getExcludedBookIds = (): Set<string> => {
+    const set = new Set<string>();
+    try {
+      if (!isAuthenticated) {
+        const guestDislikes = localStorage.getItem('guest_dislikes');
+        if (guestDislikes) {
+          JSON.parse(guestDislikes).forEach((id: string) => set.add(id));
+        }
+        const guestLikes = localStorage.getItem('guest_pending_likes');
+        if (guestLikes) {
+          JSON.parse(guestLikes).forEach((id: string) => set.add(id));
+        }
+      } else if (user?.id) {
+        const userDislikes = localStorage.getItem(`user_dislikes_${user.id}`);
+        if (userDislikes) {
+          JSON.parse(userDislikes).forEach((id: string) => set.add(id));
+        }
+      }
+    } catch (e) {
+      console.error('Error al leer libros descartados de localStorage:', e);
+    }
+    return set;
+  };
+
+  // Inicializar la lista de libros cuando se recibe la respuesta inicial de React Query,
+  // filtrando de inmediato cualquier libro que haya sido descartado anteriormente
   useEffect(() => {
     if (rawBooks && rawBooks.length > 0) {
-      setBooksList(rawBooks);
+      const excluded = getExcludedBookIds();
+      const freshBooks = rawBooks.filter((b) => !excluded.has(b.id));
+      setBooksList(freshBooks);
       setCurrentBookIndex(0);
       setSwipedHistory([]);
+      if (freshBooks.length < 10 && !isFetchingMore) {
+        fetchMoreBooks();
+      }
     }
   }, [queryBooks]);
 
@@ -100,9 +131,12 @@ export const SwipePage: React.FC = () => {
         : '/books/guest-random?count=20&category=Ficci%C3%B3n%2C%20Novelas%20y%20Relatos';
       const newBooks = await apiClient.get<BookItem[]>(endpoint);
       if (newBooks && newBooks.length > 0) {
+        const excluded = getExcludedBookIds();
         setBooksList((prev) => {
           const existingIds = new Set(prev.map((b) => b.id));
-          const filteredNew = newBooks.filter((b) => !existingIds.has(b.id));
+          const filteredNew = newBooks.filter(
+            (b) => !existingIds.has(b.id) && !excluded.has(b.id)
+          );
           return [...prev, ...filteredNew];
         });
       }
@@ -415,11 +449,31 @@ export const SwipePage: React.FC = () => {
               const updatedLikes = existingLikes.filter((id) => id !== undoneBook.id);
               localStorage.setItem('guest_pending_likes', JSON.stringify(updatedLikes));
             }
+            const existingDislikesStr = localStorage.getItem('guest_dislikes');
+            if (existingDislikesStr) {
+              const existingDislikes: string[] = JSON.parse(existingDislikesStr);
+              const updatedDislikes = existingDislikes.filter((id) => id !== undoneBook.id);
+              localStorage.setItem('guest_dislikes', JSON.stringify(updatedDislikes));
+            }
           } catch (e) {
-            console.error('Error al actualizar me gusta de invitado:', e);
+            console.error('Error al actualizar me gusta / descartes de invitado:', e);
           }
         }
         setLimitReached(false);
+      }
+
+      if (undoneBook && isAuthenticated && user?.id) {
+        try {
+          const storageKey = `user_dislikes_${user.id}`;
+          const existingDislikesStr = localStorage.getItem(storageKey);
+          if (existingDislikesStr) {
+            const existingDislikes: string[] = JSON.parse(existingDislikesStr);
+            const updatedDislikes = existingDislikes.filter((id) => id !== undoneBook.id);
+            localStorage.setItem(storageKey, JSON.stringify(updatedDislikes));
+          }
+        } catch (e) {
+          console.error('Error al revertir descarte de usuario:', e);
+        }
       }
     }
   };
@@ -451,6 +505,14 @@ export const SwipePage: React.FC = () => {
     const swipedBook = currentBook;
     const isInternalMatch = direction === 'right' && swipedBook.isInternalStock !== false;
 
+    // Actualizar inmediatamente la caché en memoria de React Query para eliminar el libro deslizado
+    if (swipedBook) {
+      queryClient.setQueryData<BookItem[]>(['books', isAuthenticated], (old) => {
+        if (!old) return [];
+        return old.filter((b) => b.id !== swipedBook.id);
+      });
+    }
+
     // Cerrar modal de zoom si estaba abierto
     setIsZoomOpen(false);
 
@@ -480,6 +542,20 @@ export const SwipePage: React.FC = () => {
             }
           } catch (e) {
             console.error('Error al guardar me gusta de invitado:', e);
+          }
+        }
+      } else {
+        // Dislike de invitado: persistir descarte localmente para no volver a mostrar el libro
+        if (swipedBook) {
+          try {
+            const existingDislikesStr = localStorage.getItem('guest_dislikes');
+            const existingDislikes: string[] = existingDislikesStr ? JSON.parse(existingDislikesStr) : [];
+            if (!existingDislikes.includes(swipedBook.id)) {
+              existingDislikes.push(swipedBook.id);
+              localStorage.setItem('guest_dislikes', JSON.stringify(existingDislikes));
+            }
+          } catch (e) {
+            console.error('Error al guardar descarte de invitado:', e);
           }
         }
       }
@@ -566,6 +642,21 @@ export const SwipePage: React.FC = () => {
     // 3. Enviar el registro del swipe al servidor en segundo plano
     try {
       const action = direction === 'right' ? 'like' : 'dislike';
+
+      // Persistir descarte de usuario inmediatamente en localStorage para blindar contra refetch / recargas
+      if (action === 'dislike' && swipedBook && user?.id) {
+        try {
+          const storageKey = `user_dislikes_${user.id}`;
+          const existingDislikesStr = localStorage.getItem(storageKey);
+          const existingDislikes: string[] = existingDislikesStr ? JSON.parse(existingDislikesStr) : [];
+          if (!existingDislikes.includes(swipedBook.id)) {
+            existingDislikes.push(swipedBook.id);
+            localStorage.setItem(storageKey, JSON.stringify(existingDislikes));
+          }
+        } catch (e) {
+          console.error('Error al persistir descarte localmente:', e);
+        }
+      }
       
       interface SwipeResponse {
         success: boolean;
