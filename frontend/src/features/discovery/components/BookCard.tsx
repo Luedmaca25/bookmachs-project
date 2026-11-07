@@ -335,7 +335,7 @@ export const BookCard: React.FC<BookCardProps> = ({
                   aria-label={`Estado: ${book.condition}`}
                 >
                   {/* <i className="fa-solid fa-circle-info"></i> */}
-                  <span>{book.condition}</span>
+                  <span>Estado: {book.condition}</span>
                 </button>
               )}
 
@@ -345,9 +345,9 @@ export const BookCard: React.FC<BookCardProps> = ({
                     {book.stockBadgeIcon && <i className={book.stockBadgeIcon}></i>} {book.stockBadgeLabel}
                   </span>
                 ) : book.isInternalStock !== false ? (
-                  <span className="stock-pill-badge internal">Intercambia libros</span>
+                  <span className="stock-pill-badge internal">Stock: Interno</span>
                 ) : (
-                  <span className="stock-pill-badge user">Usuario</span>
+                  <span className="stock-pill-badge user">Stock: Externo</span>
                 )}
               </div>
             </div>

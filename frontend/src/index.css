@@ -13640,13 +13640,14 @@ body.swipe-page-active .app-footer {
 
 .book-condition-guide-card {
   background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--accent-primary);
   border-radius: 14px;
   padding: 0.85rem 1rem;
   transition: all 0.2s ease;
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
 }
 
 .book-condition-guide-card.is-current-condition {
@@ -13667,11 +13668,14 @@ body.swipe-page-active .app-footer {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.82rem;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   padding: 3px 10px;
   border-radius: 9999px;
   letter-spacing: 0.02em;
+  background-color: var(--accent-primary);
+  color: #fff;
+  text-align: center;
 }
 
 .condition-badge-nuevo .book-condition-pill-tag {

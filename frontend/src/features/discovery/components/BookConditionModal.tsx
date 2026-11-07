@@ -120,20 +120,13 @@ export const BookConditionModal: React.FC<BookConditionModalProps> = ({
               return (
                 <div
                   key={cond.title}
-                  className={`book-condition-guide-card ${cond.badgeClass} ${
-                    isCurrent ? 'is-current-condition' : ''
-                  }`}
+                  className={`book-condition-guide-card`}
                 >
                   <div className="book-condition-guide-header">
                     <div className="book-condition-guide-title-row">
                       <span className="book-condition-pill-tag font-heading">
-                        <i className={cond.icon}></i> {cond.title}
+                        {cond.title}
                       </span>
-                      {isCurrent && (
-                        <span className="current-book-badge font-heading">
-                          <i className="fa-solid fa-circle-check"></i> Estado de este libro
-                        </span>
-                      )}
                     </div>
                   </div>
 
