@@ -13502,12 +13502,12 @@ body.swipe-page-active .app-footer {
   height: 68px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
-  border: 1.5px solid rgba(16, 185, 129, 0.35);
+  border: 1.5px solid var(--accent-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2rem;
-  color: #10b981;
+  color: var(--accent-primary);
   margin-bottom: 1.15rem;
   box-shadow: 0 8px 24px rgba(16, 185, 129, 0.22);
 }
@@ -15705,7 +15705,7 @@ body.swipe-page-active .app-footer {
 }
 
 .text-green {
-  color: #0f9d58;
+  color: var(--accent-primary);
 }
 
 .text-amber {
