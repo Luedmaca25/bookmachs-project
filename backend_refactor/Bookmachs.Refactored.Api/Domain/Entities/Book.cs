@@ -35,6 +35,9 @@ public class Book
     public bool IsDoubleExchangeCommitment { get; set; } = false;
     public DateTime? DoubleExchangeCommitmentUntil { get; set; }
 
+    // Muestra tus libros primero (Boost 48 horas)
+    public DateTime? BoostedUntil { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

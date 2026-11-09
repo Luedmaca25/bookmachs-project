@@ -33,6 +33,18 @@ public class GlobalSettings
     // Campaña promocional de Intercambio Doble (Exclusivo Premium)
     public bool EnableDoubleExchange { get; set; } = true;
 
+    // Precios de Complementos y Pases Especiales (CLP)
+    public decimal PricePremium24h { get; set; } = 2990.0m;
+    public decimal PriceUnlimitedLikes24h { get; set; } = 1990.0m;
+    public decimal PriceAuthorSearches10 { get; set; } = 990.0m;
+    public decimal PriceBookBoost48h { get; set; } = 490.0m;
+    public decimal PriceMatchPassWeek { get; set; } = 2990.0m;
+    public decimal PriceMatchPassDayPromo { get; set; } = 990.0m;
+
+    // Umbrales para Disparo de Pop-up Promocional Match Pass
+    public int MatchPassPromoSwipesThreshold { get; set; } = 200;
+    public int MatchPassPromoMinInterestedThreshold { get; set; } = 2;
+
     public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
 }
 

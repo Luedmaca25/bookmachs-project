@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../authentication/store/authStore';
 import { apiClient } from '../../lib/apiClient';
 import { CancelSubscriptionModal } from './components/CancelSubscriptionModal';
+import { BuyAddonModal } from './components/BuyAddonModal';
 
 interface Plan {
   id: string;
@@ -24,6 +25,8 @@ export const PlansPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [highlightPremium, setHighlightPremium] = useState(false);
+  const [selectedAddonType, setSelectedAddonType] = useState<string | null>(null);
+  const [showAddonModal, setShowAddonModal] = useState(false);
   const location = useLocation();
 
   const { data: globalSettings } = useQuery<{ premiumPlanPriceUsd: number }>({
@@ -76,13 +79,40 @@ export const PlansPage: React.FC = () => {
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenWs = urlParams.get('token_ws');
+    const isAddon = urlParams.get('addon') === '1';
 
     if (tokenWs && processedTokenRef.current !== tokenWs) {
       processedTokenRef.current = tokenWs;
       window.history.replaceState({}, document.title, window.location.pathname);
-      handleConfirmWebpay(tokenWs);
+      if (isAddon) {
+        handleConfirmAddonWebpay(tokenWs);
+      } else {
+        handleConfirmWebpay(tokenWs);
+      }
     }
   }, []);
+
+  const handleConfirmAddonWebpay = async (token: string) => {
+    setLoadingPlanId('addon');
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const response = await apiClient.post<any>(`/addons/webpay-confirm?token_ws=${encodeURIComponent(token)}`);
+      if (response.success) {
+        const updatedProfile = await apiClient.get<any>('/auth/me');
+        const tokenStr = localStorage.getItem('token') || '';
+        login(updatedProfile, tokenStr);
+        setSuccessMessage(response.message || '¡Tu complemento ha sido activado con éxito por Transbank Webpay Plus!');
+      } else {
+        setErrorMessage(response.message || 'Error al confirmar el complemento en Transbank Webpay.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage('Error al confirmar la transacción del complemento con Transbank.');
+    } finally {
+      setLoadingPlanId(null);
+    }
+  };
 
   React.useEffect(() => {
     const hash = window.location.hash || location.hash;
@@ -330,7 +360,255 @@ export const PlansPage: React.FC = () => {
         })}
       </div>
 
-      {/* Modal de Cancelación con doble check */}
+      {/* SECCIÓN DE COMPLEMENTOS Y PASES RÁPIDOS (MICROTRANSACCIONES) */}
+      <div className="addons-section" style={{ marginTop: '3.5rem', marginBottom: '2.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.35rem 0.85rem',
+              borderRadius: '20px',
+              background: '#ecfdf5',
+              color: '#059669',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: '0.5rem'
+            }}
+          >
+            <i className="fa-solid fa-wand-magic-sparkles"></i> Pases Flexibles sin Suscripción
+          </div>
+          <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#1f2937', margin: '0 0 0.5rem' }}>
+            Complementos y Pases Rápidos
+          </h2>
+          <p style={{ fontSize: '0.95rem', color: '#6b7280', maxWidth: '640px', margin: '0 auto' }}>
+            Potencia tu experiencia de intercambio al instante mediante un pago único seguro con Webpay Plus, sin renovaciones automáticas.
+          </p>
+        </div>
+
+        <div
+          className="addons-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.25rem'
+          }}
+        >
+          {/* 1. Plan Premium 24h */}
+          <div className="addon-card" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+                <i className="fa-solid fa-bolt"></i>
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1f2937' }}>Plan Premium 24 Horas</h4>
+                <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Acceso total por 1 día</span>
+              </div>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', margin: '0.5rem 0' }}>
+              $2.990 <span style={{ fontSize: '0.85rem', color: '#6b7280', fontWeight: 500 }}>CLP</span>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: '#4b5563', flex: 1, margin: '0 0 1rem' }}>
+              Prueba todos los beneficios Premium: swipes ilimitados, rewind, 2 reservas por 4 horas y Match Pass incluido.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAddonType('Premium24h');
+                setShowAddonModal(true);
+              }}
+              className="addon-buy-btn"
+              style={{
+                width: '100%',
+                padding: '0.7rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: '#1f2937',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                cursor: 'pointer'
+              }}
+            >
+              Comprar Pase 24h
+            </button>
+          </div>
+
+          {/* 2. Likes ilimitados 24h */}
+          <div className="addon-card" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#ffe4e6', color: '#e11d48', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+                <i className="fa-solid fa-heart-pulse"></i>
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1f2937' }}>Likes Ilimitados 24h</h4>
+                <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Sin tope diario de me gusta</span>
+              </div>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', margin: '0.5rem 0' }}>
+              $1.990 <span style={{ fontSize: '0.85rem', color: '#6b7280', fontWeight: 500 }}>CLP</span>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: '#4b5563', flex: 1, margin: '0 0 1rem' }}>
+              Desliza a la derecha todo el día sin consumir tu saldo de swipes mensuales para hacer match sin límites.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAddonType('UnlimitedLikes24h');
+                setShowAddonModal(true);
+              }}
+              className="addon-buy-btn"
+              style={{
+                width: '100%',
+                padding: '0.7rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: '#1f2937',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                cursor: 'pointer'
+              }}
+            >
+              Activar Likes 24h
+            </button>
+          </div>
+
+          {/* 3. 10 búsquedas por autor */}
+          <div className="addon-card" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+                <i className="fa-solid fa-magnifying-glass"></i>
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1f2937' }}>10 Búsquedas por Autor</h4>
+                <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Acceso directo a catálogo</span>
+              </div>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', margin: '0.5rem 0' }}>
+              $990 <span style={{ fontSize: '0.85rem', color: '#6b7280', fontWeight: 500 }}>CLP</span>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: '#4b5563', flex: 1, margin: '0 0 1rem' }}>
+              10 consultas avanzadas en catálogo para localizar títulos y escritores específicos de forma inmediata.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAddonType('AuthorSearches10');
+                setShowAddonModal(true);
+              }}
+              className="addon-buy-btn"
+              style={{
+                width: '100%',
+                padding: '0.7rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: '#1f2937',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                cursor: 'pointer'
+              }}
+            >
+              Comprar 10 Búsquedas
+            </button>
+          </div>
+
+          {/* 4. Boost 48h */}
+          <div className="addon-card" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#f3e8ff', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+                <i className="fa-solid fa-rocket"></i>
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1f2937' }}>Muestra tus Libros Primero</h4>
+                <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Boost prioritario por 48 horas</span>
+              </div>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', margin: '0.5rem 0' }}>
+              $490 <span style={{ fontSize: '0.85rem', color: '#6b7280', fontWeight: 500 }}>CLP</span>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: '#4b5563', flex: 1, margin: '0 0 1rem' }}>
+              Tus libros aparecerán primero en la fila de swipes de todos los demás lectores para conseguir intercambios más rápido.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAddonType('BookBoost48h');
+                setShowAddonModal(true);
+              }}
+              className="addon-buy-btn"
+              style={{
+                width: '100%',
+                padding: '0.7rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: '#1f2937',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                cursor: 'pointer'
+              }}
+            >
+              Destacar por 48h
+            </button>
+          </div>
+
+          {/* 5. Match Pass 1 semana */}
+          <div className="addon-card" style={{ background: '#ffffff', borderRadius: '16px', border: '2px solid #10b981', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 8px 20px rgba(16, 185, 129, 0.12)' }}>
+            <div style={{ position: 'absolute', top: '-11px', right: '16px', background: '#10b981', color: '#ffffff', fontSize: '0.72rem', fontWeight: 800, padding: '2px 10px', borderRadius: '12px', textTransform: 'uppercase' }}>
+              ¡Popular!
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#d1fae5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+                <i className="fa-solid fa-heart-circle-bolt"></i>
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1f2937' }}>Match Pass (1 Semana)</h4>
+                <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Descubre quién quiere intercambiar</span>
+              </div>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', margin: '0.5rem 0' }}>
+              $2.990 <span style={{ fontSize: '0.85rem', color: '#6b7280', fontWeight: 500 }}>CLP</span>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: '#4b5563', flex: 1, margin: '0 0 1rem' }}>
+              Desbloquea sin borrosidad la 4ta pestaña en tu libreta: mira exactamente quiénes dieron like a tus libros y stock de Ecolectura.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAddonType('MatchPassWeek');
+                setShowAddonModal(true);
+              }}
+              className="addon-buy-btn"
+              style={{
+                width: '100%',
+                padding: '0.7rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(16, 185, 129, 0.25)'
+              }}
+            >
+              Comprar Match Pass 1 Semana
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal para compra de cualquier Add-on */}
+      <BuyAddonModal
+        isOpen={showAddonModal}
+        onClose={() => setShowAddonModal(false)}
+        addonType={selectedAddonType}
+      />
       <CancelSubscriptionModal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}

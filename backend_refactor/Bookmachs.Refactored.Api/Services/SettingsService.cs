@@ -84,6 +84,14 @@ public class SettingsService : ISettingsService
         settings.MinFeeAmount = updateDto.MinFeeAmount;
         settings.MaxFeeAmount = updateDto.MaxFeeAmount;
         settings.EnableDoubleExchange = updateDto.EnableDoubleExchange;
+        settings.PricePremium24h = updateDto.PricePremium24h > 0 ? updateDto.PricePremium24h : 2990.0m;
+        settings.PriceUnlimitedLikes24h = updateDto.PriceUnlimitedLikes24h > 0 ? updateDto.PriceUnlimitedLikes24h : 1990.0m;
+        settings.PriceAuthorSearches10 = updateDto.PriceAuthorSearches10 > 0 ? updateDto.PriceAuthorSearches10 : 990.0m;
+        settings.PriceBookBoost48h = updateDto.PriceBookBoost48h > 0 ? updateDto.PriceBookBoost48h : 490.0m;
+        settings.PriceMatchPassWeek = updateDto.PriceMatchPassWeek > 0 ? updateDto.PriceMatchPassWeek : 2990.0m;
+        settings.PriceMatchPassDayPromo = updateDto.PriceMatchPassDayPromo > 0 ? updateDto.PriceMatchPassDayPromo : 990.0m;
+        settings.MatchPassPromoSwipesThreshold = updateDto.MatchPassPromoSwipesThreshold > 0 ? updateDto.MatchPassPromoSwipesThreshold : 200;
+        settings.MatchPassPromoMinInterestedThreshold = updateDto.MatchPassPromoMinInterestedThreshold > 0 ? updateDto.MatchPassPromoMinInterestedThreshold : 2;
         settings.LastUpdatedAt = DateTime.UtcNow;
 
         _dbContext.GlobalSettings.Update(settings);
@@ -265,6 +273,14 @@ public class SettingsService : ISettingsService
             MinFeeAmount = g.MinFeeAmount,
             MaxFeeAmount = g.MaxFeeAmount,
             EnableDoubleExchange = g.EnableDoubleExchange,
+            PricePremium24h = g.PricePremium24h > 0 ? g.PricePremium24h : 2990.0m,
+            PriceUnlimitedLikes24h = g.PriceUnlimitedLikes24h > 0 ? g.PriceUnlimitedLikes24h : 1990.0m,
+            PriceAuthorSearches10 = g.PriceAuthorSearches10 > 0 ? g.PriceAuthorSearches10 : 990.0m,
+            PriceBookBoost48h = g.PriceBookBoost48h > 0 ? g.PriceBookBoost48h : 490.0m,
+            PriceMatchPassWeek = g.PriceMatchPassWeek > 0 ? g.PriceMatchPassWeek : 2990.0m,
+            PriceMatchPassDayPromo = g.PriceMatchPassDayPromo > 0 ? g.PriceMatchPassDayPromo : 990.0m,
+            MatchPassPromoSwipesThreshold = g.MatchPassPromoSwipesThreshold > 0 ? g.MatchPassPromoSwipesThreshold : 200,
+            MatchPassPromoMinInterestedThreshold = g.MatchPassPromoMinInterestedThreshold > 0 ? g.MatchPassPromoMinInterestedThreshold : 2,
             LastUpdatedAt = g.LastUpdatedAt
         };
     }

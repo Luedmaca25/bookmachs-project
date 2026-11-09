@@ -53,6 +53,19 @@ public class BooksController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("match-pass")]
+    public async Task<ActionResult<MatchPassResultDto>> GetMatchPass(CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized("Usuario no identificado o no autenticado.");
+        }
+
+        var result = await _bookService.GetMatchPassAsync(userId, cancellationToken);
+        return Ok(result);
+    }
+
     [HttpPost("upload")]
     public async Task<ActionResult<BookDto>> UploadBook([FromForm] UploadBookRequest request)
     {

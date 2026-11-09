@@ -29,6 +29,7 @@ public interface IBookService
     Task<ReservationResultDto> CancelReservationAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<BookDto>> GetMyReservationsAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<bool> DeleteBookAsync(Guid bookId, Guid userId, CancellationToken cancellationToken = default);
+    Task<MatchPassResultDto> GetMatchPassAsync(Guid userId, CancellationToken cancellationToken = default);
 }
 
 public class BookService : IBookService
@@ -342,6 +343,30 @@ public class BookService : IBookService
         }
 
         var resultList = new List<BookDto>();
+
+        // ETAPA 0: Libros destacados / boosted (Muestra tus libros primero por 48 horas)
+        var boostedBooks = await _dbContext.Books
+            .Include(b => b.Owner)
+            .AsNoTracking()
+            .Where(b => b.IsAvailable && b.OwnerId != userId && (!b.IsReserved || b.ReservedUntil < DateTime.UtcNow))
+            .Where(b => (b.BoostedUntil.HasValue && b.BoostedUntil.Value > DateTime.UtcNow) ||
+                        (b.Owner != null && b.Owner.BooksBoostedUntil.HasValue && b.Owner.BooksBoostedUntil.Value > DateTime.UtcNow))
+            .OrderByDescending(b => b.BoostedUntil ?? b.Owner!.BooksBoostedUntil)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        foreach (var bBook in boostedBooks)
+        {
+            var bBookIdStr = bBook.Id.ToString("D");
+            if (excludedIds.Contains(bBookIdStr)) continue;
+
+            var dto = MapToBookDto(bBook);
+            dto.IsFallbackCategory = false;
+            resultList.Add(dto);
+            excludedIds.Add(bBookIdStr);
+
+            if (resultList.Count >= limit) break;
+        }
 
         // ETAPA 1: Obtener libros que coinciden con las preferencias del usuario
         if (userPreferenceTags.Any())
@@ -673,9 +698,11 @@ public class BookService : IBookService
             }
         }
 
-        int effectiveLimit = baseLimit;
+        bool hasUnlimitedLikes = user.IsPremium || (user.UnlimitedLikesUntil.HasValue && user.UnlimitedLikesUntil.Value > now);
 
-        if (!user.IsPremium)
+        int effectiveLimit = hasUnlimitedLikes ? 999999 : baseLimit;
+
+        if (!hasUnlimitedLikes)
         {
             effectiveLimit = baseLimit + user.BonusSwipesGranted;
 
@@ -704,11 +731,15 @@ public class BookService : IBookService
             }
         }
 
+        // Incrementar el contador histórico total de swipes del usuario (para promos y metas)
+        user.TotalSwipesLifetime++;
+        userModified = true;
+
         bool isLikeAction = action.Equals("like", StringComparison.OrdinalIgnoreCase);
 
         // Los swipes se descuentan únicamente cuando el usuario da "like" (me gusta a la derecha).
         // Los swipes a la izquierda (dislike) son infinitos en todos los planes.
-        if (isLikeAction)
+        if (isLikeAction && !hasUnlimitedLikes)
         {
             if (consumed >= effectiveLimit)
             {
@@ -956,12 +987,13 @@ public class BookService : IBookService
         }
 
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int searchLimit = (settings != null && settings.CatalogSearchLimitPremium > 0) ? settings.CatalogSearchLimitPremium : 10;
+        int baseLimit = (settings != null && settings.CatalogSearchLimitPremium > 0) ? settings.CatalogSearchLimitPremium : 10;
+        int totalLimit = (user.IsPremium ? baseLimit : 0) + user.ExtraCatalogSearchesGranted;
 
         return new CatalogSearchStatusDto
         {
             SearchesConsumed = user.CatalogSearchesConsumed,
-            SearchLimit = searchLimit
+            SearchLimit = totalLimit
         };
     }
 
@@ -989,18 +1021,19 @@ public class BookService : IBookService
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        if (!user.IsPremium)
+        if (!user.IsPremium && user.ExtraCatalogSearchesGranted <= 0)
         {
-            throw new UnauthorizedAccessException("Se requiere una membresía Premium para acceder al catálogo avanzado.");
+            throw new UnauthorizedAccessException("Se requiere una membresía Premium o el paquete de 10 búsquedas por autor para acceder al catálogo avanzado.");
         }
 
         var settings = await _dbContext.GlobalSettings.FirstOrDefaultAsync(cancellationToken);
-        int searchLimit = (settings != null && settings.CatalogSearchLimitPremium > 0) ? settings.CatalogSearchLimitPremium : 10;
+        int baseLimit = (settings != null && settings.CatalogSearchLimitPremium > 0) ? settings.CatalogSearchLimitPremium : 10;
+        int totalLimit = (user.IsPremium ? baseLimit : 0) + user.ExtraCatalogSearchesGranted;
 
         // Validar si el usuario alcanzó el límite de búsquedas configurado
-        if (user.CatalogSearchesConsumed >= searchLimit)
+        if (user.CatalogSearchesConsumed >= totalLimit)
         {
-            throw new InvalidOperationException($"Has alcanzado el límite de {searchLimit} búsquedas en el catálogo para tu plan Premium en el periodo actual.");
+            throw new InvalidOperationException($"Has alcanzado el límite de {totalLimit} búsquedas en el catálogo en este periodo. Puedes adquirir 10 búsquedas adicionales.");
         }
 
         // Si es una consulta de página 1 (nueva búsqueda/filtro), incrementar el contador
@@ -1160,7 +1193,7 @@ public class BookService : IBookService
         var response = new PaginatedListDto<BookDto>(dtos, page, size, totalCount)
         {
             SearchesConsumed = user.CatalogSearchesConsumed,
-            SearchLimit = searchLimit
+            SearchLimit = totalLimit
         };
 
         return response;
@@ -1501,6 +1534,235 @@ public class BookService : IBookService
             IsAvailable = product.Activo && (product.Stock > 0),
             ExchangeStatus = (product.Activo && (product.Stock > 0)) ? "Available" : "Unavailable",
             CreatedAt = product.FechaRegistro ?? DateTime.UtcNow
+        };
+    }
+
+    public async Task<MatchPassResultDto> GetMatchPassAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _dbContext.Users
+            .Include(u => u.Preferences)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException("Usuario no encontrado.");
+        }
+
+        var now = DateTime.UtcNow;
+        if (UserCycleHelper.CheckAndApplySubscriptionExpiration(user, now))
+        {
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        bool hasAccess = user.IsPremium || (user.MatchPassUntil.HasValue && user.MatchPassUntil.Value > now);
+
+        var items = new List<MatchPassItemDto>();
+
+        // 1. Libros de otros usuarios que han dado like a libros de este usuario
+        var myBooks = await _dbContext.Books
+            .AsNoTracking()
+            .Where(b => b.OwnerId == userId && b.IsAvailable)
+            .Select(b => new { b.Id, b.Title })
+            .ToListAsync(cancellationToken);
+
+        if (myBooks.Any())
+        {
+            var myBookIdMap = myBooks.ToDictionary(b => b.Id.ToString(), b => b.Title);
+            var myBookIdStrings = myBooks.Select(b => b.Id.ToString()).ToList();
+
+            var likesReceived = await _dbContext.UserBookInteractions
+                .AsNoTracking()
+                .Where(i => myBookIdStrings.Contains(i.BookId) && i.Action == "like" && i.UserId != userId)
+                .OrderByDescending(i => i.CreatedAt)
+                .ToListAsync(cancellationToken);
+
+            var likerUserIds = likesReceived.Select(i => i.UserId).Distinct().ToList();
+            if (likerUserIds.Any())
+            {
+                var likerUsers = await _dbContext.Users
+                    .AsNoTracking()
+                    .Where(u => likerUserIds.Contains(u.Id))
+                    .ToDictionaryAsync(u => u.Id, u => u, cancellationToken);
+
+                var likerAvailableBooks = await _dbContext.Books
+                    .AsNoTracking()
+                    .Where(b => b.OwnerId.HasValue && likerUserIds.Contains(b.OwnerId.Value) && b.IsAvailable && (!b.IsReserved || b.ReservedUntil < now))
+                    .ToListAsync(cancellationToken);
+
+                var likerBooksGroup = likerAvailableBooks
+                    .GroupBy(b => b.OwnerId!.Value)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                foreach (var like in likesReceived)
+                {
+                    likerUsers.TryGetValue(like.UserId, out var liker);
+                    string targetBookTitle = myBookIdMap.TryGetValue(like.BookId, out var tTitle) ? tTitle : "tu libro";
+                    string likerName = liker?.Name ?? "Usuario Bookmachs";
+
+                    if (likerBooksGroup.TryGetValue(like.UserId, out var books) && books.Any())
+                    {
+                        foreach (var b in books)
+                        {
+                            items.Add(new MatchPassItemDto
+                            {
+                                BookId = b.Id,
+                                Title = b.Title,
+                                Author = b.Author,
+                                ImageUrl = FormatImageUrl(b.ImageUrl),
+                                Category = b.Category,
+                                Condition = b.Condition,
+                                IsInternalStock = false,
+                                SourceType = "UserLike",
+                                TargetOfferedBookTitle = targetBookTitle,
+                                LikerUserName = likerName,
+                                CreatedAt = like.CreatedAt
+                            });
+                        }
+                    }
+                    else
+                    {
+                        items.Add(new MatchPassItemDto
+                        {
+                            BookId = Guid.Empty,
+                            Title = "Propuesta de intercambio",
+                            Author = likerName,
+                            ImageUrl = FormatImageUrl(liker?.ProfileImageUrl),
+                            Category = "Intercambio directo",
+                            Condition = "Disponible",
+                            IsInternalStock = false,
+                            SourceType = "UserLike",
+                            TargetOfferedBookTitle = targetBookTitle,
+                            LikerUserName = likerName,
+                            CreatedAt = like.CreatedAt
+                        });
+                    }
+                }
+            }
+        }
+
+        // 2. Stock Bookmachs / Ecolectura con drip feed:
+        // Día 1: 4 | Día 2: 6 | Día 3: 9 | Día >= 4: min(50, 9 + (días - 3) * 3)
+        var daysSinceCreated = Math.Max(1, (int)(now - user.CreatedAt).TotalDays + 1);
+        int ecoTargetCount = 4;
+        if (daysSinceCreated == 2) ecoTargetCount = 6;
+        else if (daysSinceCreated == 3) ecoTargetCount = 9;
+        else if (daysSinceCreated > 3) ecoTargetCount = Math.Min(50, 9 + (daysSinceCreated - 3) * 3);
+
+        var userPreferenceTags = user.Preferences
+            .Select(p => p.PreferenceTag)
+            .Where(t => !string.IsNullOrEmpty(t))
+            .ToList();
+
+        var queryEco = _ecolecturaDbContext.Productos
+            .AsNoTracking()
+            .Where(p => p.Activo && p.Stock > 0);
+
+        if (userPreferenceTags.Any())
+        {
+            var mappedItems = _homologationService.GetMappedItemsForConcepts(userPreferenceTags);
+            if (mappedItems.Any())
+            {
+                var categoryOnlyIds = mappedItems
+                    .Where(m => !m.SubcategoryId.HasValue)
+                    .Select(m => m.CategoryId)
+                    .Distinct()
+                    .ToList();
+
+                var subcategoryIds = mappedItems
+                    .Where(m => m.SubcategoryId.HasValue)
+                    .Select(m => m.SubcategoryId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                queryEco = queryEco.Where(p =>
+                    (p.IdCategoriaProducto.HasValue && categoryOnlyIds.Contains(p.IdCategoriaProducto.Value)) ||
+                    (p.IdSubcategoria.HasValue && subcategoryIds.Contains(p.IdSubcategoria.Value)));
+            }
+        }
+
+        var ecoProducts = await queryEco
+            .OrderByDescending(p => p.FechaRegistro)
+            .Take(ecoTargetCount)
+            .Select(p => new
+            {
+                p.IdProducto,
+                p.NombreLibro,
+                p.Autor,
+                p.IdCategoriaProducto,
+                p.IdSubcategoria,
+                p.IdEstadoProducto,
+                p.FechaRegistro,
+                RutaImagen = p.Imagenes
+                    .OrderByDescending(i => i.Principal)
+                    .Select(i => i.RutaImagen)
+                    .FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
+
+        if (ecoProducts.Count < ecoTargetCount)
+        {
+            var existingEcoIds = ecoProducts.Select(e => e.IdProducto).ToHashSet();
+            var remainingEco = ecoTargetCount - ecoProducts.Count;
+
+            var extraEco = await _ecolecturaDbContext.Productos
+                .AsNoTracking()
+                .Where(p => p.Activo && p.Stock > 0 && !existingEcoIds.Contains(p.IdProducto))
+                .OrderByDescending(p => p.FechaRegistro)
+                .Take(remainingEco)
+                .Select(p => new
+                {
+                    p.IdProducto,
+                    p.NombreLibro,
+                    p.Autor,
+                    p.IdCategoriaProducto,
+                    p.IdSubcategoria,
+                    p.IdEstadoProducto,
+                    p.FechaRegistro,
+                    RutaImagen = p.Imagenes
+                        .OrderByDescending(i => i.Principal)
+                        .Select(i => i.RutaImagen)
+                        .FirstOrDefault()
+                })
+                .ToListAsync(cancellationToken);
+
+            ecoProducts.AddRange(extraEco);
+        }
+
+        foreach (var prod in ecoProducts)
+        {
+            Guid bookId = Guid.TryParse(prod.IdProducto, out var parsedGuid) ? parsedGuid : Guid.Empty;
+            string? imageUrl = FormatImageUrl(prod.RutaImagen);
+            string? categoryName = _homologationService.GetConceptNameForProduct(
+                prod.IdCategoriaProducto,
+                prod.IdSubcategoria
+            ) ?? "Literatura general";
+
+            items.Add(new MatchPassItemDto
+            {
+                BookId = bookId,
+                Title = prod.NombreLibro,
+                Author = prod.Autor ?? "Ecolectura",
+                ImageUrl = imageUrl,
+                Category = categoryName,
+                Condition = MapEstadoProducto(prod.IdEstadoProducto),
+                IsInternalStock = true,
+                SourceType = "StockBookmachs",
+                TargetOfferedBookTitle = "Intercambio por el libro que subas",
+                LikerUserName = "Bookmachs Oficial",
+                CreatedAt = prod.FechaRegistro ?? now
+            });
+        }
+
+        return new MatchPassResultDto
+        {
+            HasAccess = hasAccess,
+            IsBlurred = !hasAccess,
+            TotalCount = items.Count,
+            UserLikesCount = items.Count(i => i.SourceType == "UserLike"),
+            StockBooksCount = items.Count(i => i.SourceType == "StockBookmachs"),
+            MatchPassExpiresAt = user.MatchPassUntil,
+            Items = items
         };
     }
 

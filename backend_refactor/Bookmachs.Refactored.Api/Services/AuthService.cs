@@ -569,7 +569,12 @@ public class AuthService : IAuthService
             Role = user.Role,
             Preferences = user.Preferences.Select(p => p.PreferenceTag).ToList(),
             DailySwipesConsumed = user.DailySwipesConsumed,
-            DailySwipeLimit = effectiveLimit
+            DailySwipeLimit = effectiveLimit,
+            UnlimitedLikesUntil = user.UnlimitedLikesUntil,
+            BooksBoostedUntil = user.BooksBoostedUntil,
+            MatchPassUntil = user.MatchPassUntil,
+            ExtraCatalogSearchesGranted = user.ExtraCatalogSearchesGranted,
+            TotalSwipesLifetime = user.TotalSwipesLifetime
         };
     }
 

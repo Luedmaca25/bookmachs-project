@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { getFileUrl } from '../../../lib/formatters';
 
 interface MatchedBookInfo {
   id: string;
@@ -80,11 +79,19 @@ export const GuestMatchPremiumModal: React.FC<GuestMatchPremiumModalProps> = ({
             </p>
           )}
 
-          <div className="guest-limit-actions">
+          <div className="guest-limit-actions" style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', width: '100%' }}>
             <button
               type="button"
               className="guest-limit-btn-bumble font-heading"
+              onClick={handleGoToPremium}
+            >
+              <i className="fa-solid fa-crown"></i> Pasar a Premium y Concretar
+            </button>
+            <button
+              type="button"
+              className="guest-limit-btn-secondary font-heading"
               onClick={onClose}
+              style={{ background: 'transparent', border: 'none', color: '#6b7280', cursor: 'pointer', padding: '0.4rem' }}
             >
               Continuar explorando
             </button>

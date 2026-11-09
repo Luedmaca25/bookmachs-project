@@ -44,6 +44,14 @@ public class UserProfileDto
     public System.Collections.Generic.List<string> Preferences { get; set; } = new System.Collections.Generic.List<string>();
     public int DailySwipesConsumed { get; set; }
     public int DailySwipeLimit { get; set; }
+    public DateTime? UnlimitedLikesUntil { get; set; }
+    public bool HasUnlimitedLikes => UnlimitedLikesUntil.HasValue && UnlimitedLikesUntil.Value > DateTime.UtcNow;
+    public DateTime? BooksBoostedUntil { get; set; }
+    public bool HasBooksBoosted => BooksBoostedUntil.HasValue && BooksBoostedUntil.Value > DateTime.UtcNow;
+    public DateTime? MatchPassUntil { get; set; }
+    public bool HasMatchPass => IsPremium || (MatchPassUntil.HasValue && MatchPassUntil.Value > DateTime.UtcNow);
+    public int ExtraCatalogSearchesGranted { get; set; }
+    public int TotalSwipesLifetime { get; set; }
 }
 
 public class AdminUserDetailDto
@@ -115,6 +123,17 @@ public class GlobalSettingsDto
     public decimal MinFeeAmount { get; set; }
     public decimal MaxFeeAmount { get; set; }
     public bool EnableDoubleExchange { get; set; } = true;
+
+    // Precios de Complementos y Pases Especiales (CLP)
+    public decimal PricePremium24h { get; set; } = 2990.0m;
+    public decimal PriceUnlimitedLikes24h { get; set; } = 1990.0m;
+    public decimal PriceAuthorSearches10 { get; set; } = 990.0m;
+    public decimal PriceBookBoost48h { get; set; } = 490.0m;
+    public decimal PriceMatchPassWeek { get; set; } = 2990.0m;
+    public decimal PriceMatchPassDayPromo { get; set; } = 990.0m;
+    public int MatchPassPromoSwipesThreshold { get; set; } = 200;
+    public int MatchPassPromoMinInterestedThreshold { get; set; } = 2;
+
     public DateTime LastUpdatedAt { get; set; }
 }
 
@@ -349,5 +368,47 @@ public class SupportTicketResponseDto
     public string Message { get; set; } = string.Empty;
     public bool HasWhatsAppAccess { get; set; }
     public string? WhatsAppUrl { get; set; }
+}
+
+public class AddonWebpayStartRequest
+{
+    public string AddonType { get; set; } = string.Empty; // Premium24h, UnlimitedLikes24h, AuthorSearches10, BookBoost48h, MatchPassWeek, MatchPassDayPromo
+    public string ReturnUrl { get; set; } = string.Empty;
+    public Guid? TargetBookId { get; set; }
+}
+
+public class AddonWebpayStartResultDto
+{
+    public bool Success { get; set; }
+    public string? Token { get; set; }
+    public string? RedirectUrl { get; set; }
+    public string? Message { get; set; }
+    public string? BuyOrder { get; set; }
+}
+
+public class MatchPassItemDto
+{
+    public Guid BookId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Author { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public string Condition { get; set; } = "Good";
+    public string? Category { get; set; }
+    public bool IsInternalStock { get; set; }
+    public string SourceType { get; set; } = "StockBookmachs"; // "UserLike" or "StockBookmachs"
+    public string? LikerUserName { get; set; }
+    public string? TargetOfferedBookTitle { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class MatchPassResultDto
+{
+    public bool HasAccess { get; set; }
+    public bool IsBlurred { get; set; }
+    public int TotalCount { get; set; }
+    public int UserLikesCount { get; set; }
+    public int StockBooksCount { get; set; }
+    public DateTime? MatchPassExpiresAt { get; set; }
+    public System.Collections.Generic.List<MatchPassItemDto> Items { get; set; } = new();
 }
 

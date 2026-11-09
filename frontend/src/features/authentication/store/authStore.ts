@@ -23,6 +23,14 @@ export interface User {
   preferences?: string[];
   dailySwipesConsumed?: number;
   dailySwipeLimit?: number;
+  unlimitedLikesUntil?: string;
+  hasUnlimitedLikes?: boolean;
+  booksBoostedUntil?: string;
+  hasBooksBoosted?: boolean;
+  matchPassUntil?: string;
+  hasMatchPass?: boolean;
+  extraCatalogSearchesGranted?: number;
+  totalSwipesLifetime?: number;
 }
 
 interface AuthState {

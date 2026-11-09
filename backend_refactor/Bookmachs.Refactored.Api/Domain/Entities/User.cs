@@ -34,6 +34,13 @@ public class User
     public int BonusSwipesGranted { get; set; } = 0;
     public DateTime? LastBonusGrantedAt { get; set; }
 
+    // Complementos y Pases Especiales
+    public DateTime? UnlimitedLikesUntil { get; set; }
+    public DateTime? BooksBoostedUntil { get; set; }
+    public DateTime? MatchPassUntil { get; set; }
+    public int ExtraCatalogSearchesGranted { get; set; } = 0;
+    public int TotalSwipesLifetime { get; set; } = 0;
+
     // Control de cuota mensual de búsquedas en catálogo
     public int CatalogSearchesConsumed { get; set; } = 0;
 

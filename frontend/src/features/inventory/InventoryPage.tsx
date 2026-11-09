@@ -6,6 +6,7 @@ import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
 import { MatchModal } from '../transactions/components/MatchModal';
 import { BookCard } from '../discovery/components/BookCard';
+import { BuyAddonModal } from '../subscriptions/components/BuyAddonModal';
 
 interface MyBookItem {
   id: string;
@@ -34,13 +35,42 @@ interface MatchTransaction {
   isAvailable?: boolean;
 }
 
+interface MatchPassItem {
+  bookId: string;
+  title: string;
+  author: string;
+  imageUrl?: string;
+  condition: string;
+  category?: string;
+  isInternalStock: boolean;
+  sourceType: string;
+  likerUserName?: string;
+  targetOfferedBookTitle?: string;
+  createdAt: string;
+}
+
+interface MatchPassData {
+  hasAccess: boolean;
+  isBlurred: boolean;
+  totalCount: number;
+  userLikesCount: number;
+  stockBooksCount: number;
+  matchPassExpiresAt?: string;
+  items: MatchPassItem[];
+}
+
 export const InventoryPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthStore();
   const isPremium = Boolean(user?.isPremium);
-  const [activeTab, setActiveTab] = useState<'interested' | 'offered' | 'reservations'>('interested');
+  const [activeTab, setActiveTab] = useState<'interested' | 'offered' | 'reservations' | 'matchpass'>('interested');
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
+
+  // Datos de Match Pass
+  const [matchPassData, setMatchPassData] = useState<MatchPassData | null>(null);
+  const [loadingMatchPass, setLoadingMatchPass] = useState(false);
+  const [showBuyPassModal, setShowBuyPassModal] = useState(false);
 
   // Datos de libros que le interesan (Matches / Likes)
   const [likedMatches, setLikedMatches] = useState<MatchTransaction[]>([]);
@@ -86,6 +116,7 @@ export const InventoryPage: React.FC = () => {
   useEffect(() => {
     fetchLikedMatches();
     fetchOfferedBooks();
+    fetchMatchPass();
     if (isPremium) {
       fetchMyReservations();
     }
@@ -114,12 +145,26 @@ export const InventoryPage: React.FC = () => {
       } else {
         setPremiumModalOpen(true);
       }
+    } else if (tabParam === 'matchpass') {
+      setActiveTab('matchpass');
     }
     if (addParam === 'true') {
       setShowAddForm(true);
       setTimeout(scrollToForm, 200);
     }
   }, [location.search, isPremium]);
+
+  const fetchMatchPass = async () => {
+    setLoadingMatchPass(true);
+    try {
+      const data = await apiClient.get<MatchPassData>('/books/match-pass');
+      setMatchPassData(data);
+    } catch (err) {
+      console.error('Error al cargar Match Pass:', err);
+    } finally {
+      setLoadingMatchPass(false);
+    }
+  };
 
   const fetchMyReservations = async () => {
     if (!isPremium) return;
@@ -346,6 +391,26 @@ export const InventoryPage: React.FC = () => {
           </button>
           <p>
             Reservas {isPremium ? `(${myReservations.length})` : ''}
+          </p>
+        </div>
+
+        <div className='libreta-tab'>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('matchpass');
+              fetchMatchPass();
+            }}
+            className={`libreta-tab-btn libreta-tab-btn-matchpass ${activeTab === 'matchpass' ? 'active' : ''}`}
+            title="Match Pass: Descubre quién quiere intercambiar contigo"
+          >
+            <i className="fa-solid fa-heart-circle-bolt"></i>
+            <span className="libreta-tab-crown-badge" title="Match Pass">
+              <i className="fa-solid fa-crown"></i>
+            </span>
+          </button>
+          <p>
+            Match Pass {matchPassData ? `(${matchPassData.totalCount})` : ''}
           </p>
         </div>
       </div>
@@ -791,6 +856,362 @@ export const InventoryPage: React.FC = () => {
         </div>
       )}
 
+      {/* CONTENIDO DE PESTAÑA: MATCH PASS (QUIÉNES QUIEREN INTERCAMBIAR CONTIGO) */}
+      {activeTab === 'matchpass' && (
+        <div className="tab-matchpass-content">
+          {loadingMatchPass ? (
+            <div className="inventory-loading" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+              <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: '#10b981', marginBottom: '0.75rem' }}></i>
+              <p>Cargando tu Match Pass...</p>
+            </div>
+          ) : !matchPassData || matchPassData.items.length === 0 ? (
+            <div className="empty-reservations-state" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+              <i className="fa-solid fa-heart-crack" style={{ fontSize: '3rem', color: '#9ca3af', marginBottom: '1rem' }}></i>
+              <h3>Aún no tienes actividad en Match Pass</h3>
+              <p style={{ maxWidth: '480px', margin: '0 auto', color: '#6b7280' }}>
+                Cuando otros usuarios den like a tus libros o se agreguen novedades de Ecolectura según tus preferencias, aparecerán aquí.
+              </p>
+            </div>
+          ) : (
+            <div>
+              {/* HERO BANNER CUANDO ESTÁ BLOQUEADO (FREE / BORROSO) */}
+              {matchPassData.isBlurred ? (
+                <div
+                  className="matchpass-locked-banner"
+                  style={{
+                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                    borderRadius: '16px',
+                    padding: '1.75rem',
+                    color: '#ffffff',
+                    marginBottom: '2rem',
+                    boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.4)',
+                    border: '1px solid #334155',
+                    textAlign: 'center'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      background: 'rgba(245, 158, 11, 0.2)',
+                      border: '1px solid #f59e0b',
+                      color: '#fbbf24',
+                      padding: '0.35rem 0.85rem',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      marginBottom: '0.75rem'
+                    }}
+                  >
+                    <i className="fa-solid fa-lock"></i> Contenido Exclusivo Desbloqueable
+                  </div>
+                  <h2 style={{ fontSize: '1.65rem', fontWeight: 800, margin: '0 0 0.5rem' }}>
+                    ¡{matchPassData.totalCount} usuarios y libros esperan por ti!
+                  </h2>
+                  <p style={{ fontSize: '0.95rem', color: '#cbd5e1', maxWidth: '620px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+                    Descubre con exactitud quiénes dieron like a tus libros y accede a la selección de stock directo de Bookmachs / Ecolectura para intercambiar al instante.
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => setPremiumModalOpen(true)}
+                      style={{
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        fontSize: '0.95rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+                      }}
+                    >
+                      <i className="fa-solid fa-crown"></i>
+                      <span>Pasar a Premium (Match Pass Incluido)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowBuyPassModal(true)}
+                      style={{
+                        padding: '0.75rem 1.25rem',
+                        borderRadius: '10px',
+                        border: '1px solid #64748b',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        color: '#ffffff',
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      <i className="fa-solid fa-heart-circle-bolt"></i>
+                      <span>Comprar Match Pass 1 Semana ($2.990)</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* BANNER CUANDO TIENE ACCESO ACTIVO */
+                <div
+                  className="matchpass-unlocked-banner"
+                  style={{
+                    background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                    borderRadius: '16px',
+                    padding: '1.25rem 1.5rem',
+                    color: '#065f46',
+                    marginBottom: '1.75rem',
+                    border: '1px solid #a7f3d0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#10b981', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+                      <i className="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
+                        Match Pass Desbloqueado
+                      </h4>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#047857' }}>
+                        {user?.isPremium ? 'Acceso total permanente con tu membresía Premium' : `Pase semanal activo ${matchPassData.matchPassExpiresAt ? `hasta el ${new Date(matchPassData.matchPassExpiresAt).toLocaleDateString('es-CL')}` : ''}`}
+                      </p>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, background: '#ffffff', padding: '0.35rem 0.85rem', borderRadius: '20px', border: '1px solid #a7f3d0' }}>
+                    {matchPassData.totalCount} libros disponibles
+                  </span>
+                </div>
+              )}
+
+              {/* GRILLA DE ITEMS DE MATCH PASS */}
+              <div
+                className={`matchpass-grid ${matchPassData.isBlurred ? 'matchpass-grid-blurred' : ''}`}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                  gap: '1.5rem',
+                  position: 'relative'
+                }}
+              >
+                {matchPassData.items.map((item, idx) => (
+                  <div
+                    key={`${item.bookId}-${idx}`}
+                    className="matchpass-card"
+                    onClick={() => {
+                      if (matchPassData.isBlurred) {
+                        setShowBuyPassModal(true);
+                      } else if (item.bookId && item.bookId !== '00000000-0000-0000-0000-000000000000') {
+                        navigate(`/catalogo?search=${encodeURIComponent(item.title)}`);
+                      }
+                    }}
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      border: '1px solid #e5e7eb',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      cursor: matchPassData.isBlurred ? 'pointer' : 'default',
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                      transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                      position: 'relative'
+                    }}
+                  >
+                    {/* Badge superior de origen */}
+                    <div
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        background: item.sourceType === 'UserLike' ? '#fdf2f8' : '#eff6ff',
+                        color: item.sourceType === 'UserLike' ? '#db2777' : '#2563eb',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <i className={item.sourceType === 'UserLike' ? 'fa-solid fa-heart' : 'fa-solid fa-book'}></i>
+                      <span>{item.sourceType === 'UserLike' ? `Le interesa: ${item.targetOfferedBookTitle}` : item.targetOfferedBookTitle}</span>
+                    </div>
+
+                    {/* Portada / Imagen con blur condicional */}
+                    <div
+                      style={{
+                        height: '240px',
+                        background: '#f3f4f6',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {item.imageUrl ? (
+                        <img
+                          src={getFileUrl(item.imageUrl)}
+                          alt={item.title}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            filter: matchPassData.isBlurred ? 'blur(16px)' : 'none',
+                            transform: matchPassData.isBlurred ? 'scale(1.15)' : 'none',
+                            transition: 'filter 0.3s ease'
+                          }}
+                        />
+                      ) : (
+                        <div style={{ color: '#9ca3af', fontSize: '2.5rem' }}>
+                          <i className="fa-solid fa-book-open"></i>
+                        </div>
+                      )}
+
+                      {/* Candado overlay si está en modo blurred */}
+                      {matchPassData.isBlurred && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'rgba(15, 23, 42, 0.45)',
+                            backdropFilter: 'blur(8px)',
+                            color: '#ffffff',
+                            padding: '1rem',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '42px',
+                              height: '42px',
+                              borderRadius: '50%',
+                              background: '#f59e0b',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.1rem',
+                              marginBottom: '0.5rem',
+                              boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+                            }}
+                          >
+                            <i className="fa-solid fa-lock"></i>
+                          </div>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Desbloquear con Match Pass
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info del libro / propuesta */}
+                    <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px', background: '#f3f4f6', color: '#4b5563', fontWeight: 600 }}>
+                          {item.condition}
+                        </span>
+                        {item.category && (
+                          <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px', background: '#ecfdf5', color: '#059669', fontWeight: 600 }}>
+                            {item.category}
+                          </span>
+                        )}
+                      </div>
+
+                      <h4
+                        style={{
+                          fontSize: '0.98rem',
+                          fontWeight: 700,
+                          color: '#1f2937',
+                          margin: '0 0 0.25rem',
+                          filter: matchPassData.isBlurred ? 'blur(5px)' : 'none',
+                          userSelect: matchPassData.isBlurred ? 'none' : 'auto'
+                        }}
+                      >
+                        {matchPassData.isBlurred ? 'Título Oculto Por Privacidad' : item.title}
+                      </h4>
+
+                      <p
+                        style={{
+                          fontSize: '0.82rem',
+                          color: '#6b7280',
+                          margin: '0 0 0.75rem',
+                          filter: matchPassData.isBlurred ? 'blur(4px)' : 'none',
+                          userSelect: matchPassData.isBlurred ? 'none' : 'auto'
+                        }}
+                      >
+                        {matchPassData.isBlurred ? 'Autor Desconocido' : item.author}
+                      </p>
+
+                      <div style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid #f3f4f6' }}>
+                        {matchPassData.isBlurred ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowBuyPassModal(true);
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '0.55rem',
+                              borderRadius: '8px',
+                              border: 'none',
+                              background: '#10b981',
+                              color: '#ffffff',
+                              fontSize: '0.82rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <i className="fa-solid fa-lock-open"></i> Ver Detalles
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (item.bookId && item.bookId !== '00000000-0000-0000-0000-000000000000') {
+                                navigate(`/catalogo?search=${encodeURIComponent(item.title)}`);
+                              } else {
+                                setActiveTab('offered');
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '0.55rem',
+                              borderRadius: '8px',
+                              border: '1px solid #10b981',
+                              background: '#ecfdf5',
+                              color: '#059669',
+                              fontSize: '0.82rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <i className="fa-solid fa-handshake"></i> Intercambiar Ahora
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Modal de Propuesta de Intercambio (Pantalla 5) */}
       <MatchModal
         isOpen={matchModalOpen}
@@ -815,8 +1236,18 @@ export const InventoryPage: React.FC = () => {
       <GlobalPremiumModal
         isOpen={premiumModalOpen}
         onClose={() => setPremiumModalOpen(false)}
-        featureName="la Reserva de Libros por 4 Horas (máx. 2 simultáneas)"
-        icon="fa-solid fa-clock"
+        featureName="el Match Pass y la Reserva de Libros por 4 Horas"
+        icon="fa-solid fa-heart-circle-bolt"
+      />
+
+      {/* Modal para compra de Match Pass 1 semana */}
+      <BuyAddonModal
+        isOpen={showBuyPassModal}
+        onClose={() => {
+          setShowBuyPassModal(false);
+          fetchMatchPass();
+        }}
+        addonType="MatchPassWeek"
       />
     </div>
   );

@@ -19,6 +19,7 @@ public class BookmachsDbContext : DbContext
     public DbSet<MasterPreferenceTag> MasterPreferenceTags { get; set; } = null!;
     public DbSet<PreferenceCategoryMapping> PreferenceCategoryMappings { get; set; } = null!;
     public DbSet<TimelineEvent> TimelineEvents { get; set; } = null!;
+    public DbSet<UserAddonPurchase> UserAddonPurchases { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -195,6 +196,23 @@ public class BookmachsDbContext : DbContext
             entity.HasOne(i => i.User)
                 .WithMany()
                 .HasForeignKey(i => i.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // --- Configuración de UserAddonPurchase ---
+        modelBuilder.Entity<UserAddonPurchase>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.AddonType).IsRequired().HasMaxLength(50);
+            entity.Property(a => a.BuyOrder).IsRequired().HasMaxLength(100);
+            entity.Property(a => a.PaymentStatus).IsRequired().HasMaxLength(30);
+            entity.Property(a => a.Price).HasPrecision(18, 2);
+            entity.HasIndex(a => a.BuyOrder);
+            entity.HasIndex(a => new { a.UserId, a.AddonType });
+
+            entity.HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

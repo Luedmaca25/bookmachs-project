@@ -10,6 +10,7 @@ import { GuestMatchPremiumModal } from './components/GuestMatchPremiumModal';
 import { UndoSwipePremiumModal } from './components/UndoSwipePremiumModal';
 import { SearchPremiumModal } from './components/SearchPremiumModal';
 import { BookImageZoomModal } from './components/BookImageZoomModal';
+import { MatchPassPromoModal } from '../subscriptions/components/MatchPassPromoModal';
 import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
 
@@ -276,6 +277,31 @@ export const SwipePage: React.FC = () => {
   const [showGuestMatchPremiumModal, setShowGuestMatchPremiumModal] = useState<boolean>(false);
   const [guestMatchedBook, setGuestMatchedBook] = useState<BookItem | null>(null);
   const [matchAnimationBookId, setMatchAnimationBookId] = useState<string | null>(null);
+
+  // Control de Modal Promocional Match Pass (200 swipes o >2 interesados)
+  const [showMatchPassPromo, setShowMatchPassPromo] = useState<boolean>(false);
+  const [matchPassInterestedCount, setMatchPassInterestedCount] = useState<number>(4);
+
+  // Detección automática para mostrar la promo pop-up de Match Pass
+  useEffect(() => {
+    if (isAuthenticated && !user?.isPremium) {
+      const dismissed = localStorage.getItem('match_pass_promo_dismissed_at');
+      const now = Date.now();
+      if (!dismissed || now - parseInt(dismissed, 10) > 24 * 60 * 60 * 1000) {
+        apiClient.get<any>('/books/match-pass')
+          .then((res) => {
+            if (res && (res.totalCount > 2 || (user?.totalSwipesLifetime && user.totalSwipesLifetime >= 200))) {
+              setMatchPassInterestedCount(res.totalCount || 4);
+              const timer = setTimeout(() => {
+                setShowMatchPassPromo(true);
+              }, 1200);
+              return () => clearTimeout(timer);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [isAuthenticated, user?.isPremium, user?.totalSwipesLifetime]);
 
   // Estados y lógica del buscador superior de BookCard
   const [searchInput, setSearchInput] = useState<string>('');
@@ -987,6 +1013,13 @@ export const SwipePage: React.FC = () => {
           isLikeDisabled={!currentBook || !!matchAnimationBookId}
         />
       )}
+
+      {/* Pop-up Promocional Match Pass (200 swipes o >2 interesados) */}
+      <MatchPassPromoModal
+        isOpen={showMatchPassPromo}
+        onClose={() => setShowMatchPassPromo(false)}
+        interestedCount={matchPassInterestedCount}
+      />
     </div>
   );
 };
