@@ -57,30 +57,35 @@ public class AddonsController : ControllerBase
         switch (request.AddonType.ToLowerInvariant())
         {
             case "premium24h":
-                amount = settings?.PricePremium24h ?? 2990m;
+                amount = (settings != null && settings.PricePremium24h > 0) ? settings.PricePremium24h : 2990m;
                 expiresAt = now.AddHours(24);
                 break;
             case "unlimitedlikes24h":
-                amount = settings?.PriceUnlimitedLikes24h ?? 1990m;
+                amount = (settings != null && settings.PriceUnlimitedLikes24h > 0) ? settings.PriceUnlimitedLikes24h : 1990m;
                 expiresAt = now.AddHours(24);
                 break;
             case "authorsearches10":
-                amount = settings?.PriceAuthorSearches10 ?? 990m;
+                amount = (settings != null && settings.PriceAuthorSearches10 > 0) ? settings.PriceAuthorSearches10 : 990m;
                 break;
             case "bookboost48h":
-                amount = settings?.PriceBookBoost48h ?? 490m;
+                amount = (settings != null && settings.PriceBookBoost48h > 0) ? settings.PriceBookBoost48h : 490m;
                 expiresAt = now.AddHours(48);
                 break;
             case "matchpassweek":
-                amount = settings?.PriceMatchPassWeek ?? 2990m;
+                amount = (settings != null && settings.PriceMatchPassWeek > 0) ? settings.PriceMatchPassWeek : 2990m;
                 expiresAt = now.AddDays(7);
                 break;
             case "matchpassdaypromo":
-                amount = settings?.PriceMatchPassDayPromo ?? 990m;
+                amount = (settings != null && settings.PriceMatchPassDayPromo > 0) ? settings.PriceMatchPassDayPromo : 990m;
                 expiresAt = now.AddHours(24);
                 break;
             default:
                 return BadRequest($"Tipo de complemento desconocido: '{request.AddonType}'");
+        }
+
+        if (amount <= 0)
+        {
+            return BadRequest("El monto del complemento debe ser mayor a cero.");
         }
 
         var buyOrder = $"ADD_{Guid.NewGuid().ToString("N")[..20]}";

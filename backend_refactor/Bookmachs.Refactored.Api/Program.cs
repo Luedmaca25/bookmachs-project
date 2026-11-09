@@ -185,6 +185,25 @@ using (var scope = app.Services.CreateScope())
     try
     {
         dbContext.Database.Migrate();
+
+        // Asegurar que los precios de complementos en GlobalSettings no queden en 0
+        var globalSettings = dbContext.GlobalSettings.FirstOrDefault();
+        if (globalSettings != null)
+        {
+            bool modified = false;
+            if (globalSettings.PricePremium24h <= 0) { globalSettings.PricePremium24h = 2990m; modified = true; }
+            if (globalSettings.PriceUnlimitedLikes24h <= 0) { globalSettings.PriceUnlimitedLikes24h = 1990m; modified = true; }
+            if (globalSettings.PriceAuthorSearches10 <= 0) { globalSettings.PriceAuthorSearches10 = 990m; modified = true; }
+            if (globalSettings.PriceBookBoost48h <= 0) { globalSettings.PriceBookBoost48h = 490m; modified = true; }
+            if (globalSettings.PriceMatchPassWeek <= 0) { globalSettings.PriceMatchPassWeek = 2990m; modified = true; }
+            if (globalSettings.PriceMatchPassDayPromo <= 0) { globalSettings.PriceMatchPassDayPromo = 990m; modified = true; }
+            if (globalSettings.MatchPassPromoSwipesThreshold <= 0) { globalSettings.MatchPassPromoSwipesThreshold = 200; modified = true; }
+            if (globalSettings.MatchPassPromoMinInterestedThreshold <= 0) { globalSettings.MatchPassPromoMinInterestedThreshold = 2; modified = true; }
+            if (modified)
+            {
+                dbContext.SaveChanges();
+            }
+        }
     }
     catch (Exception ex)
     {
