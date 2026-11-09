@@ -81,19 +81,6 @@ export const ADDONS_CATALOG: Record<string, AddonInfo> = {
       'Accede a la selección exclusiva de stock Ecolectura',
       'Inicia intercambios directos sin esperar'
     ]
-  },
-  MatchPassDayPromo: {
-    type: 'MatchPassDayPromo',
-    name: 'Match Pass Promo Flash (24 Horas)',
-    tagline: 'Oferta especial por 24 horas para desbloquear tus matches',
-    priceClp: 990,
-    durationLabel: '24 horas',
-    icon: 'fa-solid fa-fire-flame-curved',
-    benefits: [
-      'Desbloqueo instantáneo por 24 horas',
-      'Mira quiénes quieren tus libros hoy mismo',
-      'Precio promocional exclusivo flash'
-    ]
   }
 };
 

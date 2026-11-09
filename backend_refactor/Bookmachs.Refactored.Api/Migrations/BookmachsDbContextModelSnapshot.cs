@@ -37,6 +37,9 @@ namespace Bookmachs.Refactored.Api.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime?>("BoostedUntil")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Category")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -124,6 +127,12 @@ namespace Bookmachs.Refactored.Api.Migrations
                     b.Property<DateTime>("LastUpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("MatchPassPromoMinInterestedThreshold")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MatchPassPromoSwipesThreshold")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("MaxFeeAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -140,6 +149,24 @@ namespace Bookmachs.Refactored.Api.Migrations
 
                     b.Property<decimal>("PremiumPlanPriceUsd")
                         .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PriceAuthorSearches10")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PriceBookBoost48h")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PriceMatchPassDayPromo")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PriceMatchPassWeek")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PricePremium24h")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PriceUnlimitedLikes24h")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("SearchKeywordsLimitPremium")
@@ -414,6 +441,9 @@ namespace Bookmachs.Refactored.Api.Migrations
                     b.Property<int>("BonusSwipesGranted")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("BooksBoostedUntil")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("CatalogSearchesConsumed")
                         .HasColumnType("int");
 
@@ -431,6 +461,9 @@ namespace Bookmachs.Refactored.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("ExtraCatalogSearchesGranted")
+                        .HasColumnType("int");
 
                     b.Property<string>("Gender")
                         .HasMaxLength(30)
@@ -459,6 +492,9 @@ namespace Bookmachs.Refactored.Api.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("LastSwipeResetDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("MatchPassUntil")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
@@ -504,6 +540,12 @@ namespace Bookmachs.Refactored.Api.Migrations
                     b.Property<DateTime?>("TermsAcceptedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("TotalSwipesLifetime")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UnlimitedLikesUntil")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -517,6 +559,52 @@ namespace Bookmachs.Refactored.Api.Migrations
                         .HasFilter("[Telefono] IS NOT NULL AND [Telefono] <> ''");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Bookmachs.Refactored.Api.Domain.Entities.UserAddonPurchase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AddonType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("BuyOrder")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("TargetBookId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuyOrder");
+
+                    b.HasIndex("UserId", "AddonType");
+
+                    b.ToTable("UserAddonPurchases");
                 });
 
             modelBuilder.Entity("Bookmachs.Refactored.Api.Domain.Entities.UserBookInteraction", b =>
@@ -653,6 +741,17 @@ namespace Bookmachs.Refactored.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("MatchTransaction");
+                });
+
+            modelBuilder.Entity("Bookmachs.Refactored.Api.Domain.Entities.UserAddonPurchase", b =>
+                {
+                    b.HasOne("Bookmachs.Refactored.Api.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Bookmachs.Refactored.Api.Domain.Entities.UserBookInteraction", b =>

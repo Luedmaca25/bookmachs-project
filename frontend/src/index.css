@@ -9382,13 +9382,6 @@ body.swipe-page-active .app-footer {
   border-radius: 24px;
 }
 
-.guest-limit-modal-overlay .guest-limit-modal-card.match-pass-promo-modal {
-  max-width: 500px;
-  width: 100%;
-  margin: auto;
-  border-radius: 24px;
-}
-
 .libreta-tab-btn {
   position: relative;
   flex: 1;
