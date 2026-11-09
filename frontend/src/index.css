@@ -9375,6 +9375,20 @@ body.swipe-page-active .app-footer {
   filter: brightness(1.1);
 }
 
+.guest-limit-modal-overlay .guest-limit-modal-card.addon-purchase-modal {
+  max-width: 480px;
+  width: 100%;
+  margin: auto;
+  border-radius: 24px;
+}
+
+.guest-limit-modal-overlay .guest-limit-modal-card.match-pass-promo-modal {
+  max-width: 500px;
+  width: 100%;
+  margin: auto;
+  border-radius: 24px;
+}
+
 .libreta-tab-btn {
   position: relative;
   flex: 1;

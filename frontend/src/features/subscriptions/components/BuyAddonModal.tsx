@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { apiClient } from '../../../lib/apiClient';
 import { useAuthStore } from '../../authentication/store/authStore';
 
@@ -115,6 +116,25 @@ export const BuyAddonModal: React.FC<BuyAddonModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Bloquear scroll de la página y cerrar con tecla Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !loading) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, loading, onClose]);
+
   if (!isOpen || !addonType) return null;
 
   const addon = ADDONS_CATALOG[addonType];
@@ -169,16 +189,23 @@ export const BuyAddonModal: React.FC<BuyAddonModalProps> = ({
     }
   };
 
-  return (
-    <div className="book-detail-modal-overlay" onClick={onClose}>
+  const modalContent = (
+    <div className="guest-limit-modal-overlay" onClick={loading ? undefined : onClose}>
       <div
-        className="book-detail-modal-card addon-purchase-modal"
+        className="guest-limit-modal-card addon-purchase-modal"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '480px', padding: '1.75rem', borderRadius: '16px' }}
+        style={{
+          maxWidth: '480px',
+          padding: '2rem 1.75rem',
+          borderRadius: '24px',
+          background: '#ffffff',
+          position: 'relative'
+        }}
       >
         <button
-          className="book-detail-close-btn"
-          onClick={onClose}
+          className="guest-limit-close-btn"
+          onClick={loading ? undefined : onClose}
+          title="Cerrar modal"
           aria-label="Cerrar modal"
         >
           <i className="fa-solid fa-xmark"></i>
@@ -268,7 +295,7 @@ export const BuyAddonModal: React.FC<BuyAddonModalProps> = ({
             style={{
               width: '100%',
               padding: '0.85rem 1rem',
-              borderRadius: '10px',
+              borderRadius: '12px',
               border: 'none',
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               color: '#ffffff',
@@ -303,7 +330,7 @@ export const BuyAddonModal: React.FC<BuyAddonModalProps> = ({
             style={{
               width: '100%',
               padding: '0.65rem 1rem',
-              borderRadius: '10px',
+              borderRadius: '12px',
               border: '1px solid #d1d5db',
               background: 'transparent',
               color: '#6b7280',
@@ -318,4 +345,6 @@ export const BuyAddonModal: React.FC<BuyAddonModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

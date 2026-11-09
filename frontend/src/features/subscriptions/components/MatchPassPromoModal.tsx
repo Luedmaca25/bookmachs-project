@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BuyAddonModal } from './BuyAddonModal';
 
 interface MatchPassPromoModalProps {
@@ -18,6 +19,25 @@ export const MatchPassPromoModal: React.FC<MatchPassPromoModalProps> = ({
     minutes: 59,
     seconds: 59
   });
+
+  // Bloquear scroll de la página y cerrar con tecla Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleDismiss();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -55,19 +75,19 @@ export const MatchPassPromoModal: React.FC<MatchPassPromoModalProps> = ({
     setShowBuyModal(true);
   };
 
-  return (
+  const modalContent = (
     <>
-      <div className="book-detail-modal-overlay" onClick={handleDismiss}>
+      <div className="guest-limit-modal-overlay" onClick={handleDismiss}>
         <div
-          className="book-detail-modal-card match-pass-promo-modal"
+          className="guest-limit-modal-card match-pass-promo-modal"
           onClick={(e) => e.stopPropagation()}
           style={{
-            maxWidth: '520px',
-            padding: '2rem',
-            borderRadius: '20px',
+            maxWidth: '500px',
+            padding: '2.25rem 1.75rem',
+            borderRadius: '24px',
             background: 'linear-gradient(180deg, #ffffff 0%, #fefcf3 100%)',
             border: '2px solid #fbbf24',
-            boxShadow: '0 20px 40px rgba(245, 158, 11, 0.25)',
+            boxShadow: '0 20px 48px rgba(245, 158, 11, 0.28)',
             position: 'relative',
             overflow: 'hidden'
           }}
@@ -93,10 +113,10 @@ export const MatchPassPromoModal: React.FC<MatchPassPromoModalProps> = ({
           </div>
 
           <button
-            className="book-detail-close-btn"
+            className="guest-limit-close-btn"
             onClick={handleDismiss}
+            title="Cerrar modal"
             aria-label="Cerrar modal"
-            style={{ top: '14px', left: '14px', right: 'auto' }}
           >
             <i className="fa-solid fa-xmark"></i>
           </button>
@@ -120,10 +140,10 @@ export const MatchPassPromoModal: React.FC<MatchPassPromoModalProps> = ({
               <i className="fa-solid fa-fire"></i>
             </div>
 
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1f2937', margin: '0 0 0.4rem' }}>
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 900, color: '#1f2937', margin: '0 0 0.4rem', lineHeight: 1.25 }}>
               ¡Hay usuarios que quieren intercambiar contigo!
             </h2>
-            <p style={{ fontSize: '0.95rem', color: '#4b5563', margin: 0, lineHeight: 1.4 }}>
+            <p style={{ fontSize: '0.92rem', color: '#4b5563', margin: 0, lineHeight: 1.4 }}>
               Tienes <strong>{interestedCount} libros y usuarios</strong> esperando por ti en la pestaña <strong>Match Pass</strong>.
             </p>
           </div>
@@ -198,7 +218,7 @@ export const MatchPassPromoModal: React.FC<MatchPassPromoModalProps> = ({
               style={{
                 width: '100%',
                 padding: '0.85rem 1.25rem',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 border: 'none',
                 background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
                 color: '#ffffff',
@@ -246,4 +266,6 @@ export const MatchPassPromoModal: React.FC<MatchPassPromoModalProps> = ({
       />
     </>
   );
+
+  return createPortal(modalContent, document.body);
 };
