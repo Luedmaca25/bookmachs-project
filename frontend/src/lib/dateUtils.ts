@@ -96,3 +96,50 @@ export const calculateFulfillmentTiming = (createdAtStr?: string, userCountry?: 
     timeZoneLabel: timeZone
   };
 };
+
+// ============================================================================
+// Plazo de Pago de Fee: 5 días permitidos para pagar la tarifa del match
+// ============================================================================
+export const FEE_PAYMENT_WINDOW_DAYS = 5;
+export const FEE_PAYMENT_WINDOW_HOURS = FEE_PAYMENT_WINDOW_DAYS * 24; // 120 horas = 5 días permitidos para pagar el fee
+
+export interface FeePaymentTiming {
+  createdDate: Date;
+  deadlineDate: Date;
+  formattedCreatedDate: string;
+  formattedDeadlineDate: string;
+  totalHoursRemaining: number;
+  daysRemaining: number;
+  hoursRemainingMod: number;
+  isExpired: boolean;
+}
+
+export const calculateFeePaymentTiming = (createdAtStr?: string, userCountry?: string): FeePaymentTiming => {
+  const createdDate = parseUtcDate(createdAtStr);
+  const deadlineDate = new Date(createdDate.getTime() + FEE_PAYMENT_WINDOW_HOURS * 60 * 60 * 1000);
+  const now = new Date();
+
+  const totalMsRemaining = deadlineDate.getTime() - now.getTime();
+  const totalHoursRemaining = Math.max(0, Math.floor(totalMsRemaining / (1000 * 60 * 60)));
+  const daysRemaining = Math.floor(totalHoursRemaining / 24);
+  const hoursRemainingMod = totalHoursRemaining % 24;
+
+  return {
+    createdDate,
+    deadlineDate,
+    formattedCreatedDate: formatDateInUserTimezone(createdDate, userCountry),
+    formattedDeadlineDate: formatDateInUserTimezone(deadlineDate, userCountry),
+    totalHoursRemaining,
+    daysRemaining,
+    hoursRemainingMod,
+    isExpired: totalMsRemaining <= 0,
+  };
+};
+
+export const isFeePaymentInTime = (createdAtStr?: string): boolean => {
+  if (!createdAtStr) return false;
+  const createdDate = parseUtcDate(createdAtStr);
+  const deadlineDate = new Date(createdDate.getTime() + FEE_PAYMENT_WINDOW_HOURS * 60 * 60 * 1000);
+  return new Date().getTime() <= deadlineDate.getTime();
+};
+

@@ -135,6 +135,19 @@ public class TransactionService : ITransactionService
 
         foreach (var t in transactions)
         {
+            // Omitir transacciones anuladas, canceladas o fallidas
+            if (t.PaymentStatus == "Failed" || t.PaymentStatus == "Cancelled" || t.PaymentStatus == "Refunded" ||
+                t.LogisticsStatus == "Cancelled" || t.LogisticsStatus == "Expired")
+            {
+                continue;
+            }
+
+            // Omitir transacciones con fee pendiente que ya superaron los días permitidos (5 días)
+            if (t.PaymentStatus == "Pending" && t.CreatedAt < DateTime.UtcNow.AddDays(-5))
+            {
+                continue;
+            }
+
             bool isAvailable = false;
             if (t.Book != null)
             {
@@ -157,7 +170,7 @@ public class TransactionService : ITransactionService
                 BookImageUrl = BookService.FormatImageUrl(t.Book?.ImageUrl) ?? string.Empty,
                 BookCondition = t.Book?.Condition ?? "Bueno",
                 OwnerUserId = t.OwnerUserId,
-                OwnerName = t.Book?.IsInternalStock == true ? "Stock Interno" : "Stock Externo" ?? "Desconocido"),
+                OwnerName = t.Book?.IsInternalStock == true ? "Stock Interno" : (t.OwnerUser?.Name ?? "Stock Externo"),
                 FeeAmount = t.FeeAmount,
                 PaymentStatus = t.PaymentStatus,
                 LogisticsStatus = t.LogisticsStatus,
@@ -407,6 +420,16 @@ public class TransactionService : ITransactionService
             }
 
             transaction.LogisticsMethod = "IntercambioDoble";
+        }
+
+        // Validar que la transacción no haya excedido el plazo permitido para el pago del fee (5 días)
+        if (transaction.PaymentStatus == "Pending" && transaction.CreatedAt < DateTime.UtcNow.AddDays(-5))
+        {
+            return new WebpayStartResultDto
+            {
+                Success = false,
+                Message = "⚠️ El plazo de 5 días para realizar el pago del fee de este intercambio ha expirado. La propuesta ya no se encuentra activa."
+            };
         }
 
         // Validar si el libro objetivo ya no está disponible o está reservado por otro usuario
@@ -1146,7 +1169,7 @@ public class TransactionService : ITransactionService
             BookImageUrl = BookService.FormatImageUrl(t.Book?.ImageUrl) ?? string.Empty,
             BookCondition = t.Book?.Condition ?? "Bueno",
             OwnerUserId = t.OwnerUserId,
-            OwnerName = t.Book?.IsInternalStock == true ? "Stock Interno" : "Stock Externo ?? "Desconocido"),
+            OwnerName = t.Book?.IsInternalStock == true ? "Stock Interno" : (t.OwnerUser?.Name ?? "Stock Externo"),
             FeeAmount = t.FeeAmount,
             PaymentStatus = t.PaymentStatus,
             LogisticsStatus = t.LogisticsStatus,

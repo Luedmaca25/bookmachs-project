@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
 import { MatchDetailModal } from './components/MatchDetailModal';
-import { formatDateInUserTimezone } from '../../lib/dateUtils';
+import { formatDateInUserTimezone, calculateFeePaymentTiming, isFeePaymentInTime } from '../../lib/dateUtils';
 import { useAuthStore } from '../authentication/store/authStore';
 
 interface MatchTransaction {
@@ -57,6 +57,27 @@ interface ExchangeQuota {
   cycleEndDate: string;
 }
 
+// Validador de transacciones activas y en tiempo:
+// - Excluye canceladas, fallidas o expiradas
+// - Si el fee está pendiente, solo permite las que están dentro de los 5 días permitidos desde su creación
+export const isTransactionActiveAndInTime = (tx: MatchTransaction): boolean => {
+  const paymentStatus = tx.paymentStatus?.toLowerCase() || '';
+  const logisticsStatus = tx.logisticsStatus?.toLowerCase() || '';
+
+  if (paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'refunded') {
+    return false;
+  }
+  if (logisticsStatus === 'cancelled' || logisticsStatus === 'expired') {
+    return false;
+  }
+
+  if (paymentStatus === 'pending') {
+    return isFeePaymentInTime(tx.createdAt);
+  }
+
+  return true;
+};
+
 export const TransactionsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -71,6 +92,11 @@ export const TransactionsPage: React.FC = () => {
   const [quota, setQuota] = useState<ExchangeQuota | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Filtrado estricto: únicamente transacciones activas y dentro del plazo permitido para pagar el fee (5 días)
+  const activeMatches = useMemo(() => {
+    return matches.filter(isTransactionActiveAndInTime);
+  }, [matches]);
 
   // Inventario propio para intercambio
   const [myOfferedBooks, setMyOfferedBooks] = useState<MyOfferedBook[]>([]);
@@ -132,10 +158,10 @@ export const TransactionsPage: React.FC = () => {
 
   useEffect(() => {
     const hasCheckout = searchParams.has('checkout');
-    if (hasCheckout && matches.length > 0) {
+    if (hasCheckout && activeMatches.length > 0) {
       const tx = checkoutId
-        ? matches.find((m) => m.id === checkoutId)
-        : (matches.find((m) => m.paymentStatus === 'Pending') || matches[0]);
+        ? activeMatches.find((m) => m.id === checkoutId)
+        : (activeMatches.find((m) => m.paymentStatus === 'Pending') || activeMatches[0]);
       if (tx) {
         setSelectedTx(tx);
         setCheckoutSuccess(false);
@@ -151,11 +177,12 @@ export const TransactionsPage: React.FC = () => {
         }
       } else {
         setSelectedTx(null);
+        setSearchParams({}, { replace: true });
       }
-    } else if (!hasCheckout) {
+    } else if (!hasCheckout || activeMatches.length === 0) {
       setSelectedTx(null);
     }
-  }, [checkoutId, searchParams, matches]);
+  }, [checkoutId, searchParams, activeMatches]);
 
   // Modal de Detalle de Intercambio y Thank You Page
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -1195,7 +1222,7 @@ export const TransactionsPage: React.FC = () => {
         </div>
       )}
 
-      {!hasOfferedBooks && matches.length > 0 && (
+      {!hasOfferedBooks && activeMatches.length > 0 && (
         <div className="no-offered-alert-green">
           <div>
             <strong className="alert-title">
@@ -1219,15 +1246,17 @@ export const TransactionsPage: React.FC = () => {
         <div className="transactions-loading">Cargando transacciones activas...</div>
       ) : error ? (
         <div className="transactions-error">{error}</div>
-      ) : matches.length === 0 ? (
+      ) : activeMatches.length === 0 ? (
         <div className="transactions-empty-state">
           <span className="empty-icon">🤝</span>
-          <h3>Aún no tienes ningún Match</h3>
-          <p>Sigue deslizando en la pantalla de exploración. Cuando a ti y a otro usuario les interese el libro del otro, aparecerá aquí.</p>
+          <h3>Aún no tienes ningún Match activo</h3>
+          <p>Sigue deslizando en la pantalla de exploración. Cuando a ti y a otro usuario les interese el libro del otro, aparecerá aquí durante el plazo permitido para acordar el intercambio.</p>
         </div>
       ) : (
         <div className="matches-list-grid">
-          {matches.map((tx) => (
+          {activeMatches.map((tx) => {
+            const feeTiming = tx.paymentStatus === 'Pending' ? calculateFeePaymentTiming(tx.createdAt, user?.pais) : null;
+            return (
             <div key={tx.id} className="match-card">
               <div className="match-card-body">
                 <div className="match-card-img-box">
@@ -1239,7 +1268,31 @@ export const TransactionsPage: React.FC = () => {
                 </div>
 
                 <div className="match-card-details">
-                  <span className="match-card-date">Fecha: {formatDateInUserTimezone(tx.createdAt)}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+                    <span className="match-card-date">Fecha: {formatDateInUserTimezone(tx.createdAt)}</span>
+                    {feeTiming && (
+                      <span
+                        className="badge-pending"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '0.72rem',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontWeight: 600
+                        }}
+                        title={`Plazo límite para realizar el pago del fee: ${feeTiming.formattedDeadlineDate} (5 días permitidos)`}
+                      >
+                        <i className="fa-solid fa-clock"></i>
+                        <span>
+                          {feeTiming.daysRemaining > 0 
+                            ? `${feeTiming.daysRemaining}d ${feeTiming.hoursRemainingMod}h restantes para pagar fee` 
+                            : `${feeTiming.hoursRemainingMod}h restantes para pagar fee`}
+                        </span>
+                      </span>
+                    )}
+                  </div>
                   <h3>{tx.bookTitle}</h3>
                   <p className="author-p">Autor: {tx.bookAuthor}</p>
                   <p className="owner-p">Dueño: <strong>{tx.ownerName}</strong></p>
@@ -1326,7 +1379,8 @@ export const TransactionsPage: React.FC = () => {
 
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
 

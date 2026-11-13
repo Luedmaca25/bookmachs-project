@@ -97,9 +97,9 @@ public class CleanupBooksJob
                 await _ecolecturaDbContext.SaveChangesAsync();
             }
 
-            // 2. Anular transacciones pendientes de pago pasadas las 48 horas
+            // 2. Anular transacciones pendientes de pago pasados los 5 días permitidos
             var expiredTransactions = await _dbContext.MatchTransactions
-                .Where(t => t.PaymentStatus == "Pending" && t.CreatedAt < DateTime.UtcNow.AddHours(-48))
+                .Where(t => t.PaymentStatus == "Pending" && t.CreatedAt < DateTime.UtcNow.AddDays(-5))
                 .ToListAsync();
 
             foreach (var tx in expiredTransactions)
@@ -110,7 +110,7 @@ public class CleanupBooksJob
 
                 _dbContext.MatchTransactions.Update(tx);
                 expiredTransactionsCancelled++;
-                _logger.LogInformation("Transacción {TransactionId} anulada por falta de pago pasadas las 48 horas.", tx.Id);
+                _logger.LogInformation("Transacción {TransactionId} anulada por falta de pago pasados los 5 días permitidos.", tx.Id);
 
                 // Liberar el libro asociado a la transacción fallida
                 var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == tx.BookId);
