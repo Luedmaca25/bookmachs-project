@@ -78,7 +78,7 @@ export const ADDONS_CATALOG: Record<string, AddonInfo> = {
     benefits: [
       'Desbloquea la pestaña Match Pass sin borrosidad',
       'Descubre qué usuarios dieron like a tus libros',
-      'Accede a la selección exclusiva de stock Ecolectura',
+      'Accede a la selección exclusiva de stock interno',
       'Inicia intercambios directos sin esperar'
     ]
   }

@@ -400,7 +400,7 @@ export const PlansPage: React.FC = () => {
           {/* 1. Plan Premium 24h */}
           <div className="addon-card" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgb(209, 250, 229)', color: 'rgb(5, 150, 105)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
                 <i className="fa-solid fa-bolt"></i>
               </div>
               <div>
@@ -440,7 +440,7 @@ export const PlansPage: React.FC = () => {
           {/* 2. Likes ilimitados 24h */}
           <div className="addon-card" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#ffe4e6', color: '#e11d48', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgb(209, 250, 229)', color: 'rgb(5, 150, 105)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
                 <i className="fa-solid fa-heart-pulse"></i>
               </div>
               <div>
@@ -480,7 +480,7 @@ export const PlansPage: React.FC = () => {
           {/* 3. 10 búsquedas por autor */}
           <div className="addon-card" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgb(209, 250, 229)', color: 'rgb(5, 150, 105)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
                 <i className="fa-solid fa-magnifying-glass"></i>
               </div>
               <div>
@@ -520,7 +520,7 @@ export const PlansPage: React.FC = () => {
           {/* 4. Boost 48h */}
           <div className="addon-card" style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#f3e8ff', color: '#9333ea', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgb(209, 250, 229)', color: 'rgb(5, 150, 105)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
                 <i className="fa-solid fa-rocket"></i>
               </div>
               <div>

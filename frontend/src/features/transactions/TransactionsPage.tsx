@@ -1308,7 +1308,7 @@ export const TransactionsPage: React.FC = () => {
                     className="pay-fee-btn font-heading"
                     onClick={() => setSearchParams({ checkout: tx.id })}
                   >
-                    Pagar Fee & Intercambiar 💳
+                    Intercambiar
                   </button>
                 ) : (
                   <button

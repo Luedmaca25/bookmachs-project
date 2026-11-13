@@ -87,7 +87,7 @@ export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
 
           <h2 className="guest-limit-title font-heading">
             {isAuthenticated
-              ? `¡Alcanzaste el límite de ${displayLimit} swipes diarios!`
+              ? `¡Alcanzaste el límite de ${displayLimit} swipes mensuales!`
               : '¡Alcanzaste el límite de 5 swipes como invitado!'}
           </h2>
 
