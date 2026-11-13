@@ -125,9 +125,9 @@ export const BookCard: React.FC<BookCardProps> = ({
   const isBlurred = className.includes('blurred-card');
 
   // Cálculo dinámico de opacidad de los sellos durante el arrastre o confirmación
-  const likeOpacity = isSwipedRight || isMatchAnimation
+  const likeOpacity = !isMatchAnimation && isSwipedRight
     ? 1 
-    : isDragging && dragOffset.x > 20 
+    : !isMatchAnimation && isDragging && dragOffset.x > 20 
       ? Math.min(1, (dragOffset.x - 20) / 60) 
       : 0;
 

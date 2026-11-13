@@ -106,10 +106,20 @@ export const SwipePage: React.FC = () => {
     return set;
   };
 
+  const prevAuthRef = useRef(isAuthenticated);
+
   // Inicializar la lista de libros cuando se recibe la respuesta inicial de React Query,
   // filtrando de inmediato cualquier libro que haya sido descartado anteriormente
   useEffect(() => {
-    if (rawBooks && rawBooks.length > 0) {
+    if (prevAuthRef.current !== isAuthenticated) {
+      prevAuthRef.current = isAuthenticated;
+      setBooksList([]);
+      setCurrentBookIndex(0);
+      setSwipedHistory([]);
+      return;
+    }
+
+    if (rawBooks && rawBooks.length > 0 && booksList.length === 0) {
       const excluded = getExcludedBookIds();
       const freshBooks = rawBooks.filter((b) => !excluded.has(b.id));
       setBooksList(freshBooks);
@@ -119,7 +129,7 @@ export const SwipePage: React.FC = () => {
         fetchMoreBooks();
       }
     }
-  }, [queryBooks]);
+  }, [queryBooks, isAuthenticated, booksList.length]);
 
   // Cargar automáticamente los siguientes 50 libros en segundo plano cuando el usuario llega al libro 40 (quedando 10 en la cola)
   const fetchMoreBooks = async () => {
@@ -503,15 +513,7 @@ export const SwipePage: React.FC = () => {
     }
 
     const swipedBook = currentBook;
-    const isInternalMatch = direction === 'right' && swipedBook.isInternalStock !== false;
-
-    // Actualizar inmediatamente la caché en memoria de React Query para eliminar el libro deslizado
-    if (swipedBook) {
-      queryClient.setQueryData<BookItem[]>(['books', isAuthenticated], (old) => {
-        if (!old) return [];
-        return old.filter((b) => b.id !== swipedBook.id);
-      });
-    }
+    const isMatch = direction === 'right';
 
     // Cerrar modal de zoom si estaba abierto
     setIsZoomOpen(false);
@@ -560,7 +562,7 @@ export const SwipePage: React.FC = () => {
         }
       }
 
-      if (isInternalMatch) {
+      if (isMatch) {
         // Mostrar animación del sello ¡Match! al confirmar antes de deslizar la tarjeta
         setMatchAnimationBookId(swipedBook.id);
         setTimeout(() => {
@@ -587,9 +589,6 @@ export const SwipePage: React.FC = () => {
         setTimeout(() => {
           setSwipeDirection(null);
           setCurrentBookIndex((prev) => prev + 1);
-          if (direction === 'right' && newCount >= 5) {
-            setShowGuestLimitModal(true);
-          }
         }, 220);
       }
 
@@ -614,8 +613,8 @@ export const SwipePage: React.FC = () => {
       }
     }
 
-    // 2. Si es match interno confirmado, mostrar animación de sello ¡Match! antes del deslizamiento
-    if (isInternalMatch) {
+    // 2. Si es like / match, mostrar animación de celebración ¡Match! antes del deslizamiento
+    if (isMatch) {
       setMatchAnimationBookId(swipedBook.id);
       setTimeout(() => {
         setSwipeDirection('right');
@@ -633,9 +632,6 @@ export const SwipePage: React.FC = () => {
       setTimeout(() => {
         setSwipeDirection(null);
         setCurrentBookIndex((prev) => prev + 1);
-        if (reachedLimitThisSwipe) {
-          setShowGuestLimitModal(true);
-        }
       }, 220);
     }
 
