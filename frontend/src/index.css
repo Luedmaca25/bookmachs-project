@@ -3434,7 +3434,7 @@ body.swipe-page-active .app-footer {
   min-height: 40px;
   width: 100% !important;
   max-width: 380px;
-  display: flex;
+  display: block;
   justify-content: center;
   overflow: hidden;
   box-sizing: border-box;
@@ -8908,8 +8908,6 @@ body.swipe-page-active .app-footer {
   align-items: center;
   flex-direction: column;
   min-height: 70vh;
-  margin-top: 24px;
-  /* gap: 24px; */
 }
 
 .auth-page-container .modal-card {
@@ -8918,6 +8916,7 @@ body.swipe-page-active .app-footer {
   box-shadow: none !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 .onboarding-page-wrapper {
@@ -17517,9 +17516,7 @@ body.swipe-page-active .app-footer {
     padding: 0 10px !important;
   }
   .app-header .brand-logo-img {
-    height: 48px !important;
-    max-height: 48px;
-    max-width: 135px;
+    height: 45px !important;
     object-fit: contain;
   }
   .header-mobile-actions {
