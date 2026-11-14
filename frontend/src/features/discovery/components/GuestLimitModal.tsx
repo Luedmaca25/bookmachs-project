@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../../../lib/apiClient';
+// import { useQuery } from '@tanstack/react-query';
+// import { apiClient } from '../../../lib/apiClient';
 
 interface GuestLimitModalProps {
   isOpen: boolean;
