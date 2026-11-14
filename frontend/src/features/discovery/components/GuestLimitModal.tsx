@@ -30,8 +30,8 @@ export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
 
   // El límite a comunicar para usuarios con cuenta free debe estar topado al valor oficial configurado (por defecto 40),
   // para evitar confusiones si el usuario recibió bonos por 24h que eleven temporalmente su cuota efectiva (ej. 90).
-  const configuredFreeLimit = baseLimit ?? globalSettings?.dailySwipeLimitFree ?? 40;
-  const displayLimit = isAuthenticated ? Math.min(limit, configuredFreeLimit) : 5;
+  //const configuredFreeLimit = baseLimit ?? globalSettings?.dailySwipeLimitFree ?? 40;
+  //const displayLimit = isAuthenticated ? Math.min(limit, configuredFreeLimit) : 5;
 
   // Cerrar al presionar tecla Escape y bloquear scroll del body
   useEffect(() => {

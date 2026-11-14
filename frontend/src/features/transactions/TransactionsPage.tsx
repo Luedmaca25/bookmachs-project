@@ -106,6 +106,13 @@ export const TransactionsPage: React.FC = () => {
   // Stepper del Checkout (Pasos 1, 2, 3)
   const [activeStep, setActiveStep] = useState<number>(1);
 
+  const goToStep = (step: number) => {
+    setActiveStep(step);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
+
   // Estado del Checkout Seleccionado
   const [selectedTx, setSelectedTx] = useState<MatchTransaction | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -183,6 +190,23 @@ export const TransactionsPage: React.FC = () => {
       setSelectedTx(null);
     }
   }, [checkoutId, searchParams, activeMatches]);
+
+  // Al cambiar de paso en el checkout o al ingresar a un checkout, asegurar que el scroll se posicione siempre hasta arriba
+  useEffect(() => {
+    if (selectedTx) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      const raf = requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      });
+
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [activeStep, selectedTx?.id]);
 
   // Modal de Detalle de Intercambio y Thank You Page
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -370,17 +394,17 @@ export const TransactionsPage: React.FC = () => {
         <div className="checkout-stepper">
           <div className="stepper-progress-bar" style={{ width: activeStep === 1 ? '0%' : activeStep === 2 ? '50%' : '100%' }}></div>
           
-          <div className={`step-node ${activeStep >= 1 ? 'active' : ''} ${activeStep > 1 ? 'completed' : ''}`} onClick={() => setActiveStep(1)}>
+          <div className={`step-node ${activeStep >= 1 ? 'active' : ''} ${activeStep > 1 ? 'completed' : ''}`} onClick={() => goToStep(1)}>
             <div className="step-circle">{activeStep > 1 ? '✓' : '1'}</div>
             <span className="step-label font-heading">Confirmar Libros</span>
           </div>
 
-          <div className={`step-node ${activeStep >= 2 ? 'active' : ''} ${activeStep > 2 ? 'completed' : ''}`} onClick={() => hasOfferedBooks && setActiveStep(2)}>
+          <div className={`step-node ${activeStep >= 2 ? 'active' : ''} ${activeStep > 2 ? 'completed' : ''}`} onClick={() => hasOfferedBooks && goToStep(2)}>
             <div className="step-circle">{activeStep > 2 ? '✓' : '2'}</div>
             <span className="step-label font-heading">Opción de Entrega</span>
           </div>
 
-          <div className={`step-node ${activeStep === 3 ? 'active' : ''}`} onClick={() => hasOfferedBooks && setActiveStep(3)}>
+          <div className={`step-node ${activeStep === 3 ? 'active' : ''}`} onClick={() => hasOfferedBooks && goToStep(3)}>
             <div className="step-circle">3</div>
             <span className="step-label font-heading">Pago de Fee</span>
           </div>
@@ -559,7 +583,7 @@ export const TransactionsPage: React.FC = () => {
                       <button
                         type="button"
                         className={`font-heading btn-step-continue ${canContinue ? 'enabled' : 'disabled'}`}
-                        onClick={() => setActiveStep(2)}
+                        onClick={() => goToStep(2)}
                         disabled={!canContinue}
                       >
                         Continuar al Paso 2: Logística de Entrega →
@@ -832,7 +856,7 @@ export const TransactionsPage: React.FC = () => {
                 <div className="step-actions-row">
                   <button
                     type="button"
-                    onClick={() => setActiveStep(1)}
+                    onClick={() => goToStep(1)}
                     className="btn-back-step"
                   >
                     ← Volver al Paso 1
@@ -859,7 +883,7 @@ export const TransactionsPage: React.FC = () => {
                         setAddressError('Por favor indica tu dirección de envío para recibir el libro.');
                         return;
                       }
-                      setActiveStep(3);
+                      goToStep(3);
                     }}
                   >
                     Continuar al Paso 3: Pago de Fee →
@@ -1097,7 +1121,7 @@ export const TransactionsPage: React.FC = () => {
                 <div className="step-back-action-container">
                   <button
                     type="button"
-                    onClick={() => setActiveStep(2)}
+                    onClick={() => goToStep(2)}
                     className="btn-back-step"
                   >
                     ← Volver al Paso 2
