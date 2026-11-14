@@ -15,18 +15,16 @@ interface GuestLimitModalProps {
 export const GuestLimitModal: React.FC<GuestLimitModalProps> = ({
   isOpen,
   onClose,
-  isAuthenticated = false,
-  limit = 40,
-  baseLimit,
+  isAuthenticated = false
 }) => {
   const navigate = useNavigate();
 
   // Obtener la configuración global para conocer el límite base oficial del plan free
-  const { data: globalSettings } = useQuery<{ dailySwipeLimitFree?: number }>({
-    queryKey: ['globalSettings'],
-    queryFn: () => apiClient.get<any>('/globalsettings'),
-    staleTime: 1000 * 60 * 10,
-  });
+  // const { data: globalSettings } = useQuery<{ dailySwipeLimitFree?: number }>({
+  //   queryKey: ['globalSettings'],
+  //   queryFn: () => apiClient.get<any>('/globalsettings'),
+  //   staleTime: 1000 * 60 * 10,
+  // });
 
   // El límite a comunicar para usuarios con cuenta free debe estar topado al valor oficial configurado (por defecto 40),
   // para evitar confusiones si el usuario recibió bonos por 24h que eleven temporalmente su cuota efectiva (ej. 90).
