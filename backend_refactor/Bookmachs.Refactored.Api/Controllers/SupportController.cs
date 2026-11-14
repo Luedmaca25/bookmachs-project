@@ -40,7 +40,7 @@ public class SupportController : ControllerBase
             {
                 new { name = "Motor de Intercambio (Intercambialibros)", status = "online", uptime = "99.9%" },
                 new { name = "Pasarela de Pagos (Transbank Webpay)", status = "online", uptime = "99.9%" },
-                new { name = "Catálogo e Inventario Ecolectura", status = "online", uptime = "99.8%" },
+                new { name = "Catálogo e Inventario", status = "online", uptime = "99.8%" },
                 new { name = "Canal de Soporte 24/7", status = "active", uptime = "100%" }
             }
         });

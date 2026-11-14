@@ -95,10 +95,6 @@ export const BookConditionModal: React.FC<BookConditionModalProps> = ({
         </button>
 
         <div className="guest-limit-modal-body book-condition-modal-body">
-          <div className="book-condition-icon-wrapper">
-            <i className="fa-solid fa-award"></i>
-          </div>
-
           <h2 className="guest-limit-title font-heading">
             Guía de Estados de Libros
           </h2>

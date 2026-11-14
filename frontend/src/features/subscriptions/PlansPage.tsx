@@ -433,7 +433,7 @@ export const PlansPage: React.FC = () => {
                 cursor: 'pointer'
               }}
             >
-              Comprar Pase 24h
+              Activar Pase 24h
             </button>
           </div>
 
@@ -513,7 +513,7 @@ export const PlansPage: React.FC = () => {
                 cursor: 'pointer'
               }}
             >
-              Comprar 10 Búsquedas
+              Activar 10 Búsquedas
             </button>
           </div>
 
@@ -597,7 +597,7 @@ export const PlansPage: React.FC = () => {
                 boxShadow: '0 4px 10px rgba(16, 185, 129, 0.25)'
               }}
             >
-              Comprar Match Pass 1 Semana
+              Activar Match Pass 1 Semana
             </button>
           </div>
         </div>

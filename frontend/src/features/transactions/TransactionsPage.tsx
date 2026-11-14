@@ -889,7 +889,7 @@ export const TransactionsPage: React.FC = () => {
                         <strong>{currentOfferedBook?.title || 'Libro propio'}</strong>
                       </div>
                       <div className="summary-row">
-                        <span>Opción de Entrega:</span>
+                        <span>Opción de entregar y recibir:</span>
                         <strong className="icon-neon">
                           {selectedMethod === 'IntercambioDoble' ? '🔄 Intercambio Doble' : selectedMethod === 'Donacion' ? '🎁 Donación Comunitaria' : selectedMethod === 'Presencial' ? '🏪 Entrega Presencial Santiago' : '📦 Envío por Encomienda a Local'}
                         </strong>

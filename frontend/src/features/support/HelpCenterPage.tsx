@@ -549,7 +549,7 @@ export const HelpCenterPage: React.FC = () => {
               <div className="service-item">
                 <i className="fa-solid fa-circle-check icon-green"></i>
                 <div>
-                  <strong>Catálogo e Inventario Ecolectura</strong>
+                  <strong>Catálogo e Inventario</strong>
                   <small>Sincronización de stock en tiempo real</small>
                 </div>
               </div>
