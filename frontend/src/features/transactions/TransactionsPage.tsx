@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/apiClient';
 import { getFileUrl } from '../../lib/formatters';
 import { MatchDetailModal } from './components/MatchDetailModal';
@@ -88,10 +89,35 @@ export const TransactionsPage: React.FC = () => {
   const webpayTbkOrden = searchParams.get('TBK_ORDEN_COMPRA') || searchParams.get('tbk_orden_compra');
 
   // Estado general de transacciones y cuota mensual
+  const queryClient = useQueryClient();
   const [matches, setMatches] = useState<MatchTransaction[]>([]);
   const [quota, setQuota] = useState<ExchangeQuota | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  const handleDeleteMatch = async (matchId: string, bookTitle?: string) => {
+    const confirmMessage = bookTitle
+      ? `¿Estás seguro de que deseas eliminar la propuesta de intercambio por "${bookTitle}"? Ya no aparecerá en tus matches.`
+      : '¿Estás seguro de que deseas eliminar esta propuesta de intercambio? Ya no aparecerá en tus matches.';
+
+    if (!window.confirm(confirmMessage)) return;
+
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      await apiClient.delete(`/transactions/my-matches/${matchId}`);
+      setMatches((prev) => prev.filter((m) => m.id !== matchId));
+      queryClient.invalidateQueries({ queryKey: ['my-matches'] });
+      setActionSuccess('La propuesta de intercambio fue eliminada exitosamente.');
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      console.error('Error al eliminar match:', err);
+      setActionError(err.message || 'No se pudo eliminar la propuesta de intercambio.');
+      setTimeout(() => setActionError(null), 5000);
+    }
+  };
 
   // Filtrado estricto: únicamente transacciones activas y dentro del plazo permitido para pagar el fee (5 días)
   const activeMatches = useMemo(() => {
@@ -383,9 +409,27 @@ export const TransactionsPage: React.FC = () => {
       <div className="checkout-view-container">
         {/* Encabezado con Botón de Regreso */}
         <div className="checkout-header">
-          <button className="back-to-matches-btn" onClick={() => setSearchParams({})}>
-            ← Volver a mis matches
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <button className="back-to-matches-btn" onClick={() => setSearchParams({})}>
+              ← Volver a mis matches
+            </button>
+            {selectedTx.paymentStatus === 'Pending' && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleDeleteMatch(selectedTx.id, selectedTx.bookTitle);
+                  setSearchParams({});
+                }}
+                className="match-card-delete-btn"
+                title="Eliminar este match y regresar"
+                aria-label="Eliminar este match y regresar"
+                style={{ width: 'auto', padding: '0 12px', height: '34px', gap: '6px', fontSize: '0.85rem' }}
+              >
+                <i className="fa-solid fa-trash-can"></i>
+                <span>Descartar match</span>
+              </button>
+            )}
+          </div>
           <h2>Proceso de Intercambio & Checkout</h2>
           <p>Confirma los libros del trueque, la opción de logística y el pago seguro de tarifa por Transbank.</p>
         </div>
@@ -1266,6 +1310,20 @@ export const TransactionsPage: React.FC = () => {
         </div>
       )}
 
+      {actionSuccess && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #86efac', color: '#166534', padding: '0.75rem 1rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: 500 }}>
+          <i className="fa-solid fa-circle-check" style={{ color: '#16a34a' }}></i>
+          <span>{actionSuccess}</span>
+        </div>
+      )}
+
+      {actionError && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', color: '#991b1b', padding: '0.75rem 1rem', borderRadius: '12px', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: 500 }}>
+          <i className="fa-solid fa-circle-exclamation" style={{ color: '#dc2626' }}></i>
+          <span>{actionError}</span>
+        </div>
+      )}
+
       {loading ? (
         <div className="transactions-loading">Cargando transacciones activas...</div>
       ) : error ? (
@@ -1369,36 +1427,51 @@ export const TransactionsPage: React.FC = () => {
                   </div>
                 )}
 
-                {tx.isAvailable === false && tx.paymentStatus === 'Pending' ? (
-                  <button
-                    className="pay-fee-btn font-heading disabled-btn"
-                    disabled
-                    style={{ opacity: 0.6, backgroundColor: '#95a5a6', cursor: 'not-allowed' }}
-                    title="Este libro ya fue tomado o reservado por otro usuario."
-                  >
-                    ⚠️ No Disponible
-                  </button>
-                ) : !hasOfferedBooks ? (
-                  null
-                ) : tx.paymentStatus === 'Pending' ? (
-                  <button
-                    className="pay-fee-btn font-heading"
-                    onClick={() => setSearchParams({ checkout: tx.id })}
-                  >
-                    Intercambiar
-                  </button>
-                ) : (
-                  <button
-                    className="pay-fee-btn font-heading btn-view-details"
-                    onClick={() => {
-                      setSelectedDetailTx(tx);
-                      setIsThankYouMode(false);
-                      setDetailModalOpen(true);
-                    }}
-                  >
-                    🔍 Ver detalle e instrucciones
-                  </button>
-                )}
+                <div className="match-card-action-row" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  {/* Botón de eliminar match (estilo /libreta) */}
+                  {tx.paymentStatus === 'Pending' && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteMatch(tx.id, tx.bookTitle)}
+                      className="match-card-delete-btn"
+                      title="Eliminar propuesta de intercambio"
+                      aria-label="Eliminar propuesta de intercambio"
+                    >
+                      <i className="fa-solid fa-trash-can"></i>
+                    </button>
+                  )}
+                  
+                  {tx.isAvailable === false && tx.paymentStatus === 'Pending' ? (
+                    <button
+                      className="pay-fee-btn font-heading disabled-btn"
+                      disabled
+                      style={{ opacity: 0.6, backgroundColor: '#95a5a6', cursor: 'not-allowed' }}
+                      title="Este libro ya fue tomado o reservado por otro usuario."
+                    >
+                      ⚠️ No Disponible
+                    </button>
+                  ) : !hasOfferedBooks ? (
+                    null
+                  ) : tx.paymentStatus === 'Pending' ? (
+                    <button
+                      className="pay-fee-btn font-heading"
+                      onClick={() => setSearchParams({ checkout: tx.id })}
+                    >
+                      Intercambiar
+                    </button>
+                  ) : (
+                    <button
+                      className="pay-fee-btn font-heading btn-view-details"
+                      onClick={() => {
+                        setSelectedDetailTx(tx);
+                        setIsThankYouMode(false);
+                        setDetailModalOpen(true);
+                      }}
+                    >
+                      🔍 Ver detalle e instrucciones
+                    </button>
+                  )}
+                </div>
 
 
               </div>
