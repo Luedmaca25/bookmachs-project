@@ -1145,7 +1145,7 @@ export const TransactionsPage: React.FC = () => {
             <p>Aquí puedes monitorear tus propuestas activas, realizar el pago de fee y revisar la logística.</p>
           </div>
           {quota && (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{
                 background: quota.limitReached ? '#fff1f2' : '#f0fdf4',
                 border: `1px solid ${quota.limitReached ? '#fca5a5' : '#bbf7d0'}`,

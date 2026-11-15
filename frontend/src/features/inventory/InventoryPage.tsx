@@ -879,7 +879,7 @@ export const InventoryPage: React.FC = () => {
                 <div
                   className="matchpass-locked-banner"
                   style={{
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                    background: '#FFFFFF',
                     borderRadius: '16px',
                     padding: '1.75rem',
                     color: '#ffffff',
@@ -911,7 +911,7 @@ export const InventoryPage: React.FC = () => {
                   <h2 style={{ fontSize: '1.65rem', fontWeight: 800, margin: '0 0 0.5rem' }}>
                     ¡{matchPassData.totalCount} usuarios y libros esperan por ti!
                   </h2>
-                  <p style={{ fontSize: '0.95rem', color: '#cbd5e1', maxWidth: '620px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: '0.95rem', color: '#000000', maxWidth: '620px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
                     Descubre con exactitud quiénes dieron like a tus libros y accede a la selección de stock directo de Bookmachs / Ecolectura para intercambiar al instante.
                   </p>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -944,7 +944,7 @@ export const InventoryPage: React.FC = () => {
                         borderRadius: '10px',
                         border: '1px solid #64748b',
                         background: 'rgba(255, 255, 255, 0.08)',
-                        color: '#ffffff',
+                        color: '#000000',
                         fontWeight: 600,
                         fontSize: '0.95rem',
                         cursor: 'pointer',

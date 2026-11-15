@@ -5018,6 +5018,10 @@ body.swipe-page-active .app-footer {
   margin-bottom: 1.5rem;
 }
 
+.transactions-header > div > div {
+  width: 100%;
+}
+
 .transactions-header h1 {
   font-size: 24px;
   color: #000;
