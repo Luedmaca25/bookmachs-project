@@ -50,9 +50,12 @@ export const SwipePage: React.FC = () => {
   // evitamos hacer consultas para no causar llamados duplicados de invitados.
   const isRestoringSession = !!token && !user;
 
+  // Clave representativa de preferencias ordenadas para sincronizar el caché de recomendaciones
+  const preferencesKey = (user?.preferences || []).slice().sort().join(',');
+
   // React Query para cargar libros según estado de autenticación (deduplica y maneja caché)
   const { data: queryBooks, isLoading: loading, isFetching, error: queryError } = useQuery<BookItem[]>({
-    queryKey: ['books', isAuthenticated],
+    queryKey: ['books', isAuthenticated, preferencesKey],
     queryFn: async () => {
       if (isAuthenticated) {
         return apiClient.get<BookItem[]>('/books/recommendations?limit=50');
@@ -107,12 +110,17 @@ export const SwipePage: React.FC = () => {
   };
 
   const prevAuthRef = useRef(isAuthenticated);
+  const prevPrefsRef = useRef(preferencesKey);
 
   // Inicializar la lista de libros cuando se recibe la respuesta inicial de React Query,
   // filtrando de inmediato cualquier libro que haya sido descartado anteriormente
   useEffect(() => {
-    if (prevAuthRef.current !== isAuthenticated) {
+    const authChanged = prevAuthRef.current !== isAuthenticated;
+    const prefsChanged = prevPrefsRef.current !== preferencesKey;
+
+    if (authChanged || prefsChanged) {
       prevAuthRef.current = isAuthenticated;
+      prevPrefsRef.current = preferencesKey;
       setBooksList([]);
       setCurrentBookIndex(0);
       setSwipedHistory([]);
@@ -129,7 +137,7 @@ export const SwipePage: React.FC = () => {
         fetchMoreBooks();
       }
     }
-  }, [queryBooks, isAuthenticated, booksList.length]);
+  }, [queryBooks, isAuthenticated, preferencesKey, booksList.length]);
 
   // Cargar automáticamente los siguientes 50 libros en segundo plano cuando el usuario llega al libro 40 (quedando 10 en la cola)
   const fetchMoreBooks = async () => {

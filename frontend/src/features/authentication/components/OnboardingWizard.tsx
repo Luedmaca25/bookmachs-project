@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import { PreferencesCard } from './PreferencesCard';
 import { apiClient } from '../../../lib/apiClient';
@@ -15,6 +16,7 @@ interface PreferenceTag {
 }
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
+  const queryClient = useQueryClient();
   const { user, login } = useAuthStore();
   
   // Determinar el paso inicial (solo país y documento si faltan, el teléfono se gestiona en registro)
@@ -122,6 +124,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
         const updatedProfile = await apiClient.get<any>('/auth/me');
         login(updatedProfile, token);
       }
+
+      await queryClient.invalidateQueries({ queryKey: ['books'] });
 
       onComplete();
     } catch (err: unknown) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from './store/authStore';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { RegisterWizard } from './components/RegisterWizard';
@@ -9,9 +10,10 @@ import { getFileUrl } from '../../lib/formatters';
 
 export const AuthenticationPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const { user, isAuthenticated, login: loginAction, logout } = useAuthStore();
+  const { user, isAuthenticated, login: loginAction, logout, updateUser } = useAuthStore();
   const [isLogin, setIsLogin] = useState(() => searchParams.get('mode') !== 'register');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -70,14 +72,18 @@ export const AuthenticationPage: React.FC = () => {
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
         if (latestTagsRef.current && latestTagsRef.current.length > 0) {
-          apiClient.post<boolean>('/auth/preferences', latestTagsRef.current).catch(() => {});
+          apiClient.post<boolean>('/auth/preferences', latestTagsRef.current)
+            .then(() => {
+              queryClient.invalidateQueries({ queryKey: ['books'] });
+            })
+            .catch(() => {});
         }
       }
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current);
       }
     };
-  }, []);
+  }, [queryClient]);
 
   // Avatar upload states
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -339,7 +345,12 @@ export const AuthenticationPage: React.FC = () => {
       if (token) {
         const updatedProfile = await apiClient.get<any>('/auth/me');
         loginAction(updatedProfile, token);
+      } else {
+        updateUser({ preferences: tagsToSave });
       }
+
+      await queryClient.invalidateQueries({ queryKey: ['books'] });
+
       setPrefSuccess(true);
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current);
@@ -374,6 +385,7 @@ export const AuthenticationPage: React.FC = () => {
 
     setSelectedTags(nextSelectedTags);
     latestTagsRef.current = nextSelectedTags;
+    updateUser({ preferences: nextSelectedTags });
     setPrefError(null);
 
     // Guardar automáticamente las preferencias sin necesidad de presionar guardar
