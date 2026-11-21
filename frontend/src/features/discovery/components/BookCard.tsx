@@ -280,11 +280,11 @@ export const BookCard: React.FC<BookCardProps> = ({
 
       <div className="book-card-floating-wrapper">
         <div className="book-card-info">
-          {book.isFallbackCategory && (
+          {/* {book.isFallbackCategory && (
             <div className="fallback-category-badge">
               <i className="fa-solid fa-compass"></i> Recomendación de otra sección (Has completado tus preferencias)
             </div>
-          )}
+          )} */}
 
           <h3>{book.title || 'Descubre Libros'}</h3>
           <span className="book-author">Autor: {book.author || 'Desconocido'}</span>

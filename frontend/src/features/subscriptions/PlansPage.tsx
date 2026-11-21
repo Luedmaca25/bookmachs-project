@@ -575,7 +575,7 @@ export const PlansPage: React.FC = () => {
               $2.990 <span style={{ fontSize: '0.85rem', color: '#6b7280', fontWeight: 500 }}>CLP</span>
             </div>
             <p style={{ fontSize: '0.85rem', color: '#4b5563', flex: 1, margin: '0 0 1rem' }}>
-              Desbloquea sin borrosidad la 4ta pestaña en tu libreta: mira exactamente quiénes dieron like a tus libros y stock de Ecolectura.
+              Desbloquea sin borrosidad la 4ta pestaña en tu libreta: mira exactamente quiénes dieron like a tus libros y stock.
             </p>
             <button
               type="button"

@@ -79,7 +79,7 @@ public class CleanupBooksJob
 
                         await _ecolecturaDbContext.AjustesInventario.AddAsync(adjustment);
                         hasEcolecturaStockRestored = true;
-                        _logger.LogInformation("Stock de Ecolectura restituido (+1) para el producto {IdProducto} por expiración de reserva.", product.IdProducto);
+                        _logger.LogInformation("Stock restituido (+1) para el producto {IdProducto} por expiración de reserva.", product.IdProducto);
                     }
                 }
 

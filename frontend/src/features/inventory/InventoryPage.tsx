@@ -954,7 +954,7 @@ export const InventoryPage: React.FC = () => {
                       }}
                     >
                       <i className="fa-solid fa-heart-circle-bolt"></i>
-                      <span>Comprar Match Pass 1 Semana ($2.990)</span>
+                      <span>Activar Match Pass 1 Semana ($2.990)</span>
                     </button>
                   </div>
                 </div>

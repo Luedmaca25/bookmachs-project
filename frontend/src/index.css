@@ -4259,13 +4259,13 @@ body.swipe-page-active .app-footer {
 .swipe-card-img,
 .book-fallback-icon-wrapper {
   width: 100%;
-  height: calc(100% - 138px);
+  height: calc(100% - 145px);
   object-fit: contain;
   transition: transform var(--transition-normal), opacity var(--transition-normal);
   cursor: grab;
   user-select: none;
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.35));
-  top: 18px;
+  top: 12px;
   left: 0;
   right: 0;
   position: absolute;

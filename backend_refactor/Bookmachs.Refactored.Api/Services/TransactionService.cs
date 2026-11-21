@@ -1264,7 +1264,7 @@ public class TransactionService : ITransactionService
         catch (Exception ex)
         {
             // Registrar error pero no interrumpir la transacción local de Bookmachs
-            Console.Error.WriteLine($"Error al descontar stock de Ecolectura o registrar el ajuste de inventario: {ex.Message}");
+            Console.Error.WriteLine($"Error al descontar stock o registrar el ajuste de inventario: {ex.Message}");
         }
     }
 
@@ -1310,7 +1310,7 @@ public class TransactionService : ITransactionService
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error al restituir stock de Ecolectura o registrar ajuste: {ex.Message}");
+            Console.Error.WriteLine($"Error al restituir stock o registrar ajuste: {ex.Message}");
         }
     }
 }
